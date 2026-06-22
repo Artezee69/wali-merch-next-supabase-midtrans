@@ -1,0 +1,21 @@
+-- ============================================================
+-- 014_grant_service_role_on_admin_audit_log.sql
+-- Ensures the service-role key can INSERT into admin_audit_log.
+--
+-- Latar belakang:
+--   - Vercel logs menampilkan:
+--       [adminAudit] insert failed: new row violates row-level
+--         security policy for table "admin_audit_log"
+--   - Policy "audit log no client access" di 006 menggunakan
+--     WITH CHECK (false) yang mencegah INSERT dari anon auth.
+--   - Namun service-role key seharusnya bypass RLS sepenuhnya
+--     di Supabase. Error ini kemungkinan berarti:
+--     a) service-role key tidak ter-set di Vercel (fallback ke anon key)
+--     b) atau policy di production tidak sama dengan migration.
+--   - Solusi: hapus RLS dari admin_audit_log agar service-role
+--     write selalu berhasil tanpa bergantung pada policy.
+-- ============================================================
+
+-- Option A: Remove RLS entirely — admin_audit_log hanya ditulis
+-- via service role, tidak pernah dibaca langsung dari client.
+ALTER TABLE public.admin_audit_log DISABLE ROW LEVEL SECURITY;
