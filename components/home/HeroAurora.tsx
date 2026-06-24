@@ -9,6 +9,7 @@ import type { HomeHero, TrustBadge } from "@/lib/homeContent";
 type HeroAuroraProps = {
   content: HomeHero;
   trustBadges?: TrustBadge[];
+  stats?: Array<{ value: string; label: string; icon?: string }>;
 };
 
 type Particle = {
@@ -23,7 +24,7 @@ type Particle = {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export default function HeroAurora({ content, trustBadges }: HeroAuroraProps) {
+export default function HeroAurora({ content, trustBadges, stats }: HeroAuroraProps) {
   // ── Background configuration ──────────────────────────────────────────────
   const HERO_PHOTO = "/cta/wali-singapura.webp";
   const bgType: "gradient" | "solid" | "image" = content.backgroundType ?? "image";
