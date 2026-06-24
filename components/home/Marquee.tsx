@@ -69,37 +69,5 @@ export default function Marquee({ items: itemsProp }: MarqueeProps) {
   const fallback = t.home.marquee.items;
   const items = itemsProp && itemsProp.length > 0 ? itemsProp : fallback;
   if (!items || items.length === 0) return null;
-  const safeItems = items.length < 4 ? [...items, ...items, ...items, ...items] : items;
-
-  return (
-    <section
-      id="section-marquee"
-      className="relative overflow-hidden border-y border-white/10 bg-[#0b0b0b] py-3"
-      aria-label="Highlight"
-    >
-      <div className="pointer-events-none absolute inset-0 diag-stripes" />
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#d7ff53]/40 to-transparent" />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-[#5e8bff]/40 to-transparent" />
-      <div className="pointer-events-none absolute -left-20 top-1/2 h-32 w-32 -translate-y-1/2 rounded-full bg-[#d7ff53]/10 blur-3xl" />
-      <div className="pointer-events-none absolute -right-20 top-1/2 h-32 w-32 -translate-y-1/2 rounded-full bg-[#5e8bff]/10 blur-3xl" />
-
-      <MarqueeLane items={safeItems} direction="left" duration={38} textClass="text-sm" />
-
-      <div className="relative my-2 h-px overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
-        <div
-          className="absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-[#d7ff53]/50 to-transparent"
-          style={{ animation: "shimmer 4s linear infinite", backgroundSize: "200% 100%" }}
-        />
-      </div>
-
-      <MarqueeLane
-        items={[...safeItems].reverse()}
-        direction="right"
-        duration={50}
-        textClass="text-xs"
-        divider="◆"
-      />
-    </section>
-  );
+  return null;
 }

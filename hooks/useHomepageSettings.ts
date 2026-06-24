@@ -19,8 +19,8 @@ export type { HomepageSettings, HeaderSettings };
 export function resolveHeaderSettings(raw: Partial<HeaderSettings> | null | undefined): HeaderSettings {
   return {
     logoUrl: raw?.logoUrl ?? "",
-    logoText: raw?.logoText ?? "WALI",
-    logoSubtitle: raw?.logoSubtitle ?? "OFFICIAL MERCHANDISE",
+    logoText: raw?.logoText ?? "Official Merchandise Wali",
+    logoSubtitle: raw?.logoSubtitle ?? "by wakalima",
     showSubtitle: raw?.showSubtitle ?? true,
     menuLabels: raw?.menuLabels ?? {
       home: "Home",

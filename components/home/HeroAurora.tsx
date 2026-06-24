@@ -2,24 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import {
-  ArrowRight,
-  Sparkles,
-  type LucideIcon,
-  MousePointer2,
-  MoveDown,
-} from "lucide-react";
-import type { HomeHero, HomepageStat, TrustBadge } from "@/lib/homeContent";
-import { resolveIcon } from "@/lib/settingsIcons";
-import { useT } from "@/lib/i18n/useT";
+import type { HomeHero, TrustBadge } from "@/lib/homeContent";
+
+// ─── Types ───────────────────────────────────────────────────────────────────
 
 type HeroAuroraProps = {
   content: HomeHero;
-  stats?: HomepageStat[];
   trustBadges?: TrustBadge[];
 };
-
-type BgType = "gradient" | "solid" | "image";
 
 type Particle = {
   x: number;
@@ -31,22 +21,21 @@ type Particle = {
   hue: number;
 };
 
-export default function HeroAurora({
-  content,
-  stats,
-  trustBadges,
-}: HeroAuroraProps) {
-  const t = useT();
-  const bgType: BgType = content.backgroundType ?? "gradient";
+// ─── Component ───────────────────────────────────────────────────────────────
+
+export default function HeroAurora({ content, trustBadges }: HeroAuroraProps) {
+  // ── Background configuration ──────────────────────────────────────────────
+  const HERO_PHOTO = "/cta/wali-singapura.webp";
+  const bgType: "gradient" | "solid" | "image" = content.backgroundType ?? "image";
   const bgColor = content.backgroundColor || "#0b0b0b";
-  const bgImage = content.backgroundImageUrl || "";
+  const bgImage = content.backgroundImageUrl?.trim()
+    ? content.backgroundImageUrl
+    : HERO_PHOTO;
   const customGradient = content.backgroundGradient || "";
-  const overlayOpacity = (content.backgroundOverlay ?? 50) / 100;
+  const overlayOpacity = (content.backgroundOverlay ?? 35) / 100;
   const baseOpacity = (content.backgroundOpacity ?? overlayOpacity) / 100;
 
-  const hasImage =
-    bgType === "image" && bgImage.length > 0 && bgImage !== "/images/";
-
+  const hasImage = bgType !== "solid" && bgImage.length > 0 && bgImage !== "/images/";
   const showCustomGradient = bgType === "gradient" && !!customGradient;
 
   let backdropStyle: React.CSSProperties = {};
@@ -56,17 +45,7 @@ export default function HeroAurora({
     backdropStyle = { background: customGradient, opacity: baseOpacity };
   }
 
-  const statItems: HomepageStat[] =
-    stats && stats.length > 0
-      ? stats
-      : content.stat1Value
-      ? [
-          { id: "s1", value: content.stat1Value, label: content.stat1Label },
-          { id: "s2", value: content.stat2Value, label: content.stat2Label },
-          { id: "s3", value: content.stat3Value, label: content.stat3Label },
-        ]
-      : [];
-
+  // ── Derived trust items ───────────────────────────────────────────────────
   const trustItems: TrustBadge[] =
     trustBadges && trustBadges.length > 0
       ? trustBadges
@@ -78,7 +57,7 @@ export default function HeroAurora({
         ]
       : [];
 
-  // ─── mouse parallax ─────────────────────────────────────────────────────
+  // ── Mouse parallax ────────────────────────────────────────────────────────
   const sectionRef = useRef<HTMLElement | null>(null);
   const [parallax, setParallax] = useState({ x: 0, y: 0 });
 
@@ -97,7 +76,7 @@ export default function HeroAurora({
     return () => window.removeEventListener("mousemove", onMove);
   }, []);
 
-  // ─── particle field ─────────────────────────────────────────────────────
+  // ── Particle field ────────────────────────────────────────────────────────
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -165,39 +144,37 @@ export default function HeroAurora({
     };
   }, []);
 
-  // ─── headline letter reveal ──────────────────────────────────────────────
-  const headlineTop = content.headlineLine1 || "";
-  const headlineHi = content.headlineLine2a || "";
-  const headlineBot = content.headlineLine2b || "";
-
+  // ── Reveal state ──────────────────────────────────────────────────────────
   const [revealed, setRevealed] = useState(false);
   useEffect(() => {
     const id = setTimeout(() => setRevealed(true), 120);
     return () => clearTimeout(id);
   }, []);
 
-  const char = (c: string, i: number) => (
-    <span
-      key={i}
-      className="inline-block"
-      style={{
-        animation: revealed
-          ? `letter-rise 700ms cubic-bezier(0.16, 1, 0.3, 1) ${i * 25}ms both`
-          : undefined,
-        opacity: revealed ? undefined : 0,
-      }}
-    >
-      {c === " " ? " " : c}
-    </span>
-  );
+  // ── Content values (with fallbacks matching the reference screenshot) ─────
+  const badgeText = content.badge || "LIVE DROP 2026 ACTIVE";
+  const subtitleText = content.subheadline || "";
+  const primaryLabel = content.primaryCtaLabel || "KOLEKSI TOKO";
+  const primaryHref = content.primaryCtaHref || "/products";
+  const secondaryLabel = content.secondaryCtaLabel || "LACAK PESANAN";
+  const secondaryHref = content.secondaryCtaHref || "/track-order";
+
+  // Trust label strings (displayed as small caps at bottom)
+  const trustLabels = trustItems
+    .filter((b) => b.enabled !== false && b.text)
+    .map((b) => b.text);
 
   return (
     <section
       ref={sectionRef}
       id="home-hero"
-      className="hero-cinematic relative isolate overflow-hidden bg-black"
+      className="relative isolate overflow-hidden bg-[#0b0b0b]"
     >
-      {/* Layer 1: solid color or custom gradient (z=-30) */}
+      {/* ═══════════════════════════════════════════════════════════════
+          BACKGROUND LAYERS
+          ═══════════════════════════════════════════════════════════════ */}
+
+      {/* Layer 0: solid color or custom gradient (-z-30) */}
       {(bgType === "solid" || showCustomGradient) && (
         <div
           className="pointer-events-none absolute inset-0 -z-30"
@@ -205,7 +182,7 @@ export default function HeroAurora({
         />
       )}
 
-      {/* Layer 2: background image (z=-20) */}
+      {/* Layer 1: background photo (-z-20) */}
       {hasImage ? (
         <>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -213,15 +190,26 @@ export default function HeroAurora({
             src={bgImage}
             alt=""
             className="pointer-events-none absolute inset-0 -z-20 h-full w-full object-cover"
+            style={{ filter: "blur(4px)", transform: "scale(1.03)" }}
           />
+          {/* Base dark scrim — slightly heavier so logo pops */}
           <div
             className="pointer-events-none absolute inset-0 -z-10 bg-black"
             style={{ opacity: overlayOpacity }}
           />
+          {/* Radial vignette — darker in center (where text sits),
+              keeping the edges of the photo more visible. */}
+          <div
+            className="pointer-events-none absolute inset-0 -z-10"
+            style={{
+              background:
+                "radial-gradient(ellipse at center, rgba(0,0,0,0.60) 0%, rgba(0,0,0,0.20) 55%, rgba(0,0,0,0.45) 100%)",
+            }}
+          />
         </>
       ) : null}
 
-      {/* Layer 3: aurora blobs (mouse parallax) */}
+      {/* Layer 2: aurora blobs with mouse parallax (-z-10) */}
       <div
         className="pointer-events-none absolute inset-0 -z-10"
         style={{
@@ -230,24 +218,16 @@ export default function HeroAurora({
         }}
       >
         <div
-          className="absolute -top-32 -left-20 h-[520px] w-[720px] rounded-full bg-[radial-gradient(circle_at_center,rgba(215,255,83,0.30),transparent_60%)] blur-3xl"
+          className="absolute -top-32 -left-20 h-[520px] w-[720px] rounded-full bg-[radial-gradient(circle_at_center,rgba(215,255,83,0.12),transparent_70%)] blur-3xl"
           style={{ animation: "aurora-drift-1 14s ease-in-out infinite alternate" }}
         />
         <div
-          className="absolute -bottom-40 left-1/4 h-[480px] w-[620px] rounded-full bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.22),transparent_60%)] blur-3xl"
+          className="absolute -bottom-40 left-1/4 h-[480px] w-[620px] rounded-full bg-[radial-gradient(circle_at_center,rgba(94,139,255,0.08),transparent_70%)] blur-3xl"
           style={{ animation: "aurora-drift-2 17s ease-in-out infinite alternate" }}
-        />
-        <div
-          className="absolute -bottom-32 right-[-80px] h-[440px] w-[560px] rounded-full bg-[radial-gradient(circle_at_center,rgba(236,72,153,0.18),transparent_60%)] blur-3xl"
-          style={{ animation: "aurora-drift-3 19s ease-in-out infinite alternate" }}
-        />
-        <div
-          className="absolute left-1/2 top-1/3 h-[360px] w-[480px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle_at_center,rgba(56,189,248,0.12),transparent_60%)] blur-3xl"
-          style={{ animation: "aurora-drift-1 22s ease-in-out infinite alternate-reverse" }}
         />
       </div>
 
-      {/* Layer 4: particle field (mouse parallax, opposite) */}
+      {/* Layer 3: particle canvas (-z-5) */}
       <canvas
         ref={canvasRef}
         aria-hidden="true"
@@ -258,242 +238,115 @@ export default function HeroAurora({
         }}
       />
 
-      {/* Layer 5: scan-line + grain */}
-      <div className="pointer-events-none absolute inset-0 -z-[4] animate-scan-slow overflow-hidden" />
-      <div className="pointer-events-none absolute inset-0 -z-[3] grain opacity-[0.08]" />
+      {/* Top / bottom fade masks (-z-2) */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 -z-[2] h-32 bg-gradient-to-b from-[#0b0b0b] to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 -z-[2] h-32 bg-gradient-to-t from-[#0b0b0b] to-transparent" />
 
-      {/* Top/bottom fade to content */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 -z-[2] h-32 bg-gradient-to-b from-black to-transparent" />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 -z-[2] h-32 bg-gradient-to-t from-black to-transparent" />
-
-      {/* Layer 6: rotating conic rings (decorative) */}
-      <div className="pointer-events-none absolute left-1/2 top-1/2 -z-[2] hidden -translate-x-1/2 -translate-y-1/2 md:block">
-        <div className="relative h-[820px] w-[820px]">
-          <div className="absolute inset-0 rounded-full border border-white/[0.04] animate-spin-slower" />
-          <div className="absolute inset-12 rounded-full border border-dashed border-white/[0.05] animate-spin-slow" />
-          <div className="absolute inset-32 rounded-full border border-white/[0.03]" />
-        </div>
-      </div>
-
+      {/* ═══════════════════════════════════════════════════════════════
+          ANIMATION KEYFRAMES
+          ═══════════════════════════════════════════════════════════════ */}
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes aurora-drift-1 {
-          0% { transform: translate(0, 0) scale(1); opacity: 0.7; }
-          50% { transform: translate(60px, 30px) scale(1.08); opacity: 1; }
+          0%   { transform: translate(0, 0) scale(1);     opacity: 0.7; }
+          50%  { transform: translate(60px, 30px) scale(1.08); opacity: 1; }
           100% { transform: translate(-30px, 60px) scale(0.95); opacity: 0.75; }
         }
         @keyframes aurora-drift-2 {
-          0% { transform: translate(0, 0) scale(1); opacity: 0.55; }
-          50% { transform: translate(-50px, -30px) scale(1.06); opacity: 0.95; }
+          0%   { transform: translate(0, 0) scale(1);     opacity: 0.55; }
+          50%  { transform: translate(-50px, -30px) scale(1.06); opacity: 0.95; }
           100% { transform: translate(40px, 20px) scale(0.97); opacity: 0.65; }
         }
-        @keyframes aurora-drift-3 {
-          0% { transform: translate(0, 0) scale(1); opacity: 0.45; }
-          50% { transform: translate(40px, -20px) scale(1.05); opacity: 0.85; }
-          100% { transform: translate(-20px, 40px) scale(0.96); opacity: 0.55; }
-        }
-        @keyframes letter-rise {
-          from { opacity: 0; transform: translateY(28px) rotateX(-40deg); filter: blur(6px); }
-          to { opacity: 1; transform: translateY(0) rotateX(0); filter: blur(0); }
-        }
-        @keyframes scan-slow {
-          0% { transform: translateY(-100%); }
-          100% { transform: translateY(100%); }
-        }
-        .hero-cinematic .animate-scan-slow::before {
-          content: "";
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(to bottom, transparent 0%, rgba(215,255,83,0.06) 50%, transparent 100%);
-          animation: scan-slow 6s ease-in-out infinite;
-          pointer-events: none;
+        @keyframes logo-reveal {
+          from { opacity: 0; transform: translateY(32px) scale(0.96); filter: blur(4px); }
+          to   { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
         }
       ` }} />
 
-      {/* ===== Main Content ===== */}
-      <div className="mx-auto max-w-7xl px-4 pt-24 pb-32 md:px-8 md:pt-32 md:pb-44">
-        <div className="flex flex-col items-center text-center">
-          {/* Badge pill with shimmer */}
+      {/* ═══════════════════════════════════════════════════════════════
+          BADGE PILLOT — floating near top-center, outside the main content flow
+          ═══════════════════════════════════════════════════════════════ */}
+      <div className="relative z-10 flex min-h-[60vh] flex-col items-center justify-center md:min-h-[70vh]">
+        <div className="mx-auto flex max-w-3xl flex-col items-center gap-5 px-4 md:gap-6 md:px-6">
+
+          {/* Badge pill */}
           <div
-            className="hero-badge group relative inline-flex items-center gap-2 overflow-hidden rounded-full border border-[#d7ff53]/30 bg-[#d7ff53]/10 px-3.5 py-1.5 text-[10px] font-black uppercase tracking-[0.25em] text-[#d7ff53]"
+            className="relative inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.02] px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.3em] text-white/40"
             style={{
               animation: revealed
-                ? "letter-rise 700ms cubic-bezier(0.16, 1, 0.3, 1) 0ms both"
+                ? "logo-reveal 700ms cubic-bezier(0.16, 1, 0.3, 1) 0ms both"
                 : undefined,
               opacity: revealed ? undefined : 0,
             }}
           >
-            <span className="absolute inset-0 -z-10 holo-sweep" />
-            <Sparkles size={12} strokeWidth={2.5} className="animate-pulse-soft" />
-            <span className="relative">{content.badge}</span>
+            <span className="relative">{badgeText}</span>
           </div>
 
-          {/* Headline (letter-by-letter reveal) */}
-          <h1
-            className="mt-7 flex max-w-5xl flex-col items-center text-4xl font-black leading-[1.05] tracking-tight text-white md:text-6xl lg:text-7xl"
+          {/* ── WALI Logo ── */}
+          <div
+            className="flex flex-col items-center"
             style={{ perspective: "1000px" }}
           >
-            <span className="flex">{headlineTop.split("").map(char)}</span>
-            <span className="mt-1 flex flex-col items-center gap-1 md:flex-row md:gap-2">
-              <span className="holo-text text-[#d7ff53]">
-                {headlineHi.split("").map(char)}
-              </span>
-              {headlineBot ? (
-                <span className="text-white/95">{headlineBot.split("").map(char)}</span>
-              ) : null}
-            </span>
-          </h1>
-
-          {/* Subheadline */}
-          <p
-            className="mt-6 max-w-2xl text-balance text-sm text-white/65 md:text-base"
-            style={{
-              animation: revealed
-                ? "letter-rise 700ms cubic-bezier(0.16, 1, 0.3, 1) 700ms both"
-                : undefined,
-              opacity: revealed ? undefined : 0,
-            }}
-          >
-            {content.subheadline}
-          </p>
-
-          {/* CTA Buttons */}
-          <div
-            className="mt-9 flex flex-col items-center gap-3 sm:flex-row"
-            style={{
-              animation: revealed
-                ? "letter-rise 700ms cubic-bezier(0.16, 1, 0.3, 1) 850ms both"
-                : undefined,
-              opacity: revealed ? undefined : 0,
-            }}
-          >
-            {content.primaryCtaHref ? (
-              <Link
-                href={content.primaryCtaHref}
-                className="magnetic-btn group relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-[#d7ff53] px-8 py-3.5 text-sm font-black uppercase tracking-wider text-black transition hover:bg-[#d7ff53]/90"
-              >
-                <span className="absolute inset-0 -z-10 holo-sweep opacity-60" />
-                <span className="absolute inset-0 -z-10 animate-shimmer" />
-                <span className="relative">{content.primaryCtaLabel}</span>
-                <ArrowRight
-                  size={16}
-                  strokeWidth={3}
-                  className="relative transition group-hover:translate-x-1"
-                />
-              </Link>
-            ) : null}
-            {content.secondaryCtaHref ? (
-              <Link
-                href={content.secondaryCtaHref}
-                className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full border border-white/15 bg-white/[0.04] px-8 py-3.5 text-sm font-bold uppercase tracking-wider text-white/80 backdrop-blur-md transition hover:border-[#d7ff53]/40 hover:bg-[#d7ff53]/10 hover:text-[#d7ff53]"
-              >
-                <span className="relative">{content.secondaryCtaLabel}</span>
-              </Link>
-            ) : null}
-          </div>
-
-          {/* Stats strip with gradient border & counter */}
-          {statItems.length > 0 ? (
-            <div
-              className={`mt-14 grid w-full max-w-3xl gap-3 sm:gap-4 ${
-                statItems.length === 1
-                  ? "grid-cols-1"
-                  : statItems.length === 2
-                  ? "grid-cols-2"
-                  : statItems.length === 4
-                  ? "grid-cols-2 md:grid-cols-4"
-                  : "grid-cols-3"
-              }`}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/cta/LOGO MERCH FIX SIZE.webp"
+              alt="OFFICIAL MERCHANDISE"
+              width={800}
+              height={800}
+              decoding="async"
+              className="h-auto w-[70vw] max-w-[400px] select-none opacity-0"
               style={{
+                filter: "drop-shadow(0 0 60px rgba(215,255,83,0.12))",
                 animation: revealed
-                  ? "letter-rise 700ms cubic-bezier(0.16, 1, 0.3, 1) 1000ms both"
+                  ? "logo-reveal 1200ms cubic-bezier(0.16, 1, 0.3, 1) 200ms both"
                   : undefined,
-                opacity: revealed ? undefined : 0,
+                opacity: revealed ? 1 : 0,
               }}
-            >
-              {statItems.map((s, idx) => (
-                <div
-                  key={s.id}
-                  className="stat-card group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-4 backdrop-blur-md transition hover:border-[#d7ff53]/30 hover:bg-white/[0.05] md:p-5"
-                  style={{
-                    animation: `letter-rise 700ms cubic-bezier(0.16, 1, 0.3, 1) ${
-                      1100 + idx * 100
-                    }ms both`,
-                    opacity: revealed ? undefined : 0,
-                  }}
-                >
-                  <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#d7ff53]/60 to-transparent opacity-0 transition group-hover:opacity-100" />
-                  <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_50%_0%,rgba(215,255,83,0.06),transparent_60%)] opacity-0 transition group-hover:opacity-100" />
-                  <div className="text-2xl font-black text-white transition group-hover:text-[#d7ff53] md:text-3xl">
-                    {s.value}
-                  </div>
-                  <div className="mt-1 text-[10px] font-bold uppercase tracking-widest text-white/45">
-                    {s.label}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : null}
-
-          {/* Trust strip */}
-          {trustItems.filter((b) => b.enabled !== false).length > 0 ? (
-            <div
-              className="mt-9 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[11px] font-bold uppercase tracking-widest text-white/45"
-              style={{
-                animation: revealed
-                  ? "letter-rise 700ms cubic-bezier(0.16, 1, 0.3, 1) 1300ms both"
-                  : undefined,
-                opacity: revealed ? undefined : 0,
-              }}
-            >
-              {trustItems
-                .filter((b) => b.enabled !== false)
-                .map((b, i, arr) => {
-                  const Icon: LucideIcon = resolveIcon(b.icon);
-                  return (
-                    <span
-                      key={b.id}
-                      className="inline-flex items-center gap-1.5 transition hover:text-[#d7ff53]"
-                    >
-                      <Icon
-                        size={12}
-                        strokeWidth={2.5}
-                        className="text-[#d7ff53]"
-                      />
-                      {b.text}
-                      {i < arr.length - 1 ? (
-                        <span className="ml-6 text-white/15">·</span>
-                      ) : null}
-                    </span>
-                  );
-                })}
-            </div>
-          ) : null}
-
-          {/* Scroll hint */}
-          <div
-            className="mt-16 flex flex-col items-center gap-2 text-white/30 md:mt-20"
-            style={{
-              animation: revealed
-                ? "letter-rise 700ms cubic-bezier(0.16, 1, 0.3, 1) 1500ms both"
-                : undefined,
-              opacity: revealed ? undefined : 0,
-            }}
-          >
-            <span className="text-[10px] font-bold uppercase tracking-[0.3em]">
-              {t.home.hero.scroll}
-            </span>
-            <MoveDown
-              size={16}
-              className="animate-float-y text-[#d7ff53]/70"
-              strokeWidth={2}
             />
           </div>
 
-          {/* Mouse hint */}
-          <div className="mt-4 hidden items-center gap-1.5 text-[10px] font-medium uppercase tracking-widest text-white/25 md:flex">
-            <MousePointer2 size={11} className="text-[#d7ff53]/60" />
-            {t.home.hero.move}
+          {/* ── Subtitle — small, understated ── */}
+          {subtitleText && (
+            <p
+              className="max-w-md text-center text-sm leading-relaxed text-white/60 md:text-base"
+              style={{
+                animation: revealed
+                  ? "logo-reveal 1000ms cubic-bezier(0.16, 1, 0.3, 1) 500ms both"
+                  : undefined,
+                opacity: revealed ? undefined : 0,
+              }}
+            >
+              {subtitleText}
+            </p>
+          )}
+
+          {/* ── CTA Buttons ── */}
+          <div
+            className="mt-3 flex items-center gap-3"
+            style={{
+              animation: revealed
+                ? "logo-reveal 800ms cubic-bezier(0.16, 1, 0.3, 1) 550ms both"
+                : undefined,
+              opacity: revealed ? undefined : 0,
+            }}
+          >
+            {primaryHref ? (
+              <Link
+                href={primaryHref}
+                className="inline-flex items-center justify-center rounded-full bg-[#d7ff53] px-7 py-2.5 text-[11px] font-black uppercase tracking-[0.2em] text-black transition-all duration-500 hover:bg-[#c7ef33] hover:shadow-[0_0_20px_rgba(215,255,83,0.25)]"
+              >
+                {primaryLabel}
+              </Link>
+            ) : null}
+            {secondaryHref ? (
+              <Link
+                href={secondaryHref}
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-white/20 bg-white/[0.03] px-7 py-2.5 text-[11px] font-bold uppercase tracking-[0.2em] text-white/70 backdrop-blur transition-all duration-500 hover:border-white/40 hover:bg-white/[0.06] hover:text-white"
+              >
+                {secondaryLabel}
+              </Link>
+            ) : null}
           </div>
+
         </div>
       </div>
     </section>

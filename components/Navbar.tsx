@@ -146,9 +146,8 @@ export default function Navbar({
 
   const items = variant === "admin" ? adminNav : customerNav;
   const brandHref = variant === "admin" ? "/admin" : "/";
-  const brandSubtitle = variant === "admin" ? "Admin Panel" : "Official Merchandise";
 
-  // Customer nav CTA
+  // Customer nav CTA (auth buttons)
   const customerCta = (
     <div className="flex items-center gap-2">
       <LocaleToggle />
@@ -211,12 +210,18 @@ export default function Navbar({
       ) : (
         <>
           {headerSettings.showLogin && (
-            <Link href="/login" className="rounded-xl border border-white/10 px-4 py-2 text-xs font-bold uppercase tracking-wider text-white/70 transition hover:border-white/30 hover:text-white">
+            <Link
+              href="/login"
+              className="rounded-xl border border-[#d7ff53]/60 bg-transparent px-4 py-2 text-xs font-bold uppercase tracking-wider text-[#d7ff53] transition hover:border-[#d7ff53] hover:bg-[#d7ff53]/10"
+            >
               {headerSettings.loginLabel}
             </Link>
           )}
           {headerSettings.showRegister && (
-            <Link href="/register" className="rounded-xl bg-[#d7ff53] px-4 py-2 text-xs font-bold uppercase tracking-wider text-black transition hover:bg-[#c7ef33]">
+            <Link
+              href="/register"
+              className="rounded-xl bg-[#d7ff53] px-4 py-2 text-xs font-bold uppercase tracking-wider text-black transition hover:bg-[#c7ef33]"
+            >
               {headerSettings.registerLabel}
             </Link>
           )}
@@ -226,7 +231,7 @@ export default function Navbar({
   );
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#0b0b0b]/85 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-white/5 bg-[#0b0b0b]/70 backdrop-blur-xl">
       {/* Animated gradient line at the bottom of the navbar */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px overflow-hidden">
         <div
@@ -235,11 +240,8 @@ export default function Navbar({
         />
       </div>
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 md:px-8">
-        <Link href={brandHref} className="group relative shrink-0">
-          <div
-            className="pointer-events-none absolute -inset-2 -z-10 rounded-full bg-[#d7ff53]/20 opacity-0 blur-md transition-opacity duration-700 group-hover:opacity-100"
-            style={{ animation: "pulse-soft 4s ease-in-out infinite" }}
-          />
+        {/* Brand — top left: big bold text, subtitle below */}
+        <Link href={brandHref} className="shrink-0">
           {headerSettings.logoUrl ? (
             <img
               src={headerSettings.logoUrl}
@@ -247,17 +249,20 @@ export default function Navbar({
               className="h-9 w-auto transition-transform duration-500 group-hover:scale-105"
             />
           ) : (
-            <div className="text-lg font-black tracking-[0.25em] text-white transition-colors duration-300 group-hover:text-[#d7ff53]">
-              {headerSettings.logoText}
-            </div>
-          )}
-          {headerSettings.showSubtitle && (
-            <div className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/45">
-              {headerSettings.logoSubtitle}
-            </div>
+            <>
+              <div className="text-base font-black uppercase tracking-[0.22em] text-white transition-colors duration-300 group-hover:text-[#d7ff53] md:text-lg">
+                {headerSettings.logoText}
+              </div>
+              {headerSettings.showSubtitle && (
+                <div className="text-[9px] font-bold uppercase tracking-[0.35em] text-white/40">
+                  {headerSettings.logoSubtitle}
+                </div>
+              )}
+            </>
           )}
         </Link>
 
+        {/* Center nav links */}
         <nav className="hidden items-center gap-8 text-sm font-semibold text-white/70 md:flex">
           {items.map((item) => {
             const active = isItemActive(item, activeKey, pathname);
@@ -265,24 +270,26 @@ export default function Navbar({
               <Link
                 key={item.href}
                 href={item.href}
-                className={`draw-underline relative transition hover:text-white ${
+                className={`relative transition hover:text-white ${
                   active ? "text-[#d7ff53]" : ""
                 }`}
               >
                 {item.label}
-                {active ? (
+                {active && (
                   <span
-                    className="absolute -bottom-[14px] left-1/2 h-0.5 w-5 -translate-x-1/2 rounded-full bg-[#d7ff53]"
+                    className="absolute -bottom-[14px] left-1/2 h-[3px] w-5 -translate-x-1/2 rounded-full bg-[#d7ff53]"
                     style={{ boxShadow: "0 0 8px rgba(215,255,83,0.6)" }}
                   />
-                ) : null}
+                )}
               </Link>
             );
           })}
         </nav>
 
+        {/* Right side CTA */}
         <div className="hidden shrink-0 md:flex">{desktopCta || customerCta}</div>
 
+        {/* Mobile hamburger */}
         <button
           type="button"
           onClick={() => setOpen((prev) => !prev)}
@@ -294,6 +301,7 @@ export default function Navbar({
         </button>
       </div>
 
+      {/* Mobile menu */}
       {open && (
         <div
           className="animate-slide-down-spring border-t border-white/10 bg-[#0b0b0b] md:hidden"
@@ -369,7 +377,7 @@ export default function Navbar({
               ) : (
                 <>
                   {headerSettings.showLogin && (
-                    <Link href="/login" className="rounded-xl border border-white/10 px-4 py-3 text-center text-sm font-bold text-white/70 transition hover:border-white/30 hover:text-white">
+                    <Link href="/login" className="rounded-xl border border-[#d7ff53]/60 bg-transparent px-4 py-3 text-center text-sm font-bold text-[#d7ff53] transition hover:bg-[#d7ff53]/10">
                       {headerSettings.loginLabel}
                     </Link>
                   )}

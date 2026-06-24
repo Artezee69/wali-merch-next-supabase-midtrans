@@ -223,8 +223,8 @@ export const DEFAULT_GENERAL: StoreGeneralSettings = {
 
 export const DEFAULT_HEADER: HeaderSettings = {
   logoUrl: "",
-  logoText: "WALI",
-  logoSubtitle: "OFFICIAL MERCHANDISE",
+  logoText: "Official Merchandise Wali",
+  logoSubtitle: "by wakalima",
   showSubtitle: true,
   menuLabels: {
     home: "Home",
@@ -258,9 +258,9 @@ export const DEFAULT_HERO: HeroSettings = {
   primaryButtonUrl: "/products",
   secondaryButtonText: "Track Order",
   secondaryButtonUrl: "/track-order",
-  backgroundType: "gradient",
+  backgroundType: "image",
   backgroundColor: "#0b0b0b",
-  backgroundImageUrl: "",
+  backgroundImageUrl: "/cta/wali-singapura.webp",
   backgroundGradient: "",
   overlayOpacity: 50,
   backgroundOpacity: 0.5,
@@ -641,7 +641,12 @@ async function readJsonArrayRow<T extends { id: string }>(
 }
 
 export async function getHeaderSettings(): Promise<HeaderSettings> {
-  return readJsonRow<HeaderSettings>("homepage_header", DEFAULT_HEADER);
+  // Always enforce the canonical header text regardless of stale DB values.
+  return {
+    ...(await readJsonRow<HeaderSettings>("homepage_header", DEFAULT_HEADER)),
+    logoText: DEFAULT_HEADER.logoText,
+    logoSubtitle: DEFAULT_HEADER.logoSubtitle,
+  };
 }
 
 export async function getHeroSettings(): Promise<HeroSettings> {
