@@ -267,11 +267,9 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
         const f = accepted[i];
         const fd = new FormData();
         fd.append("file", f);
-        if (mode === "edit" && productId) fd.append("productId", productId);
-        if (!values.images[i]?.storage_path) {
-          const tempId = `temp-${Date.now()}-${i}`;
-          fd.append("tempId", tempId);
-        }
+        if (productId) fd.append("productId", productId);
+        const tempId = `temp-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 6)}`;
+        fd.append("tempId", tempId);
         setUploadProgress((prev) => prev.map((p) => (p.name === f.name ? { ...p, pct: 30 } : p)));
 
         const res = await fetch("/api/admin/products/upload-image", {
@@ -279,16 +277,25 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
           body: fd,
         });
         const data = await res.json();
-        if (!res.ok || !data?.ok) {
+        if (!res.ok || !data?.success) {
           throw new Error(data?.error || "Upload gagal");
         }
+        // API response: { success, image: { id, image_url, storage_path, sort_order } }
+        const uploaded = data?.image || {};
         setUploadProgress((prev) => prev.map((p) => (p.name === f.name ? { ...p, pct: 100 } : p)));
         // Replace preview URL with real URL.
         setValues((v) => ({
           ...v,
           images: v.images.map((img) =>
             img.file === f
-              ? { ...img, image_url: data.imageUrl, storage_path: data.path, isNew: true }
+              ? {
+                  ...img,
+                  id: uploaded.id ?? img.id,
+                  image_url: uploaded.image_url ?? img.image_url,
+                  storage_path: uploaded.storage_path ?? img.storage_path,
+                  sort_order: typeof uploaded.sort_order === "number" ? uploaded.sort_order : img.sort_order,
+                  isNew: true,
+                }
               : img
           ),
         }));
@@ -318,7 +325,7 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
       // Existing image: delete via API.
       if (!confirm("Hapus foto ini?")) return;
       try {
-        const res = await fetch(`/api/admin/products/image/${img.id}`, { method: "DELETE" });
+        const res = await fetch(`/api/admin/products/images/${img.id}`, { method: "DELETE" });
         if (!res.ok) throw new Error((await res.json())?.error || "Gagal hapus");
       } catch (err: any) {
         setGeneralError(`Gagal hapus foto: ${err.message}`);
@@ -424,19 +431,32 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
 
   const applyBulkPrice = () => {
     const p = Number(bulkPrice);
-    if (!p || p < 0) {
+    if (Number.isNaN(p) || p < 0) {
       setErrors((e) => ({ ...e, bulkPrice: "Harga tidak valid" }));
       return;
     }
     setValues((v) => {
-      const targets = selectedVariants.size > 0
-        ? v.variants.filter((va) => selectedVariants.has(va.id || `idx-${v.variants.indexOf(va)}`))
-        : v.variants;
-      const ids = new Set(targets);
+      const targetIndices = new Set<number>();
+      if (selectedVariants.size > 0) {
+        v.variants.forEach((va, i) => {
+          const key = va.id || `idx-${i}`;
+          if (selectedVariants.has(key)) targetIndices.add(i);
+        });
+      } else {
+        v.variants.forEach((_va, i) => {
+          if (!v.variants[i].toDelete) targetIndices.add(i);
+        });
+      }
       return {
         ...v,
-        variants: v.variants.map((va) => (ids.has(va) ? { ...va, price: p } : va)),
+        variants: v.variants.map((va, i) =>
+          targetIndices.has(i) ? { ...va, price: p } : va
+        ),
       };
+    });
+    setErrors((e) => {
+      const { bulkPrice: _bp, ...rest } = e;
+      return rest;
     });
     setShowBulkPrice(false);
     setBulkPrice("");
@@ -449,21 +469,33 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
       return;
     }
     setValues((v) => {
-      const targets = selectedVariants.size > 0
-        ? v.variants.filter((va) => selectedVariants.has(va.id || `idx-${v.variants.indexOf(va)}`))
-        : v.variants;
-      const ids = new Set(targets);
+      // Determine which variant indices to update.
+      const targetIndices = new Set<number>();
+      if (selectedVariants.size > 0) {
+        v.variants.forEach((va, i) => {
+          const key = va.id || `idx-${i}`;
+          if (selectedVariants.has(key)) targetIndices.add(i);
+        });
+      } else {
+        v.variants.forEach((_va, i) => {
+          if (!v.variants[i].toDelete) targetIndices.add(i);
+        });
+      }
       return {
         ...v,
-        variants: v.variants.map((va) => {
-          if (!ids.has(va)) return va;
-          let stock = va.stock;
+        variants: v.variants.map((va, i) => {
+          if (!targetIndices.has(i)) return va;
+          let stock = Number(va.stock) || 0;
           if (bulkAdjust === "set") stock = s;
-          else if (bulkAdjust === "add") stock = va.stock + s;
-          else stock = Math.max(0, va.stock - s);
+          else if (bulkAdjust === "add") stock = Math.max(0, stock + s);
+          else stock = Math.max(0, stock - s);
           return { ...va, stock };
         }),
       };
+    });
+    setErrors((e) => {
+      const { bulkStock: _bs, ...rest } = e;
+      return rest;
     });
     setShowBulkStock(false);
     setBulkStock("");
@@ -472,13 +504,22 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
   const applyBulkStatus = (isActive: boolean) => {
     if (!confirm(`${isActive ? "Aktifkan" : "Nonaktifkan"} variasi yang dipilih?`)) return;
     setValues((v) => {
-      const targets = selectedVariants.size > 0
-        ? v.variants.filter((va) => selectedVariants.has(va.id || `idx-${v.variants.indexOf(va)}`))
-        : v.variants;
-      const ids = new Set(targets);
+      const targetIndices = new Set<number>();
+      if (selectedVariants.size > 0) {
+        v.variants.forEach((va, i) => {
+          const key = va.id || `idx-${i}`;
+          if (selectedVariants.has(key)) targetIndices.add(i);
+        });
+      } else {
+        v.variants.forEach((_va, i) => {
+          if (!v.variants[i].toDelete) targetIndices.add(i);
+        });
+      }
       return {
         ...v,
-        variants: v.variants.map((va) => (ids.has(va) ? { ...va, is_active: isActive } : va)),
+        variants: v.variants.map((va, i) =>
+          targetIndices.has(i) ? { ...va, is_active: isActive } : va
+        ),
       };
     });
   };
@@ -569,7 +610,7 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
 
       const data = await res.json();
 
-      if (!res.ok || !data?.ok) {
+      if (!res.ok || !data?.success) {
         if (data?.errors) setErrors(data.errors);
         throw new Error(data?.error || "Gagal menyimpan");
       }
@@ -577,7 +618,23 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
       setSuccessMsg(action === "publish" ? "Produk berhasil dipublikasikan!" : "Draft berhasil disimpan");
       setIsDirty(false);
 
+      // For create mode: attach any orphan (product_id = null) images that
+      // were uploaded before the product existed to the new product.
       if (mode === "create" && data.product?.id) {
+        const orphanImageIds = values.images
+          .filter((img) => img.id && img.isNew)
+          .map((img) => img.id!);
+        if (orphanImageIds.length > 0) {
+          await fetch("/api/admin/products/attach-images", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              product_id: data.product.id,
+              image_ids: orphanImageIds,
+            }),
+          }).catch(() => null);
+        }
+
         startTransition(() => {
           router.push(`/admin/products/${data.product.id}/edit`);
         });
@@ -598,7 +655,7 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
     try {
       const res = await fetch(`/api/admin/products/${productId}/duplicate`, { method: "POST" });
       const data = await res.json();
-      if (!res.ok || !data?.ok) throw new Error(data?.error || "Gagal duplikasi");
+      if (!res.ok || !data?.success) throw new Error(data?.error || "Gagal duplikasi");
       router.push(`/admin/products/${data.product.id}/edit`);
     } catch (err: any) {
       setGeneralError(err.message);

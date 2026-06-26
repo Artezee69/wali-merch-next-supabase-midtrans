@@ -314,6 +314,20 @@ export async function POST(request: NextRequest) {
         await supabaseAdmin.from("products").delete().eq("id", product.id);
         return NextResponse.json({ error: "Gagal membuat varian", details: varError.message }, { status: 500 });
       }
+
+      // Sync product totals from variants.
+      const { data: allVars } = await supabaseAdmin
+        .from("product_variants")
+        .select("stock, price, sale_price")
+        .eq("product_id", product.id);
+      const totalStock = ((allVars ?? []) as any[]).reduce((s, v) => s + (v.stock || 0), 0);
+      const minPrice = (allVars ?? []).length
+        ? Math.min(...(allVars as any[]).map((v) => v.sale_price != null ? v.sale_price : (v.price || 0)))
+        : (productInput.base_price ?? 0);
+      await supabaseAdmin
+        .from("products")
+        .update({ stock: totalStock, base_price: minPrice })
+        .eq("id", product.id);
     }
 
     await logAdminAction({

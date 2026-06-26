@@ -16,7 +16,8 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const file = formData.get("file") as File;
-    const productId = formData.get("product_id") as string | null;
+    // Accept both "productId" (from client) and "product_id" (legacy form name).
+    const productId = (formData.get("productId") ?? formData.get("product_id")) as string | null;
 
     if (!file || !file.size || file.size === 0) {
       return NextResponse.json({ error: "File gambar wajib dikirim." }, { status: 400 });

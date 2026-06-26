@@ -26,6 +26,9 @@ export async function PATCH(
     if (typeof body.is_primary === "boolean") {
       update.is_primary = body.is_primary;
     }
+    if (typeof body.product_id === "string" && body.product_id) {
+      update.product_id = body.product_id;
+    }
 
     if (Object.keys(update).length === 0) {
       return NextResponse.json({ error: "Tidak ada data untuk diupdate" }, { status: 400 });

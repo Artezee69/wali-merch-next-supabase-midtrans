@@ -334,18 +334,32 @@ export async function PATCH(
               variantData.is_active = false;
             }
 
-            await supabaseAdmin
+            const { error: updateVarErr } = await supabaseAdmin
               .from("product_variants")
               .update(variantData)
               .eq("id", variantId);
+            if (updateVarErr) {
+              console.error("[API /api/admin/products/:id] variant update error:", updateVarErr.message);
+              return NextResponse.json(
+                { error: "Gagal memperbarui varian", details: updateVarErr.message },
+                { status: 500 }
+              );
+            }
           } else {
             // ID diberikan tapi tidak ditemukan — abaikan (mungkin sudah dihapus sebelumnya)
           }
         } else {
           // Insert varian baru
-          await supabaseAdmin
+          const { error: insertVarErr } = await supabaseAdmin
             .from("product_variants")
             .insert(variantData);
+          if (insertVarErr) {
+            console.error("[API /api/admin/products/:id] variant insert error:", insertVarErr.message);
+            return NextResponse.json(
+              { error: "Gagal membuat varian", details: insertVarErr.message },
+              { status: 500 }
+            );
+          }
         }
       }
 
@@ -376,6 +390,48 @@ export async function PATCH(
             }
           }
         }
+      }
+
+      // Soft-delete variants marked as toDelete (user clicked trash in UI).
+      const deletedVariants = rawVariants
+        .filter((v) => (v as any).toDelete === true)
+        .map((v) => v.id)
+        .filter(Boolean) as string[];
+      if (deletedVariants.length > 0) {
+        const { error: softErr } = await supabaseAdmin
+          .from("product_variants")
+          .update({ is_active: false, stock: 0 })
+          .in("id", deletedVariants);
+        if (softErr) {
+          console.error("[API /api/admin/products/:id] soft-delete variants error:", softErr.message);
+          return NextResponse.json({ error: "Gagal menghapus varian", details: softErr.message }, { status: 500 });
+        }
+      }
+
+      // Recompute total stock and price range from all active variants.
+      const { data: allVariants, error: fetchErr } = await supabaseAdmin
+        .from("product_variants")
+        .select("stock, price, sale_price, is_active")
+        .eq("product_id", productId);
+      if (!fetchErr) {
+        const active = (allVariants ?? []).filter((v) => v.is_active !== false);
+        const totalStock = active.reduce((s, v) => s + (v.stock || 0), 0);
+        const minPrice = active.length
+          ? Math.min(
+              ...active.map((v) =>
+                v.sale_price != null ? v.sale_price : (v.price || 0),
+              ),
+            )
+          : (input.base_price ?? 0);
+
+        await supabaseAdmin
+          .from("products")
+          .update({
+            has_variants: rawVariants.length > 0,
+            stock: totalStock,
+            base_price: minPrice,
+          })
+          .eq("id", productId);
       }
     }
 
