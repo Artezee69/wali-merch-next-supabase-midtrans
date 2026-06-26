@@ -4,6 +4,8 @@ import ProductImageGallery from "@/components/ProductImageGallery";
 import AddToCartBox from "@/components/AddToCart";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
+export const dynamic = "force-dynamic";
+
 type ProductImage = {
   id: string;
   product_id: string;
