@@ -8,8 +8,11 @@ import { useCartContext } from "@/components/CartProvider";
 
 type Variant = {
   id: string;
-  size: string | null;
-  color?: string | null;
+  /** option_1_value or option_2_value — whichever maps to the grouping dimension */
+  option1: string | null;
+  option2: string | null;
+  /** legacy color field, used as fallback when option1 is just "Default" */
+  legacyColor?: string | null;
   stock: number;
 };
 
@@ -19,6 +22,10 @@ type AddToCartBoxProps = {
   slug: string;
   price: number;
   image?: string;
+  /** label for the first option column — comes from option_1_name */
+  option1Label?: string;
+  /** label for the second option column — comes from option_2_name */
+  option2Label?: string;
   variants: Variant[];
 };
 
@@ -28,72 +35,83 @@ export default function AddToCartBox({
   slug,
   price,
   image,
+  option1Label,
+  option2Label,
   variants,
 }: AddToCartBoxProps) {
   const { addItem } = useCartContext();
 
-  // Auto-detect variant mode: if any variant has both color+size, use 2-group.
-  // Otherwise use 1-group (only size) or 2-group with a single color.
-  const hasColor = variants.some((v) => v.color && v.color !== "Default");
-  const variantMode = hasColor ? ("two-group" as const) : ("one-group" as const);
+  const label1 = option1Label || "Option 1";
+  const label2 = option2Label || "Option 2";
 
-  const colorOptions = useMemo(() => {
-    if (variantMode === "one-group") return null;
-    const unique = Array.from(
-      new Set(
-        variants.map((v) => (v.color ? v.color.trim() : "Default")).filter(Boolean)
-      )
-    ).filter(Boolean);
-    return unique.length > 0 ? unique : ["Default"];
-  }, [variants, variantMode]);
+  // --- Smart auto-detect: does this product use 2-group or 1-group variants? ---
+  // If every variant has option1 === "Default", treat it as 1-group (show only option2).
+  // Otherwise treat it as 2-group (show option1 as first selector).
+  const allDefaultOpt1 = variants.every((v) => v.option1 === "Default" || v.option1 === "");
+  const isOneGroup = allDefaultOpt1;
 
-  const [selectedColor, setSelectedColor] = useState(colorOptions?.[0] || "Default");
-  const [selectedSize, setSelectedSize] = useState("");
+  // Effective option1 value for a variant (use legacyColor if option1 is useless)
+  const effectiveOpt1 = (v: Variant) => {
+    if (v.option1 && v.option1 !== "Default") return v.option1;
+    return v.legacyColor || "Default";
+  };
+
+  const [selectedOpt1, setSelectedOpt1] = useState(
+    isOneGroup ? (variants[0]?.legacyColor || "Default") : (variants[0]?.option1 || "")
+  );
+  const [selectedOpt2, setSelectedOpt2] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const filteredVariants = useMemo(() => {
-    return variantMode === "two-group"
-      ? variants.filter((v) => (v.color || "Default") === selectedColor)
-      : variants;
-  }, [variants, variantMode, selectedColor]);
+  // --- Derived data ---
+  const opt1Options = useMemo(() => {
+    if (isOneGroup) return [];
+    const unique = Array.from(
+      new Set(variants.map((v) => effectiveOpt1(v)).filter(Boolean))
+    );
+    return unique as string[];
+  }, [variants, isOneGroup, effectiveOpt1]);
 
-  const sizes = useMemo(() => {
-    if (variantMode === "one-group") {
-      // Sort by logical size order: M, L, XL, XXL, etc.
-      const sizes = Array.from(new Set(filteredVariants.map((v) => v.size))).filter(Boolean) as string[];
-      const order: Record<string, number> = { XS: 1, S: 2, M: 3, L: 4, XL: 5, XXL: 6, XXXL: 7, XXXXL: 8, XXXXXL: 9 };
-      sizes.sort((a, b) => (order[a] || a.length * 10) - (order[b] || b.length * 10));
-      return sizes;
-    }
-    // two-group: extract sizes from filtered variants
-    return Array.from(new Set(filteredVariants.map((v) => v.size))).filter(Boolean) as string[];
-  }, [filteredVariants, variantMode]);
+  const filteredVariants = useMemo(() => {
+    if (isOneGroup) return variants;
+    return variants.filter((v) => effectiveOpt1(v) === selectedOpt1);
+  }, [variants, isOneGroup, selectedOpt1, effectiveOpt1]);
+
+  const opt2Options = useMemo(() => {
+    const vals = Array.from(new Set(filteredVariants.map((v) => v.option2))).filter(Boolean) as string[];
+    // Sort sizes logically: M < L < XL < XXL < XXXL
+    const order: Record<string, number> = {
+      XS: 1, S: 2, M: 3, L: 4, XL: 5, XXL: 6, XXXL: 7, XXXXL: 8, XXXXXL: 9,
+    };
+    vals.sort((a, b) => (order[a] ?? a.length * 100) - (order[b] ?? b.length * 100));
+    return vals;
+  }, [filteredVariants]);
 
   const selectedVariant = useMemo(() => {
-    return filteredVariants.find(
-      (v) => v.size === selectedSize
-    );
-  }, [filteredVariants, selectedSize]);
+    if (!selectedOpt2) return null;
+    return filteredVariants.find((v) => v.option2 === selectedOpt2);
+  }, [filteredVariants, selectedOpt2]);
 
   const maxStock = Number(selectedVariant?.stock || 0);
   const isSoldOut = maxStock <= 0;
-  const allSoldOut = filteredVariants.every((v) => Number(v.stock || 0) <= 0) && filteredVariants.length > 0;
+  const allSoldOut = filteredVariants.length > 0 && filteredVariants.every((v) => Number(v.stock || 0) <= 0);
 
-  function chooseColor(color: string) {
-    setSelectedColor(color);
-    setSelectedSize("");
+  // --- Handlers ---
+  function chooseOpt1(val: string) {
+    setSelectedOpt1(val);
+    setSelectedOpt2("");
     setQuantity(1);
     setAdded(false);
   }
 
-  function chooseSize(size: string) {
-    setSelectedSize(size);
+  function chooseOpt2(val: string) {
+    setSelectedOpt2(val);
     setQuantity(1);
     setAdded(false);
   }
 
+  // --- Submit ---
   async function addToCart() {
     if (!selectedVariant || isSoldOut) return;
     if (submitting) return;
@@ -105,7 +123,7 @@ export default function AddToCartBox({
         variant_id: selectedVariant.id,
         name,
         slug,
-        size: selectedVariant.size!,
+        size: selectedVariant.option2!,
         image_url: image,
         price,
         quantity,
@@ -120,6 +138,7 @@ export default function AddToCartBox({
     }
   }
 
+  // --- Sold Out state ---
   if (allSoldOut) {
     return (
       <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.02] p-6 backdrop-blur-md">
@@ -141,44 +160,48 @@ export default function AddToCartBox({
     );
   }
 
+  // --- Render ---
   return (
     <div className="space-y-5">
-      {/* Color selector — only show for 2-group variants */}
-      {colorOptions && colorOptions.length > 1 && (
+      {/* Option 1 — only shown when it has meaningful (non-Default) values */}
+      {!isOneGroup && opt1Options.length > 1 ? (
         <div>
           <div className="mb-3 flex items-center justify-between">
             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50">
-              Color
+              {label1}
             </p>
-            <p className="text-xs font-bold text-white/70">{selectedColor}</p>
+            <p className="text-xs font-bold text-white/70">{selectedOpt1}</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            {colorOptions.map((color) => {
-              const isActive = color === selectedColor;
+            {opt1Options.map((val) => {
+              const isActive = val === selectedOpt1;
               return (
                 <button
-                  key={color}
+                  key={val}
                   type="button"
-                  onClick={() => chooseColor(color)}
+                  onClick={() => chooseOpt1(val)}
                   className={`relative rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all duration-300 ${
                     isActive
                       ? "border-[#d7ff53] bg-[#d7ff53] text-black"
                       : "border-white/10 bg-white/5 text-white/70 hover:border-white/30 hover:text-white"
                   }`}
                 >
-                  {color}
+                  {val}
                 </button>
               );
             })}
           </div>
         </div>
-      )}
+      ) : !isOneGroup && opt1Options.length === 1 ? (
+        /* Only 1 option1 value — hide the selector, just show value */
+        <div className="text-xs text-white/50">{label1}: {opt1Options[0]}</div>
+      ) : null}
 
-      {/* Size selector — always show */}
+      {/* Option 2 — always shown */}
       <div>
         <div className="mb-3 flex items-center justify-between">
           <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50">
-            Size
+            {label2}
           </p>
           <Link
             href="#size-guide"
@@ -187,19 +210,19 @@ export default function AddToCartBox({
             Size Guide →
           </Link>
         </div>
-        {sizes.length > 0 ? (
+        {opt2Options.length > 0 ? (
           <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
-            {sizes.map((size) => {
-              const variant = filteredVariants.find((v) => v.size === size);
+            {opt2Options.map((val) => {
+              const variant = filteredVariants.find((v) => v.option2 === val);
               const stock = variant ? Number(variant.stock || 0) : 0;
               const isOut = stock <= 0;
-              const isActive = selectedSize === size;
+              const isActive = selectedOpt2 === val;
               return (
                 <button
-                  key={size}
+                  key={val}
                   type="button"
                   disabled={isOut}
-                  onClick={() => chooseSize(size)}
+                  onClick={() => chooseOpt2(val)}
                   className={`relative overflow-hidden rounded-xl border px-3 py-3 text-sm font-black transition-all duration-300 ${
                     isActive
                       ? "border-[#d7ff53] bg-[#d7ff53] text-black"
@@ -208,20 +231,20 @@ export default function AddToCartBox({
                       : "border-white/10 bg-white/5 text-white hover:border-white/30"
                   }`}
                 >
-                  {size || "—"}
+                  {val}
                 </button>
               );
             })}
           </div>
         ) : (
           <p className="py-3 text-center text-sm text-white/40">
-            Tidak ada ukuran yang tersedia.
+            Tidak ada pilihan yang tersedia.
           </p>
         )}
       </div>
 
       {/* Quantity */}
-      {selectedSize && (
+      {selectedOpt2 && (
         <div
           className="flex items-center justify-between"
           style={{ animation: "fade-in 400ms ease-out" }}
@@ -274,11 +297,11 @@ export default function AddToCartBox({
         <button
           type="button"
           onClick={addToCart}
-          disabled={!selectedSize || isSoldOut || submitting}
+          disabled={!selectedOpt2 || isSoldOut || submitting}
           className={`group relative mt-5 inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-full px-6 py-4 text-sm font-black uppercase tracking-[0.2em] transition-all duration-500 ${
             added
               ? "bg-white text-black"
-              : !selectedSize || isSoldOut || submitting
+              : !selectedOpt2 || isSoldOut || submitting
               ? "cursor-not-allowed bg-white/5 text-white/30"
               : "bg-[#d7ff53] text-black hover:shadow-[0_0_50px_-8px_rgba(215,255,83,0.5)]"
           }`}

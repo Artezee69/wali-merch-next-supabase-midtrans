@@ -46,6 +46,15 @@ type PageProps = {
   }>;
 };
 
+interface VariantForCart {
+  id: string;
+  color: string | null;
+  size: string | null;
+  stock: number;
+  option_1_name?: string | null;
+  option_2_name?: string | null;
+}
+
 function rupiah(value: number) {
   return new Intl.NumberFormat("id-ID", {
     style: "currency",
@@ -228,19 +237,27 @@ export default async function ProductDetailPage({ params }: PageProps) {
           </div>
 
           <div className="mt-8">
-            <AddToCartBox
-              productId={product.id}
-              name={product.name}
-              slug={product.slug}
-              price={Number(product.price || 0)}
-              image={sortedGalleryImages[0]?.image_url || product.image_url || ""}
-              variants={variants.map((variant) => ({
-                id: variant.id,
-                color: variant.option_1_value || variant.color || null,
-                size: variant.option_2_value || variant.size || null,
-                stock: Number(variant.stock || 0),
-              }))}
-            />
+            {(() => {
+              const sampleVariant = variants[0];
+              return (
+                <AddToCartBox
+                  productId={product.id}
+                  name={product.name}
+                  slug={product.slug}
+                  price={Number(product.price || 0)}
+                  image={sortedGalleryImages[0]?.image_url || product.image_url || ""}
+                  option1Label={sampleVariant?.option_1_name || "Color"}
+                  option2Label={sampleVariant?.option_2_name || "Size"}
+                  variants={variants.map((variant) => ({
+                    id: variant.id,
+                    option1: variant.option_1_value || variant.color || null,
+                    option2: variant.option_2_value || variant.size || null,
+                    legacyColor: variant.color || null,
+                    stock: Number(variant.stock || 0),
+                  }))}
+                />
+              );
+            })()}
           </div>
         </div>
       </section>
