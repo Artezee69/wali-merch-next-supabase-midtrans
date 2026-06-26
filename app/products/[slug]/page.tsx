@@ -17,7 +17,11 @@ type ProductVariant = {
   id: string;
   product_id: string;
   color: string | null;
-  size: string;
+  size: string | null;
+  option_1_name: string | null;
+  option_1_value: string | null;
+  option_2_name: string | null;
+  option_2_value: string | null;
   stock: number;
 };
 
@@ -74,6 +78,10 @@ export default async function ProductDetailPage({ params }: PageProps) {
         product_id,
         color,
         size,
+        option_1_name,
+        option_1_value,
+        option_2_name,
+        option_2_value,
         stock
       )
     `
@@ -93,7 +101,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
   const product = data as Product;
 
   const variants = (product.product_variants || []).filter(
-    (variant) => Number(variant.stock || 0) > 0
+    (variant: any) => (variant as any).is_active !== false
   );
 
   const totalStock = variants.reduce(
@@ -228,8 +236,8 @@ export default async function ProductDetailPage({ params }: PageProps) {
               image={sortedGalleryImages[0]?.image_url || product.image_url || ""}
               variants={variants.map((variant) => ({
                 id: variant.id,
-                color: variant.color || "Default",
-                size: variant.size,
+                color: variant.option_1_value || variant.color || null,
+                size: variant.option_2_value || variant.size || null,
                 stock: Number(variant.stock || 0),
               }))}
             />

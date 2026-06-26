@@ -8,8 +8,8 @@ import { useCartContext } from "@/components/CartProvider";
 
 type Variant = {
   id: string;
-  size: string;
-  color?: string;
+  size: string | null;
+  color?: string | null;
   stock: number;
 };
 
@@ -31,39 +31,55 @@ export default function AddToCartBox({
   variants,
 }: AddToCartBoxProps) {
   const { addItem } = useCartContext();
-  const colors = useMemo(() => {
-    const uniqueColors = Array.from(
+
+  // Auto-detect variant mode: if any variant has both color+size, use 2-group.
+  // Otherwise use 1-group (only size) or 2-group with a single color.
+  const hasColor = variants.some((v) => v.color && v.color !== "Default");
+  const variantMode = hasColor ? ("two-group" as const) : ("one-group" as const);
+
+  const colorOptions = useMemo(() => {
+    if (variantMode === "one-group") return null;
+    const unique = Array.from(
       new Set(
-        variants.map((variant) => variant.color || "Default").filter(Boolean)
+        variants.map((v) => (v.color ? v.color.trim() : "Default")).filter(Boolean)
       )
-    );
+    ).filter(Boolean);
+    return unique.length > 0 ? unique : ["Default"];
+  }, [variants, variantMode]);
 
-    return uniqueColors.length > 0 ? uniqueColors : ["Default"];
-  }, [variants]);
-
-  const [selectedColor, setSelectedColor] = useState(colors[0] || "Default");
+  const [selectedColor, setSelectedColor] = useState(colorOptions?.[0] || "Default");
   const [selectedSize, setSelectedSize] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const variantsByColor = useMemo(() => {
-    return variants.filter(
-      (variant) => (variant.color || "Default") === selectedColor
-    );
-  }, [variants, selectedColor]);
+  const filteredVariants = useMemo(() => {
+    return variantMode === "two-group"
+      ? variants.filter((v) => (v.color || "Default") === selectedColor)
+      : variants;
+  }, [variants, variantMode, selectedColor]);
+
+  const sizes = useMemo(() => {
+    if (variantMode === "one-group") {
+      // Sort by logical size order: M, L, XL, XXL, etc.
+      const sizes = Array.from(new Set(filteredVariants.map((v) => v.size))).filter(Boolean) as string[];
+      const order: Record<string, number> = { XS: 1, S: 2, M: 3, L: 4, XL: 5, XXL: 6, XXXL: 7, XXXXL: 8, XXXXXL: 9 };
+      sizes.sort((a, b) => (order[a] || a.length * 10) - (order[b] || b.length * 10));
+      return sizes;
+    }
+    // two-group: extract sizes from filtered variants
+    return Array.from(new Set(filteredVariants.map((v) => v.size))).filter(Boolean) as string[];
+  }, [filteredVariants, variantMode]);
 
   const selectedVariant = useMemo(() => {
-    return variants.find(
-      (variant) =>
-        (variant.color || "Default") === selectedColor &&
-        variant.size === selectedSize
+    return filteredVariants.find(
+      (v) => v.size === selectedSize
     );
-  }, [variants, selectedColor, selectedSize]);
+  }, [filteredVariants, selectedSize]);
 
   const maxStock = Number(selectedVariant?.stock || 0);
   const isSoldOut = maxStock <= 0;
-  const allSoldOut = variants.every((v) => Number(v.stock || 0) <= 0);
+  const allSoldOut = filteredVariants.every((v) => Number(v.stock || 0) <= 0) && filteredVariants.length > 0;
 
   function chooseColor(color: string) {
     setSelectedColor(color);
@@ -89,7 +105,7 @@ export default function AddToCartBox({
         variant_id: selectedVariant.id,
         name,
         slug,
-        size: selectedVariant.size,
+        size: selectedVariant.size!,
         image_url: image,
         price,
         quantity,
@@ -127,8 +143,8 @@ export default function AddToCartBox({
 
   return (
     <div className="space-y-5">
-      {/* Color selector */}
-      {colors.length > 0 && (
+      {/* Color selector — only show for 2-group variants */}
+      {colorOptions && colorOptions.length > 1 && (
         <div>
           <div className="mb-3 flex items-center justify-between">
             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50">
@@ -137,7 +153,7 @@ export default function AddToCartBox({
             <p className="text-xs font-bold text-white/70">{selectedColor}</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            {colors.map((color) => {
+            {colorOptions.map((color) => {
               const isActive = color === selectedColor;
               return (
                 <button
@@ -158,7 +174,7 @@ export default function AddToCartBox({
         </div>
       )}
 
-      {/* Size selector */}
+      {/* Size selector — always show */}
       <div>
         <div className="mb-3 flex items-center justify-between">
           <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50">
@@ -171,18 +187,19 @@ export default function AddToCartBox({
             Size Guide →
           </Link>
         </div>
-        <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
-          {variantsByColor.length > 0 ? (
-            variantsByColor.map((variant) => {
-              const stock = Number(variant.stock || 0);
+        {sizes.length > 0 ? (
+          <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
+            {sizes.map((size) => {
+              const variant = filteredVariants.find((v) => v.size === size);
+              const stock = variant ? Number(variant.stock || 0) : 0;
               const isOut = stock <= 0;
-              const isActive = selectedSize === variant.size;
+              const isActive = selectedSize === size;
               return (
                 <button
-                  key={variant.id}
+                  key={size}
                   type="button"
                   disabled={isOut}
-                  onClick={() => chooseSize(variant.size)}
+                  onClick={() => chooseSize(size)}
                   className={`relative overflow-hidden rounded-xl border px-3 py-3 text-sm font-black transition-all duration-300 ${
                     isActive
                       ? "border-[#d7ff53] bg-[#d7ff53] text-black"
@@ -191,16 +208,16 @@ export default function AddToCartBox({
                       : "border-white/10 bg-white/5 text-white hover:border-white/30"
                   }`}
                 >
-                  {variant.size}
+                  {size || "—"}
                 </button>
               );
-            })
-          ) : (
-            <p className="col-span-full py-3 text-center text-sm text-white/40">
-              Tidak ada varian untuk warna ini.
-            </p>
-          )}
-        </div>
+            })}
+          </div>
+        ) : (
+          <p className="py-3 text-center text-sm text-white/40">
+            Tidak ada ukuran yang tersedia.
+          </p>
+        )}
       </div>
 
       {/* Quantity */}
