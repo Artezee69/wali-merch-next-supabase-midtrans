@@ -20,7 +20,7 @@ export default async function EditProductPage({ params }: { params: Promise<Para
       supabaseAdmin.from("products").select("*").eq("id", id).maybeSingle(),
       supabaseAdmin
         .from("product_images")
-        .select("id, image_url, storage_path, sort_order, is_primary, alt_text")
+        .select("id, image_url, storage_path, sort_order, is_primary")
         .eq("product_id", id)
         .order("sort_order", { ascending: true }),
       supabaseAdmin
@@ -76,7 +76,6 @@ export default async function EditProductPage({ params }: { params: Promise<Para
       storage_path: img.storage_path ?? null,
       sort_order: img.sort_order ?? 0,
       is_primary: img.is_primary ?? false,
-      alt_text: (img as any).alt_text ?? null,
       isNew: false,
     })),
     variants: (variants ?? []).map((va) => ({

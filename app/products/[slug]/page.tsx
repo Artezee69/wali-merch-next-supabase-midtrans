@@ -8,7 +8,6 @@ type ProductImage = {
   id: string;
   product_id: string;
   image_url: string;
-  alt_text: string | null;
   sort_order: number | null;
 };
 
@@ -66,7 +65,6 @@ export default async function ProductDetailPage({ params }: PageProps) {
         id,
         product_id,
         image_url,
-        alt_text,
         sort_order
       ),
       product_variants (
@@ -110,7 +108,6 @@ export default async function ProductDetailPage({ params }: PageProps) {
               id: "main-image",
               product_id: product.id,
               image_url: product.image_url,
-              alt_text: product.name,
               sort_order: 0,
             },
           ]

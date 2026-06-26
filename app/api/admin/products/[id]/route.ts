@@ -296,10 +296,10 @@ export async function PATCH(
       for (const v of rawVariants) {
         const variantData = {
           product_id: productId,
-          option_1_name: v.option_1_name || null,
-          option_1_value: v.option_1_value || null,
-          option_2_name: v.option_2_name || null,
-          option_2_value: v.option_2_value || null,
+          option_1_name: (v.option_1_name || "Color").toString(),
+          option_1_value: (v.option_1_value || "").toString() || null,
+          option_2_name: (v.option_2_name || "Size").toString(),
+          option_2_value: (v.option_2_value || "").toString() || null,
           sku: typeof v.sku === "string" ? v.sku || null : null,
           price: typeof v.price === "number" ? v.price : null,
           sale_price: typeof v.sale_price === "number" ? v.sale_price : null,
@@ -308,8 +308,9 @@ export async function PATCH(
           is_active: v.is_active !== false,
           sort_order: typeof v.sort_order === "number" ? v.sort_order : 0,
           weight: typeof v.weight === "number" ? v.weight : null,
-          color: v.option_1_value || null,
-          size: v.option_2_value || null,
+          // Legacy — fallback non-null untuk kolom NOT NULL constraint
+          color: (v.option_1_value || "Default").toString(),
+          size: (v.option_2_value || "Default").toString(),
         };
 
         const variantId = v.id as string | undefined;

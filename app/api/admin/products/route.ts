@@ -283,13 +283,13 @@ export async function POST(request: NextRequest) {
 
       // Normalisasi varian: sync legacy fields
       const normalizedVariants = (rawVariants as Array<Record<string, unknown>>).map((v: Record<string, unknown>) => {
-        const opt1Val = v.option_1_value as string | null;
-        const opt2Val = v.option_2_value as string | null;
+        const opt1Val = (v.option_1_value as string | null) || null;
+        const opt2Val = (v.option_2_value as string | null) || null;
         return {
           product_id: product.id,
-          option_1_name: v.option_1_name || "Color",
+          option_1_name: (v.option_1_name || "Color").toString(),
           option_1_value: opt1Val,
-          option_2_name: v.option_2_name || "Size",
+          option_2_name: (v.option_2_name || "Size").toString(),
           option_2_value: opt2Val,
           sku: typeof v.sku === "string" ? v.sku : null,
           price: typeof v.price === "number" ? v.price : null,
@@ -299,9 +299,9 @@ export async function POST(request: NextRequest) {
           is_active: v.is_active !== false,
           sort_order: typeof v.sort_order === "number" ? v.sort_order : 0,
           weight: typeof v.weight === "number" ? v.weight : null,
-          // Legacy
-          color: opt1Val,
-          size: opt2Val,
+          // Legacy — fallback non-null agar tidak gagal di kolom NOT NULL
+          color: opt1Val || "Default",
+          size: opt2Val || "Default",
         };
       });
 
