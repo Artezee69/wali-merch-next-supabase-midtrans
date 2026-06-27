@@ -10,6 +10,7 @@ import PageHeader from "@/components/PageHeader";
 import MidtransScript from "@/components/MidtransScript";
 import { rupiah } from "@/lib/format";
 import { useCartContext } from "@/components/CartProvider";
+import { useAuth } from "@/hooks/useAuth";
 import { supabasePublic } from "@/lib/supabasePublic";
 
 type CheckoutCartItem = {
@@ -90,6 +91,7 @@ const formatWeight = (grams: number) => {
 export default function CheckoutPage() {
   const router = useRouter();
   const { items: cartItems, loading: cartLoading, authReady, clearCart } = useCartContext();
+  const { user, profile, profileLoading } = useAuth();
 
   const [items, setItems] = useState<CheckoutCartItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -115,6 +117,18 @@ export default function CheckoutPage() {
   const [selectedService, setSelectedService] = useState<string | null>(null);
   const [originCityName, setOriginCityName] = useState<string>("Tangerang Selatan");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Auto-fill shipping form from registered profile (name, phone, email, address)
+  useEffect(() => {
+    if (profileLoading || !profile || !user) return;
+    setForm((prev) => ({
+      ...prev,
+      customer_name: profile.full_name || prev.customer_name,
+      customer_phone: profile.phone || prev.customer_phone,
+      customer_email: profile.email || prev.customer_email,
+      address: profile.address || prev.address,
+    }));
+  }, [profile, profileLoading, user?.id]);
 
   // Pull the latest cart from CartProvider (DB-backed) and enrich with
   // product + variant metadata. We do enrichment lazily because the
