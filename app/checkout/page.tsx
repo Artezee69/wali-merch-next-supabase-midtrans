@@ -9,8 +9,11 @@ import Footer from "@/components/Footer";
 import PageHeader from "@/components/PageHeader";
 import MidtransScript from "@/components/MidtransScript";
 import { rupiah } from "@/lib/format";
+import { useCartContext } from "@/components/CartProvider";
+import { supabasePublic } from "@/lib/supabasePublic";
 
-type CartItem = {
+type CheckoutCartItem = {
+  cartItemId: string;
   productId: string;
   variantId: string;
   name: string;
@@ -44,15 +47,21 @@ type ShippingResponse = {
   currency: string;
 };
 
-function getCart(): CartItem[] {
-  if (typeof window === "undefined") return [];
-
-  try {
-    const raw = localStorage.getItem("cart");
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
+/**
+ * Convert CartProvider item (DB row) to the format the checkout form expects.
+ */
+function cartToCheckout(cartItem: ReturnType<typeof useCartContext>["items"][number]): CheckoutCartItem {
+  return {
+    cartItemId: cartItem.id ?? "",
+    productId: cartItem.product_id,
+    variantId: cartItem.variant_id,
+    name: cartItem.name || "Produk",
+    slug: cartItem.slug,
+    size: cartItem.size || "",
+    price: Number(cartItem.price),
+    quantity: cartItem.quantity,
+    image: cartItem.image_url,
+  };
 }
 
 const mobileExtras = (
@@ -80,8 +89,9 @@ const formatWeight = (grams: number) => {
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const { items: cartItems, loading: cartLoading, authReady, clearCart } = useCartContext();
 
-  const [items, setItems] = useState<CartItem[]>([]);
+  const [items, setItems] = useState<CheckoutCartItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -106,9 +116,77 @@ export default function CheckoutPage() {
   const [originCityName, setOriginCityName] = useState<string>("Tangerang Selatan");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Pull the latest cart from CartProvider (DB-backed) and enrich with
+  // product + variant metadata. We do enrichment lazily because the
+  // CartProvider only stores `product_id`/`variant_id`/`quantity`/`price_at_add`.
   useEffect(() => {
-    setItems(getCart());
-  }, []);
+    if (!authReady) return;
+    if (cartItems.length === 0) {
+      setItems([]);
+      return;
+    }
+
+    const productIds = Array.from(new Set(cartItems.map((i) => i.product_id)));
+    const variantIds = Array.from(new Set(cartItems.map((i) => i.variant_id)));
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const [{ data: prods }, { data: vars }] = await Promise.all([
+          supabasePublic
+            .from("products")
+            .select("id, name, slug, product_images(image_url)")
+            .in("id", productIds),
+          supabasePublic
+            .from("product_variants")
+            .select("id, size, color, stock")
+            .in("id", variantIds),
+        ]);
+
+        if (cancelled) return;
+
+        const prodMap = new Map<string, { name: string; slug: string; image_url: string | null }>();
+        (prods ?? []).forEach((p: any) => {
+          prodMap.set(p.id, {
+            name: p.name,
+            slug: p.slug,
+            image_url: p.product_images?.[0]?.image_url ?? null,
+          });
+        });
+
+        const varMap = new Map<string, { size: string | null; color: string | null; stock: number | null }>();
+        (vars ?? []).forEach((v: any) => {
+          varMap.set(v.id, {
+            size: v.size ?? null,
+            color: v.color ?? null,
+            stock: typeof v.stock === "number" ? v.stock : null,
+          });
+        });
+
+        const enriched: CheckoutCartItem[] = cartItems.map((ci) => {
+          const p = prodMap.get(ci.product_id);
+          const v = varMap.get(ci.variant_id);
+          const base = cartToCheckout(ci);
+          return {
+            ...base,
+            name: base.name && base.name !== "Produk" ? base.name : (p?.name ?? "Produk"),
+            slug: base.slug || p?.slug || "",
+            size: base.size || v?.size || "",
+            color: v?.color ?? undefined,
+            image: base.image || (p?.image_url ?? undefined),
+            stock: v?.stock ?? undefined,
+          };
+        });
+        setItems(enriched);
+      } catch (err) {
+        console.error("checkout enrich error:", err);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authReady, cartItems]);
 
   // Default origin city from config
   useEffect(() => {
@@ -259,7 +337,17 @@ export default function CheckoutPage() {
         },
         body: JSON.stringify({
           customer: form,
-          items,
+          items: items.map((it) => ({
+            productId: it.productId,
+            variantId: it.variantId,
+            name: it.name,
+            slug: it.slug,
+            size: it.size,
+            color: it.color,
+            price: it.price,
+            quantity: it.quantity,
+            image: it.image,
+          })),
           shipping_cost: selectedShippingCost,
           shipping_service: selectedService ?? "JNE REG",
           shipping_destination: shippingOptions?.destination
@@ -280,8 +368,17 @@ export default function CheckoutPage() {
         throw new Error(result.error || "Checkout gagal.");
       }
 
-      localStorage.removeItem("cart");
-      window.dispatchEvent(new Event("cart-updated"));
+      // Clear the DB cart (and localStorage fallback if present) once
+      // the server has accepted the order.
+      try {
+        await clearCart();
+      } catch (e) {
+        console.warn("clearCart after checkout failed:", e);
+      }
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("cart");
+        window.dispatchEvent(new Event("cart-updated"));
+      }
 
       // Jika API mengembalikan snap_token, buka popup Midtrans Snap.
       // onSuccess/onPending/onClose tetap redirect ke track-order supaya
@@ -341,7 +438,20 @@ export default function CheckoutPage() {
       />
 
       <section className="relative mx-auto max-w-7xl px-4 py-10 md:px-8 md:py-14">
-        {items.length === 0 ? (
+        {!authReady || cartLoading ? (
+          <div className="group relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 text-center backdrop-blur-md sm:p-8 md:rounded-[2.5rem] md:p-14 animate-blur-in">
+            <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_50%_0%,rgba(215,255,83,0.18),transparent_60%)] opacity-60" />
+            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full border border-white/10 bg-gradient-to-br from-white/10 to-white/0 text-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] sm:mb-6 sm:h-20 sm:w-20 sm:text-3xl animate-float-y">
+              ⏳
+            </div>
+            <h2 className="text-2xl font-black uppercase sm:text-3xl md:text-5xl">
+              Memuat Keranjang
+            </h2>
+            <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-white/55 sm:mt-4 sm:text-base sm:leading-8">
+              Sedang mengambil data keranjang kamu...
+            </p>
+          </div>
+        ) : items.length === 0 ? (
           <div className="group relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 text-center backdrop-blur-md sm:p-8 md:rounded-[2.5rem] md:p-14 animate-blur-in">
             <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_50%_0%,rgba(215,255,83,0.18),transparent_60%)] opacity-60" />
             <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full border border-white/10 bg-gradient-to-br from-white/10 to-white/0 text-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] sm:mb-6 sm:h-20 sm:w-20 sm:text-3xl animate-float-y">
@@ -902,7 +1012,7 @@ function CheckoutSummary({
   loading,
   onCheckout,
 }: {
-  items: CartItem[];
+  items: CheckoutCartItem[];
   totalItems: number;
   subtotal: number;
   shippingOptions: ShippingResponse | null;
@@ -1112,7 +1222,7 @@ function ConfirmModal({
   onConfirm,
 }: {
   form: any;
-  items: CartItem[];
+  items: CheckoutCartItem[];
   totalItems: number;
   subtotal: number;
   shippingOptions: ShippingResponse | null;
