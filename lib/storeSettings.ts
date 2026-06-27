@@ -451,7 +451,7 @@ export async function getStoreSettings(): Promise<StoreSettings> {
         "terms_of_service",
       ]);
     if (error) {
-      console.error("getStoreSettings error:", error.message);
+      quietError("getStoreSettings", error);
       return DEFAULT_GENERAL as StoreSettings;
     }
     const map: Record<string, string> = {};
@@ -472,9 +472,30 @@ export async function getStoreSettings(): Promise<StoreSettings> {
       termsOfService: map.terms_of_service || "",
     };
   } catch (err) {
-    console.error("getStoreSettings unexpected error");
+    quietError("getStoreSettings", err);
     return DEFAULT_GENERAL as StoreSettings;
   }
+}
+
+/**
+ * Logs Supabase errors once per server process. "fetch failed" is
+ * expected when env vars are missing or Supabase is unreachable —
+ * falling back to defaults keeps the site functional, but logging on
+ * every request floods Vercel logs.
+ */
+const fetchFailuresLogged = new Set<string>();
+function quietError(label: string, err: any) {
+  const msg = String(err?.message || err);
+  if (/fetch failed|TypeError: fetch failed/i.test(msg)) {
+    if (!fetchFailuresLogged.has(label)) {
+      fetchFailuresLogged.add(label);
+      console.error(
+        `[storeSettings] Supabase unreachable — check NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY. (${label})`
+      );
+    }
+    return;
+  }
+  console.error(`${label} error:`, msg);
 }
 
 // ============================================================
@@ -577,7 +598,7 @@ async function readJsonRow<T>(key: string, fallback: T): Promise<T> {
       .eq("key", key)
       .maybeSingle();
     if (error) {
-      console.error(`readJsonRow(${key}) error:`, error.message);
+      quietError(`readJsonRow(${key})`, error);
       return fallback;
     }
     if (!data) {
@@ -635,7 +656,7 @@ async function readJsonArrayRow<T extends { id: string }>(
     if (!Array.isArray(parsed)) return fallback;
     return parsed as T[];
   } catch (err) {
-    console.error(`readJsonArrayRow(${key}) error:`, err);
+    quietError(`readJsonArrayRow(${key})`, err);
     return fallback;
   }
 }
