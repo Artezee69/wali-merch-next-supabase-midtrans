@@ -336,24 +336,24 @@ export default function RegisterPage() {
   // --- SUCCESS STATE ---
   if (success) {
     return (
-      <main className="min-h-screen bg-[#0b0b0b] px-4 py-16">
+      <main className="min-h-screen bg-gray-50 text-gray-900 dark:bg-black dark:text-white px-4 py-16">
         <div className="mx-auto max-w-md space-y-6 text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-500/20">
-            <svg className="h-8 w-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-white/5 border border-white/10">
+            <svg className="h-8 w-8 text-[#d7ff53]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h1 className="text-2xl font-black text-white">Pendaftaran Berhasil!</h1>
-          <p className="text-sm text-white/60">
+          <h1 className="text-2xl font-black text-gray-900 dark:text-white">Pendaftaran Berhasil!</h1>
+          <p className="text-sm text-gray-600 dark:text-white/70">
             Kami sudah mengirim email verifikasi ke{" "}
-            <span className="font-semibold text-white">{email}</span>
+            <span className="font-semibold text-gray-900 dark:text-white">{email}</span>
           </p>
-          <p className="text-sm text-white/50">
+          <p className="text-sm text-gray-500 dark:text-white/60">
             Silakan cek kotak masuk (dan folder spam) untuk memverifikasi email Anda sebelum masuk.
           </p>
 
           {!emailSent && (
-            <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-4 text-sm text-yellow-400">
+            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm text-white/80">
               Verifikasi email sudah aktif untuk akun ini. Anda bisa langsung masuk.
               <div className="mt-3">
                 <Link href="/login" className="font-bold text-[#d7ff53] underline">
@@ -363,11 +363,11 @@ export default function RegisterPage() {
             </div>
           )}
 
-          <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-white/60">
+          <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4 text-sm text-white/80">
             <p className="mb-3 text-white/80">Belum diverifikasi?</p>
             <button
               onClick={resendVerification}
-              className="rounded-lg bg-white/10 px-4 py-2 text-sm font-bold text-white transition hover:bg-white/15"
+              className="rounded-lg border border-white/20 bg-white/[0.05] px-4 py-2 text-sm font-bold text-white transition hover:bg-white/[0.10]"
             >
               Kirim Ulang Email Verifikasi
             </button>
@@ -385,19 +385,19 @@ export default function RegisterPage() {
 
   // --- FORM ---
   return (
-    <main className="min-h-screen bg-[#0b0b0b] px-4 py-16">
+    <main className="min-h-screen bg-gray-50 text-gray-900 dark:bg-black dark:text-white px-4 py-16">
       <div className="mx-auto max-w-md space-y-6">
 
         {/* Logo */}
         <div className="text-center">
-          <h1 className="text-2xl font-black tracking-[0.25em] text-white">WALI</h1>
-          <p className="mt-2 text-sm text-white/50">Buat akun baru</p>
+          <h1 className="text-2xl font-black tracking-[0.25em] text-gray-900 dark:text-white">WALI</h1>
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Buat akun baru</p>
         </div>
 
         {/* Card */}
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 md:p-8">
+        <div className="rounded-2xl border border-white/10 bg-black/[0.3] p-6 md:p-8">
           {errors._general && (
-            <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+            <div className="mb-4 rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
               {errors._general}
             </div>
           )}
@@ -405,37 +405,33 @@ export default function RegisterPage() {
           <form onSubmit={handleRegister} className="space-y-4" noValidate>
             {/* Full Name */}
             <div>
-              <label className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-white/80">
-                <User size={14} /> Nama Lengkap
+              <label className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-gray-700 dark:text-gray-300">
+                <User size={14} className="text-gray-600 dark:text-gray-400" /> Nama Lengkap
               </label>
               <input
                 type="text"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                className={`w-full rounded-xl border bg-white/5 px-4 py-3 text-sm text-white placeholder-white/30 outline-none transition focus:border-[#d7ff53] focus:ring-1 focus:ring-[#d7ff53]/30 ${
-                  errors.fullName ? "border-red-500/50" : "border-white/10"
-                }`}
+                  className={`w-full rounded-xl border ${
+                    errors.fullName ? "border-red-500/50" : (phoneTaken ? "border-red-500/50" : "border-black/20 dark:border-white/20")
+                  } bg-white/5 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/30 outline-none transition focus:border-[#d7ff53] focus:ring-1 focus:ring-[#d7ff53]/30 `}
                 placeholder="Nama lengkap Anda"
               />
-              {errors.fullName && <p className="mt-1.5 text-xs text-red-400">{errors.fullName}</p>}
+              {errors.fullName && <p className="mt-1.5 text-xs text-red-600 dark:text-red-300">{errors.fullName}</p>}
             </div>
 
             {/* Phone */}
             <div>
-              <label className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-white/80">
-                <Phone size={14} /> Nomor HP
+              <label className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-gray-700 dark:text-gray-300">
+                <Phone size={14} className="text-gray-600 dark:text-gray-400" /> Nomor HP
               </label>
               <input
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className={`w-full rounded-xl border bg-white/5 px-4 py-3 text-sm text-white placeholder-white/30 outline-none transition focus:border-[#d7ff53] focus:ring-1 focus:ring-[#d7ff53]/30 ${
-                  errors.phone
-                    ? "border-red-500/50"
-                    : phoneTaken
-                    ? "border-red-500/50"
-                    : "border-white/10"
-                }`}
+                className={`w-full rounded-xl border ${
+                    errors.phone ? "border-red-500/50" : phoneTaken ? "border-red-500/50" : "border-black/20 dark:border-white/20"
+                  } bg-white/5 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/30 outline-none transition focus:border-[#d7ff53] focus:ring-1 focus:ring-[#d7ff53]/30 `}
                 placeholder="08xxxxxxxxxx"
               />
               <FieldStatus
@@ -464,6 +460,7 @@ export default function RegisterPage() {
                     : "border-white/10"
                 }`}
                 placeholder="nama@email.com"
+                style={{ backgroundColor: "rgba(255, 255, 255, 0.05)" }}
               />
               <FieldStatus
                 loading={checkingEmail}
@@ -487,6 +484,7 @@ export default function RegisterPage() {
                   className={`w-full rounded-xl border bg-white/5 px-4 py-3 pr-12 text-sm text-white placeholder-white/30 outline-none transition focus:border-[#d7ff53] focus:ring-1 focus:ring-[#d7ff53]/30 ${
                     errors.password ? "border-red-500/50" : "border-white/10"
                   }`}
+                  style={{ backgroundColor: "rgba(255, 255, 255, 0.05)" }}
                   placeholder="Minimal 8 karakter"
                 />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70">
@@ -509,6 +507,7 @@ export default function RegisterPage() {
                   className={`w-full rounded-xl border bg-white/5 px-4 py-3 pr-12 text-sm text-white placeholder-white/30 outline-none transition focus:border-[#d7ff53] focus:ring-1 focus:ring-[#d7ff53]/30 ${
                     errors.confirmPassword ? "border-red-500/50" : "border-white/10"
                   }`}
+                  style={{ backgroundColor: "rgba(255, 255, 255, 0.05)" }}
                   placeholder="Ulangi kata sandi"
                 />
                 <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70">
@@ -531,6 +530,7 @@ export default function RegisterPage() {
                   errors.address ? "border-red-500/50" : "border-white/10"
                 }`}
                 placeholder="Jl. ..., RT/RW, Kelurahan, Kecamatan, Kota"
+                style={{ backgroundColor: "rgba(255, 255, 255, 0.05)" }}
               />
               {errors.address && <p className="mt-1.5 text-xs text-red-400">{errors.address}</p>}
             </div>
@@ -548,6 +548,7 @@ export default function RegisterPage() {
                   className={`w-full rounded-xl border bg-white/5 px-4 py-3 text-sm text-white outline-none transition focus:border-[#d7ff53] focus:ring-1 focus:ring-[#d7ff53]/30 ${
                     errors.birthDate ? "border-red-500/50" : "border-white/10"
                   }`}
+                  style={{ backgroundColor: "rgba(255, 255, 255, 0.05)" }}
                 />
                 {errors.birthDate && <p className="mt-1.5 text-xs text-red-400">{errors.birthDate}</p>}
               </div>
@@ -561,11 +562,12 @@ export default function RegisterPage() {
                   className={`w-full rounded-xl border bg-white/5 px-4 py-3 text-sm text-white outline-none transition focus:border-[#d7ff53] focus:ring-1 focus:ring-[#d7ff53]/30 ${
                     errors.gender ? "border-red-500/50" : "border-white/10"
                   }`}
+                  style={{ backgroundColor: "rgba(255, 255, 255, 0.05)" }}
                 >
-                  <option value="" className="bg-[#0b0b0b] text-white/40">Pilih</option>
-                  <option value="male" className="bg-[#0b0b0b]">Laki-laki</option>
-                  <option value="female" className="bg-[#0b0b0b]">Perempuan</option>
-                  <option value="other" className="bg-[#0b0b0b]">Lainnya</option>
+                  <option value="" className="bg-white dark:bg-black/80 text-gray-600 dark:text-gray-300">Pilih</option>
+                  <option value="male" className="bg-white dark:bg-black/80">Laki-laki</option>
+                  <option value="female" className="bg-white dark:bg-black/80">Perempuan</option>
+                  <option value="other" className="bg-white dark:bg-black/80">Lainnya</option>
                 </select>
                 {errors.gender && <p className="mt-1.5 text-xs text-red-400">{errors.gender}</p>}
               </div>
@@ -584,6 +586,7 @@ export default function RegisterPage() {
                   if (file) setAvatarFile(file);
                 }}
                 className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/60 file:mr-3 file:rounded-lg file:border-0 file:bg-white/10 file:px-3 file:py-2 file:text-sm file:font-bold file:text-white hover:file:bg-white/15"
+                style={{ backgroundColor: "rgba(255, 255, 255, 0.05)" }}
               />
               {errors.avatar && <p className="mt-1.5 text-xs text-red-400">{errors.avatar}</p>}
             </div>
@@ -595,7 +598,7 @@ export default function RegisterPage() {
                   type="checkbox"
                   checked={agreePolicy}
                   onChange={(e) => setAgreePolicy(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded border-white/30 bg-white/5 text-[#d7ff53] focus:ring-[#d7ff53]/30"
+                  className="mt-0.5 h-4 w-4 rounded border-white/30 bg-black/20 text-[#d7ff53] focus:ring-[#d7ff53]/30"
                 />
                 <span>
                   Saya menyetujui{" "}
@@ -647,7 +650,7 @@ type FieldStatusProps = {
 function FieldStatus({ loading, taken, available, takenText, availableText }: FieldStatusProps) {
   if (loading) {
     return (
-      <p className="mt-1 flex items-center gap-1 text-xs text-white/40">
+      <p className="mt-1 flex items-center gap-1 text-xs text-white/60">
         <Loader2 className="h-3 w-3 animate-spin" />
         Memeriksa...
       </p>
@@ -657,7 +660,7 @@ function FieldStatus({ loading, taken, available, takenText, availableText }: Fi
     return <p className="mt-1 text-xs text-red-400">{takenText}</p>;
   }
   if (available) {
-    return <p className="mt-1 text-xs text-emerald-400">{availableText}</p>;
+    return <p className="mt-1 text-xs text-[#d7ff53]">{availableText}</p>;
   }
   return null;
 }
