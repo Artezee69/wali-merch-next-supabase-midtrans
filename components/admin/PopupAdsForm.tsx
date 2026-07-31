@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useToast } from "@/components/Toast";
 import { PopupAd } from "@/lib/adminPopupAds";
+import { ArrowLeft, Image as ImageIcon, Plus, Save, Eye } from "lucide-react";
 
 type Props = {
   initialPopup?: Partial<PopupAd>;
@@ -54,7 +55,7 @@ export default function PopupAdsForm({ initialPopup, mode }: Props) {
         button_text: data.button_text || "Kunjungi",
         button_link: data.button_link || "/",
         position: data.position || "center",
-        status: data.status !== false, // default true
+        status: data.status !== false,
         start_date: data.start_date || null,
         end_date: data.end_date || null,
         dismiss_minutes: data.dismiss_minutes || 60,
@@ -71,7 +72,6 @@ export default function PopupAdsForm({ initialPopup, mode }: Props) {
       if (!res.ok) throw new Error("Failed to save popup");
       show(isEdit ? "Popup iklan berhasil disimpan!" : "Popup iklan baru berhasil ditambahkan!");
 
-      // Refresh page to see changes
       setTimeout(() => window.location.reload(), 1000);
     } catch (err) {
       console.error("ERROR SIMPAN POPUP:", err);
@@ -81,196 +81,280 @@ export default function PopupAdsForm({ initialPopup, mode }: Props) {
     }
   };
 
+  const inputClass = "w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white text-sm focus:border-[#d7ff53] focus:outline-none focus:ring-1 focus:ring-[#d7ff53]/50 transition-all placeholder:text-gray-500";
+  const labelClass = "block text-sm font-medium text-gray-300 mb-2";
+  const sectionClass = "space-y-4";
+  const cardClass = "bg-white/5 border border-white/10 rounded-2xl p-4 md:p-5";
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 bg-white/5 border border-white/10 rounded-xl p-6">
-      <h2 className="text-lg font-bold mb-4">{mode === "create" ? "Tambah Popup Baru" : "Edit Popup"}</h2>
-
-      <div>
-        <label className="block text-sm font-bold text-white/80 mb-2">Judul *</label>
-        <input
-          type="text"
-          value={data.title || ""}
-          onChange={(e) => handleChange("title", e.target.value)}
-          className="w-full rounded-lg border border-white/20 bg-black/40 px-4 py-2 text-white focus:border-[#d7ff53] focus:outline-none"
-          placeholder="Contoh: Promo Flash Sale!"
-          required
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-bold text-white/80 mb-2">Subjudul (opsional)</label>
-        <input
-          type="text"
-          value={data.subtitle || ""}
-          onChange={(e) => handleChange("subtitle", e.target.value)}
-          className="w-full rounded-lg border border-white/20 bg-black/40 px-4 py-2 text-white focus:border-[#d7ff53] focus:outline-none"
-          placeholder="Contoh: Dapatkan diskon 50% hari ini!"
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-bold text-white/80 mb-2">Isi/Pesan *</label>
-        <textarea
-          value={data.body || ""}
-          onChange={(e) => handleChange("body", e.target.value)}
-          rows={3}
-          className="w-full rounded-lg border border-white/20 bg-black/40 px-4 py-2 text-white focus:border-[#d7ff53] focus:outline-none resize-none"
-          placeholder="Teks yang akan ditampilkan ke pengguna..."
-          required
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-bold text-white/80 mb-2">Gambar</label>
-        <input
-          type="text"
-          value={data.image_url || ""}
-          onChange={(e) => handleChange("image_url", e.target.value)}
-          className="w-full rounded-lg border border-white/20 bg-black/40 px-4 py-2 text-white focus:border-[#d7ff53] focus:outline-none"
-          placeholder="URL gambar (dari supabase storage)"
-          required
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-bold text-white/80 mb-2">Path Penyimpanan (Opsional)</label>
-        <input
-          type="text"
-          value={data.storage_path || ""}
-          onChange={(e) => handleChange("storage_path", e.target.value)}
-          className="w-full rounded-lg border border-white/20 bg-black/40 px-4 py-2 text-white focus:border-[#d7ff53] focus:outline-none"
-          placeholder="/popup/ads/2024/promo.jpg"
-        />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-bold text-white/80 mb-2">Tombak CTA</label>
-          <input
-            type="text"
-            value={data.button_text || ""}
-            onChange={(e) => handleChange("button_text", e.target.value)}
-            className="w-full rounded-lg border border-white/20 bg-black/40 px-4 py-2 text-white focus:border-[#d7ff53] focus:outline-none"
-            placeholder="Contoh: Beli Sekarang"
-          />
+    <div className="max-w-3xl">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          {mode === "create" && (
+            <Link
+              href="/admin/popup-ads"
+              className="p-2 rounded-lg hover:bg-white/10 transition-colors text-gray-400 hover:text-white"
+              aria-label="Kembali"
+            >
+              <ArrowLeft size={18} />
+            </Link>
+          )}
+          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+            {mode === "create" ? (
+              <><Plus className="text-[#d7ff53]" size={20} /> Tambah Popup Baru</>
+            ) : (
+              <><Save className="text-[#d7ff53]" size={20} /> Edit Popup</>
+            )}
+          </h2>
         </div>
 
-        <div>
-          <label className="block text-sm font-bold text-white/80 mb-2">Link Target</label>
-          <input
-            type="text"
-            value={data.button_link || ""}
-            onChange={(e) => handleChange("button_link", e.target.value)}
-            className="w-full rounded-lg border border-white/20 bg-black/40 px-4 py-2 text-white focus:border-[#d7ff53] focus:outline-none"
-            placeholder="/produk/sale"
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-bold text-white/80 mb-2">Posisi Popup</label>
-          <select
-            value={data.position || "center"}
-            onChange={(e) => handleChange("position", e.target.value)}
-            className="w-full rounded-lg border border-white/20 bg-black/40 px-4 py-2 text-white focus:border-[#d7ff53] focus:outline-none"
-          >
-            <option value="center">Tengah Layar (Modal Overlay)</option>
-            <option value="bottom_right">Pojok Bawah Kanan</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-bold text-white/80 mb-2">Target Audiens</label>
-          <select
-            value={data.audience || "logged_in"}
-            onChange={(e) => handleChange("audience", e.target.value)}
-            className="w-full rounded-lg border border-white/20 bg-black/40 px-4 py-2 text-white focus:border-[#d7ff53] focus:outline-none"
-          >
-            <option value="logged_in">Hanya Pengguna Login</option>
-            <option value="all">Semua Pengunjung</option>
-            <option value="guest">Tamunan/Hanya Pengunjung</option>
-          </select>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <label className="block text-sm font-bold text-white/80 mb-2">Durasi Tampil (menit setelah menutup)</label>
-          <input
-            type="number"
-            value={data.dismiss_minutes || 60}
-            onChange={(e) => handleChange("dismiss_minutes", Number(e.target.value))}
-            className="w-full rounded-lg border border-white/20 bg-black/40 px-4 py-2 text-white focus:border-[#d7ff53] focus:outline-none"
-            min="1"
-            max="1440"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-bold text-white/80 mb-2">Status Aktif</label>
-          <select
-            value={data.status !== false ? "on" : "off"}
-            onChange={(e) => handleChange("status", e.target.value === "on")}
-            className="w-full rounded-lg border border-white/20 bg-black/40 px-4 py-2 text-white focus:border-[#d7ff53] focus:outline-none"
-          >
-            <option value="on">Aktif</option>
-            <option value="off">Nonaktif</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-bold text-white/80 mb-2">Urutan Tampil</label>
-          <input
-            type="number"
-            value={data.sort_order || 0}
-            onChange={(e) => handleChange("sort_order", Number(e.target.value))}
-            className="w-full rounded-lg border border-white/20 bg-black/40 px-4 py-2 text-white focus:border-[#d7ff53] focus:outline-none"
-            min="0"
-          />
-        </div>
-      </div>
-
-      {/* Date range picker */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-bold text-white/80 mb-2">Mulai Tanggal (opsional)</label>
-          <input
-            type="datetime-local"
-            value={data.start_date ? data.start_date.slice(0, 16) || "" : ""}
-            onChange={(e) => handleChange("start_date", e.target.value + "Z")}
-            className="w-full rounded-lg border border-white/20 bg-black/40 px-4 py-2 text-white focus:border-[#d7ff53] focus:outline-none"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-bold text-white/80 mb-2">Selesai Tanggal (opsional)</label>
-          <input
-            type="datetime-local"
-            value={data.end_date ? data.end_date.slice(0, 16) || "" : ""}
-            onChange={(e) => handleChange("end_date", e.target.value + "Z")}
-            className="w-full rounded-lg border border-white/20 bg-black/40 px-4 py-2 text-white focus:border-[#d7ff53] focus:outline-none"
-          />
-        </div>
-      </div>
-
-      <div className="flex gap-3 pt-4">
-        <button
-          type="submit"
-          disabled={loading}
-          className="flex-1 py-3 px-6 bg-[#d7ff53] text-black font-bold rounded-lg hover:bg-opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loading ? "Menyimpan..." : mode === "create" ? "Buat Popup" : "Simpan Perubahan"}
-        </button>
-        {mode === "create" && (
+        {mode === "edit" && data.image_url && (
           <Link
-            href="/admin/popup-ads"
-            className="py-3 px-6 border border-white/20 bg-black/40 text-white rounded-lg hover:bg-white/10 transition-colors"
+            href={data.image_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-xs text-gray-400"
           >
-            Batal
+            <Eye size={14} />
+            <span className="hidden sm:inline">Pratinjau Gambar</span>
           </Link>
         )}
       </div>
-    </form>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Basic Info */}
+        <div className={cardClass}>
+          <h3 className="text-sm font-semibold text-[#d7ff53] uppercase tracking-wider mb-4 flex items-center gap-2">
+            <span className="w-1 h-4 bg-[#d7ff53] rounded-full" />
+            Informasi Dasar
+          </h3>
+          <div className={sectionClass}>
+            <div>
+              <label className={labelClass}>Judul <span className="text-red-400">*</span></label>
+              <input
+                type="text"
+                value={data.title || ""}
+                onChange={(e) => handleChange("title", e.target.value)}
+                className={inputClass}
+                placeholder="Contoh: Promo Flash Sale!"
+                required
+              />
+            </div>
+
+            <div>
+              <label className={labelClass}>Subjudul (opsional)</label>
+              <input
+                type="text"
+                value={data.subtitle || ""}
+                onChange={(e) => handleChange("subtitle", e.target.value)}
+                className={inputClass}
+                placeholder="Contoh: Dapatkan diskon 50% hari ini!"
+              />
+            </div>
+
+            <div>
+              <label className={labelClass}>Isi/Pesan <span className="text-red-400">*</span></label>
+              <textarea
+                value={data.body || ""}
+                onChange={(e) => handleChange("body", e.target.value)}
+                rows={4}
+                className={`${inputClass} resize-none`}
+                placeholder="Teks yang akan ditampilkan ke pengguna..."
+                required
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Image */}
+        <div className={cardClass}>
+          <h3 className="text-sm font-semibold text-[#d7ff53] uppercase tracking-wider mb-4 flex items-center gap-2">
+            <span className="w-1 h-4 bg-[#d7ff53] rounded-full" />
+            Gambar
+          </h3>
+          <div className={sectionClass}>
+            <div>
+              <label className={labelClass}>Path Gambar <span className="text-red-400">*</span></label>
+              <input
+                type="text"
+                value={data.image_url || ""}
+                onChange={(e) => handleChange("image_url", e.target.value)}
+                className={inputClass}
+                placeholder="/popup/banner-1.jpg"
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1.5">Letakkan gambar di folder <code className="bg-white/10 px-1.5 py-0.5 rounded text-[#d7ff53]/80">public/popup/</code></p>
+            </div>
+
+            <div>
+              <label className={labelClass}>Path Penyimpanan (opsional)</label>
+              <input
+                type="text"
+                value={data.storage_path || ""}
+                onChange={(e) => handleChange("storage_path", e.target.value)}
+                className={inputClass}
+                placeholder="popup/banner-1.jpg"
+              />
+            </div>
+
+            {data.image_url && (
+              <div className="mt-3 rounded-xl overflow-hidden border border-white/10">
+                <img src={data.image_url} alt="Preview" className="w-full h-40 object-cover" />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* CTA & Position */}
+        <div className={cardClass}>
+          <h3 className="text-sm font-semibold text-[#d7ff53] uppercase tracking-wider mb-4 flex items-center gap-2">
+            <span className="w-1 h-4 bg-[#d7ff53] rounded-full" />
+            Tombol CTA & Posisi
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className={labelClass}>Teks Tombol</label>
+              <input
+                type="text"
+                value={data.button_text || ""}
+                onChange={(e) => handleChange("button_text", e.target.value)}
+                className={inputClass}
+                placeholder="Contoh: Beli Sekarang"
+              />
+            </div>
+
+            <div>
+              <label className={labelClass}>Link Target</label>
+              <input
+                type="text"
+                value={data.button_link || ""}
+                onChange={(e) => handleChange("button_link", e.target.value)}
+                className={inputClass}
+                placeholder="/produk/sale"
+              />
+            </div>
+
+            <div>
+              <label className={labelClass}>Posisi Popup</label>
+              <select
+                value={data.position || "center"}
+                onChange={(e) => handleChange("position", e.target.value)}
+                className={inputClass}
+              >
+                <option value="center">Tengah Layar (Modal Overlay)</option>
+                <option value="bottom_right">Pojok Bawah Kanan</option>
+              </select>
+            </div>
+
+            <div>
+              <label className={labelClass}>Target Audiens</label>
+              <select
+                value={data.audience || "logged_in"}
+                onChange={(e) => handleChange("audience", e.target.value)}
+                className={inputClass}
+              >
+                <option value="logged_in">Hanya Pengguna Login</option>
+                <option value="all">Semua Pengunjung</option>
+                <option value="guest">Tamuan/Hanya Pengunjung</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Settings */}
+        <div className={cardClass}>
+          <h3 className="text-sm font-semibold text-[#d7ff53] uppercase tracking-wider mb-4 flex items-center gap-2">
+            <span className="w-1 h-4 bg-[#d7ff53] rounded-full" />
+            Pengaturan
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+              <label className={labelClass}>Durasi (menit)</label>
+              <input
+                type="number"
+                value={data.dismiss_minutes || 60}
+                onChange={(e) => handleChange("dismiss_minutes", Number(e.target.value))}
+                className={inputClass}
+                min="1"
+                max="1440"
+              />
+              <p className="text-xs text-gray-500 mt-1.5">Hide setelah menutup</p>
+            </div>
+
+            <div>
+              <label className={labelClass}>Status</label>
+              <select
+                value={data.status !== false ? "on" : "off"}
+                onChange={(e) => handleChange("status", e.target.value === "on")}
+                className={inputClass}
+              >
+                <option value="on">✓ Aktif</option>
+                <option value="off">✗ Nonaktif</option>
+              </select>
+            </div>
+
+            <div>
+              <label className={labelClass}>Urutan Tampil</label>
+              <input
+                type="number"
+                value={data.sort_order || 0}
+                onChange={(e) => handleChange("sort_order", Number(e.target.value))}
+                className={inputClass}
+                min="0"
+              />
+              <p className="text-xs text-gray-500 mt-1.5">Smaller = lebih dulu tampil</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+            <div>
+              <label className={labelClass}>Mulai Tanggal (opsional)</label>
+              <input
+                type="datetime-local"
+                value={data.start_date ? data.start_date.slice(0, 16) || "" : ""}
+                onChange={(e) => handleChange("start_date", e.target.value + "Z")}
+                className={inputClass}
+              />
+            </div>
+
+            <div>
+              <label className={labelClass}>Selesai Tanggal (opsional)</label>
+              <input
+                type="datetime-local"
+                value={data.end_date ? data.end_date.slice(0, 16) || "" : ""}
+                onChange={(e) => handleChange("end_date", e.target.value + "Z")}
+                className={inputClass}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+          <button
+            type="submit"
+            disabled={loading}
+            className="flex-1 flex items-center justify-center gap-2 py-3.5 px-6 bg-[#d7ff53] text-black font-bold rounded-xl hover:bg-opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? (
+              <><span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" /> Menyimpan...</>
+            ) : mode === "create" ? (
+              <><Plus size={18} /> Buat Popup</>
+            ) : (
+              <><Save size={18} /> Simpan Perubahan</>
+            )}
+          </button>
+          {mode === "create" && (
+            <Link
+              href="/admin/popup-ads"
+              className="flex items-center justify-center py-3.5 px-6 border border-white/10 bg-white/5 text-white rounded-xl hover:bg-white/10 transition-colors"
+            >
+              Batal
+            </Link>
+          )}
+        </div>
+      </form>
+    </div>
   );
 }

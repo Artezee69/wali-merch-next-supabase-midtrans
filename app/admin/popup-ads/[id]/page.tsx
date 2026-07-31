@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/serverAuth";
 import { getAllPopupAds } from "@/lib/adminPopupAds";
 import PopupAdsForm from "@/components/admin/PopupAdsForm";
+import AdminShell from "@/components/admin/AdminShell";
 import { notFound } from "next/navigation";
 
 export const metadata = {
@@ -29,16 +30,18 @@ export default async function EditPopupPage({ params }: { params: Promise<{ id: 
     notFound();
   }
 
+  const adminName = user?.fullName ?? null;
+  const adminEmail = user?.email ?? null;
+
   return (
-    <div className="min-h-screen py-12 px-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-6">
-          <Link href="/admin/popup-ads" className="text-sm text-gray-400 hover:text-[#d7ff53] transition-colors">
-            ← Kembali ke Daftar Popup
-          </Link>
-        </div>
-        <PopupAdsForm initialPopup={popup} mode="edit" />
-      </div>
-    </div>
+    <AdminShell title="Edit Popup" subtitle={`ID: #${popupId}`} adminName={adminName} adminEmail={adminEmail}>
+      <Link
+        href="/admin/popup-ads"
+        className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-[#d7ff53] transition-colors mb-6"
+      >
+        ← Kembali ke Daftar Popup
+      </Link>
+      <PopupAdsForm initialPopup={popup} mode="edit" />
+    </AdminShell>
   );
 }
