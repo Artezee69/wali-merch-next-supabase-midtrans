@@ -79,8 +79,9 @@ export async function PATCH(
     // Fast path: if only status is being toggled, do a targeted update
     const hasOnlyStatus = Object.keys(input).length === 1 && input.status !== undefined;
     if (hasOnlyStatus) {
-      const newStatus = ["draft", "active", "inactive", "archived"].includes(input.status)
-        ? input.status
+      const statusVal = input.status as string;
+      const newStatus = ["draft", "active", "inactive", "archived"].includes(statusVal)
+        ? statusVal
         : null;
 
       if (!newStatus) {
