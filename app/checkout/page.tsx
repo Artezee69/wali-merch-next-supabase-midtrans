@@ -68,7 +68,7 @@ function cartToCheckout(cartItem: ReturnType<typeof useCartContext>["items"][num
 const mobileExtras = (
   <Link
     href="/cart"
-    className="rounded-2xl border border-white/10 px-4 py-4 text-center text-sm font-black uppercase tracking-wider text-white/80 transition hover:bg-white hover:text-black"
+    className="rounded-2xl border border-gray-700 dark:border-white/10 px-4 py-4 text-center text-sm font-black uppercase tracking-wider text-gray-300 dark:text-white/80 transition hover:bg-gray-800 dark:hover:bg-white dark:hover:text-gray-900"
   >
     Kembali ke Cart
   </Link>
@@ -77,7 +77,7 @@ const mobileExtras = (
 const desktopCta = (
   <Link
     href="/cart"
-    className="rounded-full bg-white px-5 py-2 text-sm font-black text-black transition hover:scale-105 hover:bg-[#d7ff53]"
+    className="rounded-full bg-gray-100 dark:bg-white px-5 py-2 text-sm font-black text-gray-900 dark:text-gray-800 transition hover:scale-105 hover:bg-green-600 dark:hover:bg-[#d7ff53] dark:hover:text-white"
   >
     Back Cart
   </Link>
@@ -153,7 +153,7 @@ export default function CheckoutPage() {
             .in("id", productIds),
           supabasePublic
             .from("product_variants")
-            .select("id, size, color, stock")
+            .select("id, size, color, stock, option_1_name, option_1_value, option_2_name, option_2_value")
             .in("id", variantIds),
         ]);
 
@@ -168,12 +168,24 @@ export default function CheckoutPage() {
           });
         });
 
-        const varMap = new Map<string, { size: string | null; color: string | null; stock: number | null }>();
+        const varMap = new Map<string, {
+  size: string | null;
+  color: string | null;
+  stock: number | null;
+  option1Name: string | null;
+  option1Value: string | null;
+  option2Name: string | null;
+  option2Value: string | null;
+}>();
         (vars ?? []).forEach((v: any) => {
           varMap.set(v.id, {
             size: v.size ?? null,
             color: v.color ?? null,
             stock: typeof v.stock === "number" ? v.stock : null,
+            option1Name: v.option_1_name ?? null,
+            option1Value: v.option_1_value ?? null,
+            option2Name: v.option_2_name ?? null,
+            option2Value: v.option_2_value ?? null,
           });
         });
 
@@ -181,11 +193,32 @@ export default function CheckoutPage() {
           const p = prodMap.get(ci.product_id);
           const v = varMap.get(ci.variant_id);
           const base = cartToCheckout(ci);
+
+          // Build complete variant display string from option fields OR fallback to size/color
+          const variantParts: string[] = [];
+          if (v?.option1Name && v?.option1Value) {
+            variantParts.push(`${v.option1Name}:${v.option1Value}`);
+          }
+          if (v?.option2Name && v?.option2Value) {
+            variantParts.push(`${v.option2Name}:${v.option2Value}`);
+          }
+
+          // If option fields are empty (legacy data), fall back to old size/color fields
+          if (variantParts.length === 0) {
+            const parts: string[] = [];
+            if (v?.color) parts.push(`Color:${v.color}`);
+            if (v?.size) parts.push(`Size:${v.size}`);
+            if (parts.length > 0) variantParts.push(parts.join(", "));
+          }
+
+          const variantDisplay = variantParts.length > 0 ? variantParts.join(", ") : "";
+          const finalSize = variantDisplay || base.size || "Default";
+
           return {
             ...base,
             name: base.name && base.name !== "Produk" ? base.name : (p?.name ?? "Produk"),
             slug: base.slug || p?.slug || "",
-            size: base.size || v?.size || "",
+            size: finalSize,
             color: v?.color ?? undefined,
             image: base.image || (p?.image_url ?? undefined),
             stock: v?.stock ?? undefined,
@@ -429,13 +462,13 @@ export default function CheckoutPage() {
   }
 
   return (
-    <main className="relative min-h-screen overflow-x-hidden bg-[#060606] text-white">
+    <main className="relative min-h-screen overflow-x-hidden bg-gray-900 text-gray-100 dark:bg-[#060606] dark:text-white">
       <MidtransScript />
       {/* Cinematic global background */}
       <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
         <div className="absolute left-1/2 top-0 h-[120vh] w-[140vw] -translate-x-1/2 bg-[radial-gradient(ellipse_at_center_top,_rgba(215,255,83,0.10),_transparent_55%)]" />
-        <div className="absolute -left-40 top-1/3 h-[36rem] w-[36rem] rounded-full bg-[#5e8bff]/10 blur-[140px] animate-aurora-2" />
-        <div className="absolute -right-40 bottom-1/4 h-[36rem] w-[36rem] rounded-full bg-[#ff5edb]/10 blur-[140px] animate-aurora-1" />
+        <div className="absolute -left-40 top-1/3 h-[36rem] w-[36rem] rounded-full bg-[#1a1a1a]/20 blur-[140px] animate-aurora-2" />
+        <div className="absolute -right-40 bottom-1/4 h-[36rem] w-[36rem] rounded-full bg-[#1a1a1a]/10 blur-[140px] animate-aurora-1" />
         <div className="absolute left-1/2 top-2/3 h-[28rem] w-[28rem] -translate-x-1/2 rounded-full bg-[#d7ff53]/10 blur-[160px] animate-aurora-3" />
         <div className="absolute inset-0 bg-grid-fade [background-size:56px_56px] opacity-[0.22]" />
         <div className="absolute inset-0 bg-noise opacity-[0.06] mix-blend-overlay" />
@@ -453,37 +486,37 @@ export default function CheckoutPage() {
 
       <section className="relative mx-auto max-w-7xl px-4 py-10 md:px-8 md:py-14">
         {!authReady || cartLoading ? (
-          <div className="group relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 text-center backdrop-blur-md sm:p-8 md:rounded-[2.5rem] md:p-14 animate-blur-in">
+          <div className="group relative overflow-hidden rounded-[2rem] border border-gray-700 dark:border-white/10 bg-gray-200 dark:bg-white/[0.04] p-6 text-center backdrop-blur-md sm:p-8 md:rounded-[2.5rem] md:p-14 animate-blur-in">
             <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_50%_0%,rgba(215,255,83,0.18),transparent_60%)] opacity-60" />
-            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full border border-white/10 bg-gradient-to-br from-white/10 to-white/0 text-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] sm:mb-6 sm:h-20 sm:w-20 sm:text-3xl animate-float-y">
+            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full border border-gray-700 dark:border-white/10 bg-gradient-to-br from-gray-300 dark/from-white/10 to-gray-100 dark:to-white/0 text-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] sm:mb-6 sm:h-20 sm:w-20 sm:text-3xl animate-float-y">
               ⏳
             </div>
-            <h2 className="text-2xl font-black uppercase sm:text-3xl md:text-5xl">
+            <h2 className="text-2xl font-black uppercase text-gray-800 dark:text-white sm:text-3xl md:text-5xl">
               Memuat Keranjang
             </h2>
-            <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-white/55 sm:mt-4 sm:text-base sm:leading-8">
+            <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-gray-600 dark:text-gray-300 sm:mt-4 sm:text-base sm:leading-8">
               Sedang mengambil data keranjang kamu...
             </p>
           </div>
         ) : items.length === 0 ? (
-          <div className="group relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 text-center backdrop-blur-md sm:p-8 md:rounded-[2.5rem] md:p-14 animate-blur-in">
+          <div className="group relative overflow-hidden rounded-[2rem] border border-gray-700 dark:border-white/10 bg-gray-200 dark:bg-white/[0.04] p-6 text-center backdrop-blur-md sm:p-8 md:rounded-[2.5rem] md:p-14 animate-blur-in">
             <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_50%_0%,rgba(215,255,83,0.18),transparent_60%)] opacity-60" />
-            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full border border-white/10 bg-gradient-to-br from-white/10 to-white/0 text-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] sm:mb-6 sm:h-20 sm:w-20 sm:text-3xl animate-float-y">
+            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full border border-gray-700 dark:border-white/10 bg-gradient-to-br from-gray-300 dark/from-white/10 to-gray-100 dark:to-white/0 text-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] sm:mb-6 sm:h-20 sm:w-20 sm:text-3xl animate-float-y">
               🛒
             </div>
 
-            <h2 className="text-2xl font-black uppercase sm:text-3xl md:text-5xl">
+            <h2 className="text-2xl font-black uppercase text-gray-800 dark:text-white sm:text-3xl md:text-5xl">
               Cart Masih Kosong
             </h2>
 
-            <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-white/55 sm:mt-4 sm:text-base sm:leading-8">
+            <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-gray-600 dark:text-gray-300 sm:mt-4 sm:text-base sm:leading-8">
               Checkout belum bisa dilanjutkan karena belum ada produk di
               keranjang.
             </p>
 
             <Link
               href="/products"
-              className="group/btn relative mt-6 inline-flex items-center gap-2 overflow-hidden rounded-full bg-[#d7ff53] px-6 py-3.5 text-sm font-black uppercase tracking-wider text-black transition hover:scale-105 hover:bg-white sm:mt-8 sm:px-8 sm:py-4"
+              className="group/btn relative mt-6 inline-flex items-center gap-2 overflow-hidden rounded-full bg-green-600 dark:bg-[#d7ff53] px-6 py-3.5 text-sm font-black uppercase tracking-wider text-white dark:text-black transition hover:scale-105 hover:bg-green-700 dark:hover:bg-white sm:mt-8 sm:px-8 sm:py-4"
             >
               <span className="relative z-10">Belanja Sekarang</span>
               <span className="absolute inset-0 -z-0 holographic opacity-0 transition group-hover/btn:opacity-100" />
@@ -1045,7 +1078,7 @@ function CheckoutSummary({
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#d7ff53]/70 to-transparent" />
       {/* corner glow */}
       <div className="pointer-events-none absolute -right-12 -top-12 h-48 w-48 rounded-full bg-[#d7ff53]/10 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-12 -left-12 h-48 w-48 rounded-full bg-[#5e8bff]/10 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-12 -left-12 h-48 w-48 rounded-full bg-[#1a1a1a]/30 blur-3xl" />
 
       <div className="relative p-4 sm:p-6 md:p-7">
         <div className="flex items-center justify-between">
@@ -1090,7 +1123,7 @@ function CheckoutSummary({
                   {item.name}
                 </h3>
                 <p className="mt-0.5 text-[10px] font-bold uppercase tracking-widest text-white/45 sm:mt-1 sm:text-[11px]">
-                  {item.color ? `${item.color} • ` : ""}Size {item.size} • Qty {item.quantity}
+                  {item.size} • Qty {item.quantity}
                 </p>
                 <p className="mt-0.5 text-xs font-black sm:mt-1 sm:text-sm">
                   {rupiah(item.price * item.quantity)}
@@ -1250,7 +1283,7 @@ function ConfirmModal({
   const selectedSvc = shippingOptions?.options.find((s) => s.service === selectedService);
   return (
     <div className="fixed inset-0 z-[999] flex items-end justify-center bg-black/80 px-3 py-4 backdrop-blur-md sm:items-center sm:px-4 sm:py-6 animate-fade-in">
-      <div className="w-full max-w-xl overflow-hidden rounded-t-3xl border border-white/10 bg-[#0b0b0b] shadow-2xl sm:rounded-[2rem] animate-blur-in">
+      <div className="w-full max-w-xl overflow-hidden rounded-t-3xl border border-black/10 dark:border-white/10 bg-gray-900 dark:bg-black shadow-2xl sm:rounded-[2rem] animate-blur-in">
         <div className="relative border-b border-white/10 bg-white/[0.04] p-5 sm:p-6">
           <div className="pointer-events-none absolute inset-0 -z-0 bg-[radial-gradient(circle_at_top,_rgba(215,255,83,0.10),transparent_50%)]" />
           <p className="relative inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.25em] text-[#d7ff53] sm:text-xs sm:tracking-[0.3em]">
@@ -1263,14 +1296,13 @@ function ConfirmModal({
         </div>
 
         <div className="max-h-[70vh] overflow-y-auto p-5 sm:p-6">
-          <div className="relative overflow-hidden rounded-xl bg-[#d7ff53] p-4 text-black sm:rounded-[1.5rem] sm:p-5">
-            <div className="pointer-events-none absolute inset-0 -z-0 holographic opacity-30" />
-            <p className="relative text-sm font-black leading-7 sm:text-base sm:leading-8">
+          <div className="relative overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] p-4 sm:rounded-[1.5rem] sm:p-5">
+            <p className="relative text-sm leading-7 sm:text-base sm:leading-8 text-white/90">
               Mohon cek kembali nama pembeli, nomor WhatsApp, alamat lengkap,
               kota, kecamatan, kode pos, dan layanan pengiriman sebelum
               membuat order.
             </p>
-            <p className="relative mt-3 text-xs font-bold leading-6 text-black/70 sm:mt-4 sm:text-sm sm:leading-7">
+            <p className="relative mt-3 text-xs sm:mt-4 sm:text-sm text-white/70">
               Kesalahan penulisan alamat, nomor WhatsApp, atau detail
               pengiriman menjadi tanggung jawab customer. Tim Official
               Merchandise WALI tidak bertanggung jawab atas keterlambatan,
@@ -1362,7 +1394,7 @@ function ConfirmModal({
               type="button"
               disabled={loading}
               onClick={onConfirm}
-              className="group/confirm relative overflow-hidden rounded-full bg-[#d7ff53] px-5 py-3.5 text-sm font-black uppercase tracking-wider text-black transition hover:scale-[1.02] hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 sm:px-7 sm:py-4"
+              className="group/confirm relative overflow-hidden rounded-full border border-white/20 bg-white/[0.05] px-5 py-3.5 text-sm font-black uppercase tracking-wider text-white transition hover:scale-[1.02] hover:bg-white/[0.10] disabled:cursor-not-allowed disabled:opacity-50 sm:px-7 sm:py-4"
             >
               <span className="relative z-10 inline-flex items-center gap-2">
                 {loading ? (

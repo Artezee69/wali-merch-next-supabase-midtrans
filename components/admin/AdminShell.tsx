@@ -14,6 +14,7 @@ import {
   Menu,
   X,
   ChevronLeft,
+  ImageIcon,
 } from "lucide-react";
 
 type NavItem = {
@@ -28,6 +29,8 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/admin/products", label: "Produk", icon: Package, matchPrefix: "/admin/products" },
   { href: "/admin/orders", label: "Pesanan", icon: ShoppingCart, matchPrefix: "/admin/orders" },
   { href: "/admin/customers", label: "Customer", icon: Users, matchPrefix: "/admin/customers" },
+  { href: "/admin/banners", label: "Banner", icon: ImageIcon, matchPrefix: "/admin/banners" },
+  { href: "/admin/popup-ads", label: "Popup Ads", icon: ImageIcon, matchPrefix: "/admin/popup-ads" },
   { href: "/admin/settings", label: "Pengaturan", icon: Settings, matchPrefix: "/admin/settings" },
 ];
 

@@ -562,11 +562,13 @@ export default function AdminProductsClient({
                         <td className="px-3 py-3">
                           {p.sale_price !== null && p.base_price !== null && p.sale_price < p.base_price ? (
                             <div className="flex flex-col items-start gap-0.5">
-                              <span className="text-[11px] font-bold text-[#d7ff53] line-through">
-                                {rupiah(p.sale_price)}
-                              </span>
-                              <span className="text-xs font-black text-white">
+                              {/* Original/base price with strikethrough */}
+                              <span className="text-[11px] font-bold text-gray-400 line-through">
                                 {rupiah(p.base_price)}
+                              </span>
+                              {/* Discounted/sale price prominently shown */}
+                              <span className="text-xs font-black text-[#d7ff53]">
+                                {rupiah(p.sale_price)}
                               </span>
                             </div>
                           ) : (

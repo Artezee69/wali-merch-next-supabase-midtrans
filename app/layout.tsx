@@ -1,11 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { ToastProvider } from "@/components/Toast";
-import { AuthProvider } from "@/components/AuthProvider";
-import { CartProvider } from "@/components/CartProvider";
-import { LoginModalProvider } from "@/components/LoginModalProvider";
-import { LocaleProvider } from "@/components/LocaleProvider";
 import { getHomepageSettings, getStoreSettings } from "@/lib/storeSettings";
+import ClientLayout from "./client-layout";
 
 export async function generateMetadata(): Promise<Metadata> {
   const [settings, store] = await Promise.all([
@@ -59,19 +56,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" className="bg-[#0b0b0b]">
-      <body className="min-h-screen bg-[#0b0b0b] text-white antialiased">
-        <ToastProvider>
-          <AuthProvider>
-            <LoginModalProvider>
-              <LocaleProvider>
-                <CartProvider>
-                  {children}
-                </CartProvider>
-              </LocaleProvider>
-            </LoginModalProvider>
-          </AuthProvider>
-        </ToastProvider>
+    <html lang="id">
+      <body className="min-h-screen antialiased" style={{ backgroundColor: "var(--bg-primary)", color: "var(--text-primary)" }}>
+        <ClientLayout>{children}</ClientLayout>
       </body>
     </html>
   );

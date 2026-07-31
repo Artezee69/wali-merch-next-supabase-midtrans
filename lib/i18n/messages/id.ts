@@ -151,9 +151,9 @@ const id: Messages = {
       empty: "Belum ada produk.",
     },
     cta: {
-      title: "Siap pakai cerita panggung?",
+      title: "Panggungmu. Ceritamu.",
       subtitle:
-        "Join komunitas WALI. Tiap drop dapet akses duluan, diskon member, dan konten behind-the-stage.",
+        "Belanja di marketplace resmi WALI. Merch panggung premium, limited drop, dan produk otentik — semuanya di satu tempat.",
       primary: "Belanja Koleksi",
       secondary: "Lacak Pesanan",
     },

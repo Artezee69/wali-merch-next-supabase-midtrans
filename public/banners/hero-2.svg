@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 600" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="side2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b0b0b"/>
+      <stop offset="100%" stop-color="#1f2a0a"/>
+    </linearGradient>
+    <linearGradient id="lineGrad2" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#d7ff53" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#d7ff53" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#d7ff53" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="glow2" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Base -->
+  <rect width="1600" height="600" fill="url(#side2)"/>
+
+  <!-- Big geometric shapes -->
+  <polygon points="1100,0 1600,0 1600,500 1300,300" fill="#d7ff53" opacity="0.08"/>
+  <polygon points="1200,100 1600,300 1200,500" fill="none" stroke="#d7ff53" stroke-width="1.5" opacity="0.4"/>
+  <polygon points="1100,150 1500,300 1100,450" fill="none" stroke="#d7ff53" stroke-width="1" opacity="0.25"/>
+
+  <!-- Vertical lines (diagonal grid feel) -->
+  <g stroke="#d7ff53" stroke-width="1" opacity="0.2">
+    <line x1="100" y1="0" x2="100" y2="600"/>
+    <line x1="180" y1="0" x2="180" y2="600"/>
+    <line x1="260" y1="0" x2="260" y2="600"/>
+    <line x1="340" y1="0" x2="340" y2="600"/>
+    <line x1="420" y1="0" x2="420" y2="600"/>
+  </g>
+
+  <!-- Number "02" big watermark -->
+  <text x="1380" y="500" font-family="Impact, 'Arial Black', sans-serif" font-weight="900" font-size="380" fill="#d7ff53" opacity="0.06" text-anchor="end">02</text>
+
+  <!-- Eyebrow -->
+  <g transform="translate(120, 130)">
+    <line x1="0" y1="0" x2="40" y2="0" stroke="#d7ff53" stroke-width="3"/>
+    <text x="55" y="6" font-family="'Courier New', monospace" font-weight="700" font-size="18" letter-spacing="4" fill="#d7ff53">CHAPTER 02 / 2026</text>
+  </g>
+
+  <!-- Headline stack -->
+  <g font-family="Impact, 'Arial Black', sans-serif" font-weight="900">
+    <text x="120" y="240" font-size="64" fill="#ffffff" letter-spacing="2">OFFICIAL</text>
+    <text x="120" y="370" font-size="130" fill="#d7ff53" letter-spacing="-2" filter="url(#glow2)">LIMITED</text>
+    <text x="120" y="490" font-size="130" fill="#ffffff" letter-spacing="-2">EDITION.</text>
+  </g>
+
+  <!-- Subtitle -->
+  <text x="120" y="540" font-family="'Helvetica', sans-serif" font-weight="400" font-size="18" fill="#ffffff" opacity="0.6" letter-spacing="2">Stok terbatas. Jangan sampai kehabisan — hanya untuk kamu yang cepat.</text>
+
+  <!-- Decorative line -->
+  <line x1="800" y1="80" x2="800" y2="540" stroke="url(#lineGrad2)" stroke-width="2"/>
+
+  <!-- Right side small product placeholder cards -->
+  <g transform="translate(900, 100)" opacity="0.85">
+    <rect x="0" y="0" width="120" height="170" fill="none" stroke="#d7ff53" stroke-width="2" rx="4"/>
+    <line x1="0" y1="120" x2="120" y2="120" stroke="#d7ff53" stroke-width="1" opacity="0.4"/>
+    <text x="60" y="80" font-family="'Arial Black', sans-serif" font-weight="900" font-size="40" fill="#d7ff53" text-anchor="middle" opacity="0.5">N°1</text>
+    <text x="60" y="145" font-family="'Courier New', monospace" font-weight="700" font-size="9" fill="#ffffff" text-anchor="middle" letter-spacing="2">PLAYER</text>
+  </g>
+  <g transform="translate(1040, 100)" opacity="0.85">
+    <rect x="0" y="0" width="120" height="170" fill="none" stroke="#d7ff53" stroke-width="2" rx="4"/>
+    <line x1="0" y1="120" x2="120" y2="120" stroke="#d7ff53" stroke-width="1" opacity="0.4"/>
+    <text x="60" y="80" font-family="'Arial Black', sans-serif" font-weight="900" font-size="40" fill="#d7ff53" text-anchor="middle" opacity="0.5">N°2</text>
+    <text x="60" y="145" font-family="'Courier New', monospace" font-weight="700" font-size="9" fill="#ffffff" text-anchor="middle" letter-spacing="2">STAGE</text>
+  </g>
+  <g transform="translate(1180, 100)" opacity="0.85">
+    <rect x="0" y="0" width="120" height="170" fill="none" stroke="#d7ff53" stroke-width="2" rx="4"/>
+    <line x1="0" y1="120" x2="120" y2="120" stroke="#d7ff53" stroke-width="1" opacity="0.4"/>
+    <text x="60" y="80" font-family="'Arial Black', sans-serif" font-weight="900" font-size="40" fill="#d7ff53" text-anchor="middle" opacity="0.5">N°3</text>
+    <text x="60" y="145" font-family="'Courier New', monospace" font-weight="700" font-size="9" fill="#ffffff" text-anchor="middle" letter-spacing="2">TOUR</text>
+  </g>
+
+  <!-- CTA -->
+  <g transform="translate(120, 555)">
+    <text x="0" y="20" font-family="'Courier New', monospace" font-weight="700" font-size="13" fill="#d7ff53" letter-spacing="3">▸ BELANJA SEKARANG</text>
+  </g>
+</svg>

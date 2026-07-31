@@ -274,7 +274,7 @@ export default function AccountPage() {
     return (
       <>
         <Navbar />
-        <main className="min-h-screen bg-[#0b0b0b] text-white">
+        <main className="min-h-screen bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
           <div className="mx-auto flex max-w-3xl items-center justify-center px-4 py-32">
             <p className="flex items-center gap-3 text-white/60">
               <Loader2 className="h-5 w-5 animate-spin" /> Memuat...
@@ -300,24 +300,24 @@ export default function AccountPage() {
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-[#0b0b0b] text-white">
-        <section className="border-b border-white/10 bg-gradient-to-b from-white/[0.04] to-transparent">
+      <main className="min-h-screen bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
+        <section className="border-b border-black/10 dark:border-white/10 bg-gradient-to-b from-black/[0.04] dark:from-white/[0.04] to-transparent">
           <div className="mx-auto max-w-4xl px-4 py-10 md:px-8 md:py-14">
             <Breadcrumb items={[{ label: "Akun Saya" }]} />
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <h1 className="text-3xl font-black tracking-wide text-white md:text-4xl">
+                <h1 className="text-3xl font-black tracking-wide text-gray-900 dark:text-white md:text-4xl">
                   Akun Saya
                 </h1>
-                <p className="mt-2 max-w-xl text-sm text-white/55">
+                <p className="mt-2 max-w-xl text-sm text-gray-600 dark:text-gray-400">
                   Kelola informasi profil, foto, dan data pribadi Anda. Semua perubahan tersimpan aman di akun Anda.
                 </p>
               </div>
               <Link
                 href="/"
-                className="inline-flex items-center gap-2 self-start rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white/70 transition hover:border-white/30 hover:text-white"
+                className="inline-flex items-center gap-2 self-start rounded-xl border border-black/20 dark:border-white/20 bg-white/5 dark:bg-white/5/10 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 transition hover:border-green-500/50 dark:hover:border-[#d7ff53]/50 hover:text-[#d7ff53] dark:hover:text-[#d7ff53]"
               >
-                <ArrowLeft size={14} />
+                <ArrowLeft size={14} className="text-gray-600 dark:text-gray-400" />
                 Kembali ke Beranda
               </Link>
             </div>
@@ -348,7 +348,7 @@ export default function AccountPage() {
               {/* Profile card */}
               <div className="rounded-3xl border border-white/10 bg-white/5 p-6 md:p-8">
                 <div className="flex flex-col items-start gap-6 sm:flex-row sm:items-center">
-                  <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full bg-white/10 ring-2 ring-white/10">
+                  <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800 ring-2 border border-black/20 dark:border-white/20">
                     {avatarSrc ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -360,16 +360,16 @@ export default function AccountPage() {
                         }}
                       />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center text-2xl font-black text-white/60">
+                      <div className="flex h-full w-full items-center justify-center text-2xl font-black text-gray-500 dark:text-gray-400">
                         {initials}
                       </div>
                     )}
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <h2 className="truncate text-xl font-black text-white">{displayName}</h2>
-                    <p className="mt-1 flex items-center gap-1.5 truncate text-sm text-white/55">
-                      <Mail size={14} className="shrink-0" /> {user?.email || profile?.email || "Belum diisi"}
+                    <h2 className="truncate text-xl font-black text-gray-900 dark:text-white">{displayName}</h2>
+                    <p className="mt-1 flex items-center gap-1.5 truncate text-sm text-gray-600 dark:text-gray-400">
+                      <Mail size={14} className="shrink-0 text-gray-600 dark:text-gray-400" /> {user?.email || profile?.email || "Belum diisi"}
                     </p>
                     {profile?.email_confirmed_at ? (
                       <span className="mt-2 inline-flex items-center gap-1 rounded-full border border-green-500/30 bg-green-500/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-green-400">
@@ -477,10 +477,10 @@ export default function AccountPage() {
                           onChange={(e) => setEditForm({ ...editForm, gender: e.target.value })}
                           className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none transition focus:border-[#d7ff53] focus:ring-1 focus:ring-[#d7ff53]/30"
                         >
-                          <option value="" className="bg-[#0b0b0b]">Pilih</option>
-                          <option value="male" className="bg-[#0b0b0b]">Laki-laki</option>
-                          <option value="female" className="bg-[#0b0b0b]">Perempuan</option>
-                          <option value="other" className="bg-[#0b0b0b]">Lainnya</option>
+                          <option value="" className="bg-white dark:bg-gray-800">Pilih</option>
+                          <option value="male" className="bg-white dark:bg-gray-800">Laki-laki</option>
+                          <option value="female" className="bg-white dark:bg-gray-800">Perempuan</option>
+                          <option value="other" className="bg-white dark:bg-gray-800">Lainnya</option>
                         </select>
                       </div>
                     </div>

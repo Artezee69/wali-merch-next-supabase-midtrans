@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 600" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <radialGradient id="spot1" cx="50%" cy="35%" r="55%">
+      <stop offset="0%" stop-color="#1a3300" stop-opacity="0.95"/>
+      <stop offset="40%" stop-color="#0a1a00" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#0b0b0b" stop-opacity="1"/>
+    </radialGradient>
+    <linearGradient id="floor1" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#d7ff53" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#d7ff53" stop-opacity="0.06"/>
+    </linearGradient>
+    <linearGradient id="beam1" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#d7ff53" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#d7ff53" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="glow1" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Base bg -->
+  <rect width="1600" height="600" fill="#0b0b0b"/>
+
+  <!-- Stage spotlight gradient -->
+  <rect width="1600" height="600" fill="url(#spot1)"/>
+
+  <!-- Stage floor reflection -->
+  <rect x="0" y="450" width="1600" height="150" fill="url(#floor1)"/>
+
+  <!-- Light beams from top -->
+  <polygon points="800,0 720,500 880,500" fill="url(#beam1)" opacity="0.7"/>
+  <polygon points="600,0 540,500 660,500" fill="url(#beam1)" opacity="0.4"/>
+  <polygon points="1000,0 940,500 1060,500" fill="url(#beam1)" opacity="0.4"/>
+
+  <!-- Stage silhouette (mic stand + crowd) -->
+  <g opacity="0.5">
+    <!-- Mic stand -->
+    <rect x="795" y="380" width="10" height="80" fill="#d7ff53" filter="url(#glow1)"/>
+    <circle cx="800" cy="370" r="22" fill="none" stroke="#d7ff53" stroke-width="3" filter="url(#glow1)"/>
+    <line x1="780" y1="360" x2="820" y2="380" stroke="#d7ff53" stroke-width="2" filter="url(#glow1)"/>
+    <!-- Crowd silhouette -->
+    <path d="M 0 600 L 0 540 Q 30 510, 60 540 Q 90 510, 120 540 Q 150 510, 180 540 Q 210 510, 240 540 Q 270 510, 300 540 Q 330 510, 360 540 Q 390 510, 420 540 Q 450 510, 480 540 Q 510 510, 540 540 Q 570 510, 600 540 Q 630 510, 660 540 Q 690 510, 720 540 Q 750 510, 780 540 Q 810 510, 840 540 Q 870 510, 900 540 Q 930 510, 960 540 Q 990 510, 1020 540 Q 1050 510, 1080 540 Q 1110 510, 1140 540 Q 1170 510, 1200 540 Q 1230 510, 1260 540 Q 1290 510, 1320 540 Q 1350 510, 1380 540 Q 1410 510, 1440 540 Q 1470 510, 1500 540 Q 1530 510, 1560 540 Q 1590 510, 1600 540 L 1600 600 Z" fill="#000"/>
+  </g>
+
+  <!-- Subtle particle dots (stars/light specks) -->
+  <g fill="#d7ff53" opacity="0.7">
+    <circle cx="200" cy="120" r="1.5"/>
+    <circle cx="350" cy="180" r="1"/>
+    <circle cx="500" cy="90" r="1.5"/>
+    <circle cx="1100" cy="100" r="1"/>
+    <circle cx="1250" cy="160" r="1.5"/>
+    <circle cx="1400" cy="80" r="1"/>
+    <circle cx="1500" cy="200" r="1.5"/>
+    <circle cx="150" cy="250" r="1"/>
+    <circle cx="1450" cy="280" r="1.5"/>
+  </g>
+
+  <!-- Headline -->
+  <g font-family="Impact, 'Arial Black', sans-serif" font-weight="900">
+    <!-- Eyebrow -->
+    <text x="120" y="180" font-size="20" letter-spacing="6" fill="#d7ff53" font-family="'Courier New', monospace" font-weight="700">▸ NEW DROP / 2026</text>
+    <!-- Main title -->
+    <text x="120" y="290" font-size="120" fill="#ffffff" letter-spacing="-2" filter="url(#glow1)">DROP EKSKLUSIF</text>
+    <!-- Subtitle highlight -->
+    <text x="120" y="380" font-size="48" fill="#d7ff53" letter-spacing="-1">PLAYER EDITION.</text>
+  </g>
+
+  <!-- CTA pill -->
+  <g transform="translate(120, 430)">
+    <rect x="0" y="0" width="240" height="56" rx="28" fill="#d7ff53" filter="url(#glow1)"/>
+    <text x="32" y="36" font-family="'Arial Black', sans-serif" font-weight="900" font-size="16" letter-spacing="2" fill="#0b0b0b">LIHAT KOLEKSI</text>
+    <text x="208" y="38" font-family="'Arial Black', sans-serif" font-weight="900" font-size="18" fill="#0b0b0b">→</text>
+  </g>
+
+  <!-- Right corner badge -->
+  <g transform="translate(1420, 100)">
+    <rect x="0" y="0" width="120" height="120" rx="60" fill="none" stroke="#d7ff53" stroke-width="2" opacity="0.6"/>
+    <text x="60" y="55" font-family="'Arial Black', sans-serif" font-weight="900" font-size="11" fill="#d7ff53" text-anchor="middle" letter-spacing="2">LIMITED</text>
+    <text x="60" y="78" font-family="Impact, sans-serif" font-weight="900" font-size="32" fill="#d7ff53" text-anchor="middle">2026</text>
+  </g>
+</svg>

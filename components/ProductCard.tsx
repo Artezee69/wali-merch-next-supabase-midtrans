@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, ShoppingBag, Eye } from "lucide-react";
+import { ArrowRight, Star } from "lucide-react";
 import { rupiah } from "@/lib/format";
 import { useState, useEffect } from "react";
 
@@ -18,10 +18,17 @@ type ProductCardProps = {
     name: string;
     slug: string;
     price: number;
+    base_price?: number | null;       // Harga asli untuk diskon
+    sale_price?: number | null;      // Harga diskon
     category?: string | null;
     description?: string | null;
     product_images?: { image_url: string }[] | null;
     product_variants?: Variant[] | null;
+    soldCount?: number;              // Jumlah produk terjual
+    rating?: {                       // Rating ulasan
+      avg: number;                   // Rata-rata bintang (0-5)
+      count: number;                 // Jumlah ulasan
+    };
   };
   index?: number;
 };
@@ -47,6 +54,43 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
   const isComingSoon =
     product.category === "Coming Soon" || product.price === 0;
   const isSoldOut = totalStock <= 0 && !isComingSoon;
+
+  // Discount detection: sale_price exists and is less than base_price
+  const hasDiscount = Boolean(
+    product.sale_price != null &&
+    product.base_price != null &&
+    Number(product.sale_price) < Number(product.base_price)
+  );
+
+  let discountPercent = 0;
+  if (hasDiscount) {
+    const base = Number(product.base_price);
+    const sale = Number(product.sale_price);
+    if (base > 0) {
+      discountPercent = Math.round(((base - sale) / base) * 100);
+    }
+  }
+
+  // Rating and sold quantity
+  const soldCount = product.soldCount ?? 0;
+  const rating = product.rating;
+  const hasRating = rating && typeof rating.avg === "number" && rating.count > 0;
+  const formattedRating = hasRating ? rating.avg.toFixed(1) : null;
+
+  // Star rating rendering helper - displays 5 stars with filled/empty state
+  const renderStars = (ratingValue: number) => {
+    const fullStars = Math.floor(ratingValue);
+    return Array.from({ length: 5 }, (_, i) => (
+      <Star
+        key={i}
+        size={12}
+        fill={i < fullStars ? "#d7ff53" : "transparent"}
+        stroke={i < fullStars ? "#d7ff53" : "#374151"}
+        strokeWidth={1.5}
+        className="transition"
+      />
+    ));
+  };
 
   const [hover, setHover] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -78,21 +122,21 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
         onMouseLeave={() => setHover(false)}
         className="block"
       >
-        {/* Outer glow ring on hover */}
+        {/* Subtle outer glow on hover */}
         <div
-          className="pointer-events-none absolute -inset-2 rounded-[2rem] bg-gradient-to-br from-[#d7ff53]/20 via-transparent to-[#5e8bff]/10 opacity-0 blur-xl transition-opacity duration-700 group-hover:opacity-100"
+          className="pointer-events-none absolute -inset-2 rounded-[2rem] bg-gradient-to-br from-[#d7ff53]/20 via-transparent to-white/5 opacity-0 blur-xl transition-opacity duration-700 group-hover:opacity-100"
           aria-hidden
         />
 
-        <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.02] p-3 backdrop-blur-sm transition-all duration-500 group-hover:border-[#d7ff53]/40 group-hover:bg-white/[0.04] sm:rounded-[2rem] sm:p-3">
-          {/* Subtle inner frame gradient */}
+        <div className="relative overflow-hidden rounded-2xl border border-white/5 bg-black/30 backdrop-blur-sm transition-all duration-500 group-hover:border-white/10 group-hover:bg-black/50 sm:p-3 dark:border-gray-800 dark:bg-gray-900/[0.1] group-hover:dark:border-[#d7ff53]/30 group-hover:dark:bg-[#d7ff53]/5 flex flex-col h-full">
+          {/* Subtle inner frame glow */}
           <div
-            className="pointer-events-none absolute inset-px rounded-[1.4rem] bg-gradient-to-br from-white/[0.04] via-transparent to-white/[0.02]"
+            className="pointer-events-none absolute inset-px rounded-[1.4rem] bg-gradient-to-br from-white/5 via-transparent to-black/20 dark:from-white/5 dark:via-transparent dark:to-black/30"
             aria-hidden
           />
 
           {/* Image container */}
-          <div className="group/img relative aspect-[4/5] overflow-hidden rounded-2xl bg-gradient-to-br from-white/[0.05] to-white/[0.01]">
+          <div className="group/img relative aspect-[4/5] overflow-hidden rounded-2xl bg-gradient-to-br from-black/40 to-black/60 dark:from-black/70 dark:to-black/90">
             {/* Shimmer on hover */}
             <div
               className="pointer-events-none absolute inset-0 z-10 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
@@ -117,22 +161,28 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
             />
 
             {/* Cinematic overlays */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0b0b0b] via-[#0b0b0b]/20 to-transparent" />
-            <div className="absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-black/30 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/60 to-transparent dark:from-black dark:via-black/60" />
+            <div className="absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-gray-900/70 to-transparent dark:from-black/70 dark:to-transparent" />
 
             {/* Top-left badges */}
             <div className="absolute left-3 top-3 z-20 flex flex-col gap-2 sm:left-4 sm:top-4 sm:gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-[#d7ff53]/30 bg-[#0b0b0b]/70 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-[#d7ff53] backdrop-blur-md sm:px-3">
-                <span className="h-1 w-1 rounded-full bg-[#d7ff53] animate-pulse-soft" />
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-green-500/40 bg-green-100 dark:bg-green-900/40 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-green-700 dark:text-green-400 backdrop-blur-sm sm:px-3">
+                <span className="h-1 w-1 rounded-full bg-green-600 dark:bg-[#d7ff53] animate-pulse-soft" />
                 {product.category || "Merch"}
               </span>
+              {/* Discount badge - shows when sale_price < base_price */}
+              {hasDiscount && (
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-red-500/40 bg-red-100 dark:bg-red-900/30 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-red-700 dark:text-red-300 backdrop-blur-sm dark:border-red-400/50">
+                  DISCOUNT {discountPercent}%
+                </span>
+              )}
               {isSoldOut && (
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-red-500/40 bg-red-500/20 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-red-300 backdrop-blur-md">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-red-500/40 bg-red-100 dark:bg-red-900/30 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-red-700 dark:text-red-300 backdrop-blur-sm dark:border-red-400/50">
                   Sold Out
                 </span>
               )}
               {isComingSoon && (
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-white/30 bg-white/15 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-white backdrop-blur-md">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-400/30 bg-gray-700/30 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-gray-300 backdrop-blur-md dark:border-gray-500/40 dark:bg-gray-600/40 dark:text-gray-200">
                   Coming Soon
                 </span>
               )}
@@ -140,17 +190,17 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
 
             {/* Top-right stock indicator */}
             {!isComingSoon && (
-              <div className="absolute right-3 top-3 z-20 flex items-center gap-1.5 rounded-full border border-white/10 bg-[#0b0b0b]/70 px-2.5 py-1 backdrop-blur-md sm:right-4 sm:top-4">
+              <div className="absolute right-3 top-3 z-20 flex items-center gap-1.5 rounded-full border border-white/10 bg-gray-900/70 px-2.5 py-1 backdrop-blur-md sm:right-4 sm:top-4 dark:border-gray-700 dark:bg-gray-800/70">
                 <span
                   className={`h-1.5 w-1.5 rounded-full ${
                     totalStock > 10
-                      ? "bg-[#d7ff53] animate-pulse-soft"
+                      ? "bg-accent animate-pulse-soft"
                       : totalStock > 0
                       ? "bg-yellow-400"
                       : "bg-red-400"
                   }`}
                 />
-                <span className="font-mono text-[10px] font-bold tracking-widest text-white/70">
+                <span className="font-mono text-[10px] font-bold tracking-widest text-white/70 dark:text-gray-300/70">
                   {totalStock > 0 ? `${totalStock} pcs` : "Habis"}
                 </span>
               </div>
@@ -166,13 +216,13 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
                   "all 700ms cubic-bezier(0.16, 1, 0.3, 1) 300ms",
               }}
             >
-              <div className="rounded-2xl border border-white/10 bg-[#0b0b0b]/70 p-3 backdrop-blur-xl sm:p-4">
+              <div className="rounded-2xl border border-white/10 bg-black/70 backdrop-blur-xl sm:p-4">
                 <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#d7ff53] sm:text-xs">
                   Official Merchandise
                 </p>
                 <h3
                   className={`mt-1.5 line-clamp-2 font-display text-base font-black uppercase leading-tight tracking-tight transition-colors duration-500 sm:mt-2 sm:text-lg ${
-                    hover ? "text-[#d7ff53]" : "text-white"
+                    hover ? "text-accent" : "text-gray-100 dark:text-gray-300"
                   }`}
                 >
                   {product.name}
@@ -182,64 +232,84 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
           </div>
 
           {/* Body */}
-          <div className="p-4 sm:p-5">
-            <p className="line-clamp-2 min-h-[3.5rem] text-sm leading-7 text-white/55">
-              {product.description ||
-                "Official merchandise collection with premium streetwear feel."}
-            </p>
-
-            <div className="mt-4 flex items-center justify-between gap-3 border-t border-white/10 pt-4 sm:mt-5 sm:gap-4 sm:pt-5">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-white/35 sm:text-xs">
-                  Price
+          <div className="flex flex-col h-full min-h-[0]">
+            {/* Fixed-height description section - ALL BOXES SAME HEIGHT */}
+            <div className="p-4 sm:p-5 bg-black/20 backdrop-blur-sm overflow-hidden">
+              <div className="h-[3.5rem] overflow-hidden flex flex-col justify-end"> {/* Fixed height ~56px */}
+                <p className="text-sm leading-relaxed text-gray-300 dark:text-gray-300 line-clamp-2">
+                  {product.description || "Premium official merchandise collection."}
                 </p>
-                <p className="font-display text-lg font-black text-white sm:text-xl">
-                  {isComingSoon ? (
-                    <span className="text-[#d7ff53]">Coming Soon</span>
-                  ) : (
-                    rupiah(Number(product.price))
-                  )}
-                </p>
-              </div>
-
-              {/* Variants dots */}
-              <div className="text-right">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-white/35 sm:text-xs">
-                  Sizes
-                </p>
-                <div className="mt-1 flex justify-end gap-1">
-                  {product.product_variants?.length
-                    ? product.product_variants.slice(0, 4).map((v, i) => (
-                        <span
-                          key={v.id || `${v.size}-${i}`}
-                          className={`flex h-6 w-6 items-center justify-center rounded-full border text-[9px] font-black ${
-                            Number(v.stock) > 0
-                              ? "border-white/10 bg-white/5 text-white/70"
-                              : "border-red-400/20 bg-red-500/10 text-red-300/60 line-through"
-                          }`}
-                        >
-                          {v.size.toString().slice(0, 2)}
-                        </span>
-                      ))
-                    : null}
-                </div>
               </div>
             </div>
 
-            {/* CTA row */}
-            <div
-              className={`mt-4 flex items-center justify-center gap-2 rounded-full px-4 py-2.5 text-xs font-black uppercase tracking-[0.18em] transition-all duration-500 sm:mt-5 sm:py-3 sm:text-sm ${
-                hover
-                  ? "bg-[#d7ff53] text-black"
-                  : "bg-white/[0.04] text-white/80"
-              }`}
-            >
-              <span>{isComingSoon ? "Coming Soon" : "View Detail"}</span>
-              {hover ? (
-                <ShoppingBag className="h-3.5 w-3.5" />
-              ) : (
-                <Eye className="h-3.5 w-3.5" />
+            {/* Price & CTA section - Remaining space */}
+            <div className="p-4 sm:p-5 pt-3 bg-black/20 backdrop-blur-sm flex flex-col gap-4">
+              {/* Price display */}
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 sm:text-xs mb-1">Price</p>
+                <div className="flex flex-col">
+                  {isComingSoon ? (
+                    // Coming Soon
+                    <span className="font-display text-lg font-black text-gray-500 sm:text-xl">Coming Soon</span>
+                  ) : hasDiscount ? (
+                    // Discounted product - show original price with strikethrough and sale price
+                    <div className="flex items-baseline gap-2">
+                      {/* Original price with strikethrough */}
+                      <span className="font-display text-base font-black text-gray-400 line-through">
+                        {rupiah(product.base_price ?? product.price)}
+                      </span>
+                      {/* Sale price prominent */}
+                      <span className="font-display text-lg font-black text-[#d7ff53] sm:text-xl">
+                        {rupiah(product.sale_price ?? product.price)}
+                      </span>
+                      {/* Discount percentage badge */}
+                      <span className="text-[10px] font-bold bg-red-500/20 text-red-400 px-2 py-0.5 rounded">
+                        -{discountPercent}%
+                      </span>
+                    </div>
+                  ) : (
+                    // Regular price
+                    <span className="font-display text-lg font-black text-white dark:text-white sm:text-xl">
+                      {rupiah(Number(product.price))}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Rating & Sold count - display if available */}
+              {hasRating || soldCount > 0 && (
+                <div className="flex items-center justify-between text-xs py-2 border-b border-white/5 mb-2">
+                  {/* Rating stars + count */}
+                  {hasRating && (
+                    <div className="flex items-center gap-1">
+                      {renderStars(rating.avg)}
+                      <span className="text-white/75">{formattedRating}</span>
+                      <span className="text-white/45 ml-1">({rating.count} review)</span>
+                    </div>
+                  )}
+                  {/* Sold count on right */}
+                  {soldCount > 0 && (
+                    <span className="text-[#d7ff53] font-black">
+                      {soldCount} terjual
+                    </span>
+                  )}
+                </div>
               )}
+
+              {/* Elegant CTA button */}
+              <div className="pt-3 border-t border-white/5">
+                <div
+                  className={`flex items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-sm font-black uppercase tracking-wider transition-all duration-500 ${
+                    isComingSoon
+                      ? "bg-gray-800/50 text-gray-400 cursor-not-allowed"
+                      : "bg-gradient-to-r from-[#d7ff53] to-[#c7ef33] text-black hover:scale-[1.02] shadow-lg hover:shadow-[0_10px_30px_rgba(215,255,83,0.3)]"
+                  }`}>
+                  <span>{isComingSoon ? "Coming Soon" : "View Detail"}</span>
+                  {!isComingSoon && (
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>

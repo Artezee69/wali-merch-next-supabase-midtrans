@@ -1,14 +1,15 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import HeroAurora from "@/components/home/HeroAurora";
+import HeroCarousel from "@/components/home/HeroCarousel";
+import PromoBanner from "@/components/home/PromoBanner";
 import Marquee from "@/components/home/Marquee";
 import ProductShowcase from "@/components/home/ProductShowcase";
-import WhyWali from "@/components/home/WhyWali";
 import HowToOrder from "@/components/home/HowToOrder";
 import CtaSection from "@/components/home/CtaSection";
 import Faq from "@/components/home/Faq";
 import { getHomepageSettings } from "@/lib/storeSettings";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { getActiveBannersByPosition } from "@/lib/banners";
 import SectionNav from "@/components/SectionNav";
 
 type ShowProduct = {
@@ -98,54 +99,24 @@ async function fetchManualLatestDropProducts(ids: string[]) {
 
   // Sort by admin-set order (unknown ids get pushed to the end).
   mapped.sort((a, b) => {
-    const ai = adminOrder.get(a.id);
-    const bi = adminOrder.get(b.id);
-    if (ai !== undefined && bi !== undefined) return ai - bi;
-    if (ai !== undefined) return -1;
-    if (bi !== undefined) return 1;
-    return 0;
+    const ai = adminOrder.get(a.id) ?? Number.MAX_SAFE_INTEGER;
+    const bi = adminOrder.get(b.id) ?? Number.MAX_SAFE_INTEGER;
+    return ai - bi;
   });
-  return mapped;
+
+  return mapped.slice(0, ids.length);
 }
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-
-export default async function HomePage() {
+export default async function Home() {
   const home = await getHomepageSettings();
-
-  const heroContent = {
-    badge: home.hero.badge,
-    badgePill: home.hero.badgeLeft ?? home.hero.badge,
-    headlineLine1: home.hero.headlineTop,
-    headlineLine2a: home.hero.headlineHighlight,
-    headlineLine2b: home.hero.headlineBottom,
-    subheadline: home.hero.description,
-    primaryCtaLabel: home.hero.primaryCtaLabel,
-    primaryCtaHref: home.hero.primaryCtaUrl,
-    secondaryCtaLabel: home.hero.secondaryCtaLabel,
-    secondaryCtaHref: home.hero.secondaryCtaUrl,
-    stat1Value: "—",
-    stat1Label: "—",
-    stat2Value: "—",
-    stat2Label: "—",
-    stat3Value: "—",
-    stat3Label: "—",
-    trust1: "—",
-    trust2: "—",
-    trust3: "—",
-    backgroundType: home.hero.backgroundType,
-    backgroundColor: home.hero.backgroundColor,
-    backgroundImageUrl: home.hero.backgroundImageUrl,
-    backgroundGradient: home.hero.backgroundGradient,
-    backgroundOverlay: home.hero.overlayOpacity,
-    backgroundOpacity: home.hero.backgroundOpacity,
-  };
-
-  const enabledBadges = (home.trustBadges ?? []).filter(
-    (b) => b.enabled !== false && b.text
-  );
-  const finalStats = (home.stats ?? []).filter((s) => s.value && s.label);
+  const [heroBanners, promoTop, promoBottom] = await Promise.all([
+    getActiveBannersByPosition("hero"),
+    getActiveBannersByPosition("right_top"),
+    getActiveBannersByPosition("right_bottom"),
+  ]);
+  const promoTopBanner = promoTop[0] ?? null;
+  const promoBottomBanner = promoBottom[0] ?? null;
+  const hasPromos = !!(promoTopBanner || promoBottomBanner);
 
   // — Latest-drop products —
   let latestDropProducts: ShowProduct[] = [];
@@ -160,21 +131,50 @@ export default async function HomePage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#0b0b0b] text-white">
+    <main className="min-h-screen bg-black">
       <Navbar />
 
-      {home.hero.enabled && (
-        <HeroAurora
-          content={heroContent}
-          stats={finalStats}
-          trustBadges={enabledBadges}
-        />
+      {/* Hero + Promo */}
+      {heroBanners.length > 0 && (
+        <section className="px-4 pt-4 pb-0 md:px-6 md:pt-8">
+          <div className={`max-w-7xl mx-auto ${hasPromos ? "hidden md:grid md:grid-cols-[1.6fr_1fr] md:items-start md:gap-6" : ""}`}>
+            <HeroCarousel
+              banners={heroBanners}
+              fillHeight={hasPromos}
+              className={hasPromos ? "hidden md:block h-[480px] md:h-[520px]" : "h-[420px] sm:h-[500px] md:h-[600px]"}
+            />
+          </div>
+
+          {/* Promo banners - vertical on mobile, horizontal on desktop */}
+          {hasPromos && (
+            <div className={`max-w-7xl mx-auto mt-4 md:mt-0 ${hasPromos ? "hidden md:block" : ""}`}>
+              <div className={`${hasPromos ? "grid grid-cols-2 gap-3" : "flex flex-col gap-3"}`}>
+                {promoTopBanner && (
+                  <PromoBanner
+                    banner={promoTopBanner}
+                    className={hasPromos ? "h-[160px] sm:h-[200px]" : "h-[220px]"}
+                  />
+                )}
+                {promoBottomBanner && (
+                  <PromoBanner
+                    banner={promoBottomBanner}
+                    className={hasPromos ? "h-[160px] sm:h-[200px]" : "h-[220px]"}
+                  />
+                )}
+              </div>
+            </div>
+          )}
+        </section>
       )}
 
+      {/* Marquee */}
       {home.sections.marquee && home.marqueeSection.enabled && (
-        <Marquee items={home.marqueeSection.texts} />
+        <div className="py-4 md:py-6 bg-black/50 border-y border-white/5 overflow-hidden">
+          <Marquee items={home.marqueeSection.texts} />
+        </div>
       )}
 
+      {/* Product Showcase */}
       {home.latestDrop.enabled && latestDropProducts.length > 0 && (
         <ProductShowcase
           products={latestDropProducts}
@@ -185,38 +185,23 @@ export default async function HomePage() {
         />
       )}
 
-      {home.sections.whyWali && home.whyWaliSection.enabled && (
-        <WhyWali />
-      )}
-
+      {/* How To Order */}
       {home.sections.howToOrder && home.howToOrderSection.enabled && (
         <HowToOrder />
       )}
 
+      {/* CTA Section */}
       {home.sections.cta && home.ctaSection.enabled && (
         <CtaSection />
       )}
 
+      {/* FAQ */}
       {home.sections.faq && home.faqSection.enabled && (
         <Faq />
       )}
 
       <Footer />
-
       <SectionNav />
-
-      {/* SEO meta — read by app/layout.tsx via cookies? fallback below */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "WebSite",
-            name: home.seo.metaTitle,
-            description: home.seo.metaDescription,
-          }),
-        }}
-      />
     </main>
   );
 }

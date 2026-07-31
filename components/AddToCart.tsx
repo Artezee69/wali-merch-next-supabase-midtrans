@@ -4,11 +4,11 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ShoppingBag, Check, Minus, Plus, Sparkles } from "lucide-react";
 import { rupiah } from "@/lib/format";
-import { useCartContext } from "@/components/CartProvider";
+import type { AddToCartInput } from "@/components/CartProvider";
 
 type Variant = {
   id: string;
-  /** option_1_value or option_2_value — whichever maps to the grouping dimension */
+  /** option_1_value or option_2_value */
   option1: string | null;
   option2: string | null;
   /** legacy color field, used as fallback when option1 is just "Default" */
@@ -16,7 +16,7 @@ type Variant = {
   stock: number;
 };
 
-type AddToCartBoxProps = {
+type AddToCartFormProps = {
   productId: string;
   name: string;
   slug: string;
@@ -27,9 +27,10 @@ type AddToCartBoxProps = {
   /** label for the second option column — comes from option_2_name */
   option2Label?: string;
   variants: Variant[];
+  addItem: (item: AddToCartInput) => Promise<boolean>;
 };
 
-export default function AddToCartBox({
+export default function AddToCartForm({
   productId,
   name,
   slug,
@@ -38,26 +39,27 @@ export default function AddToCartBox({
   option1Label,
   option2Label,
   variants,
-}: AddToCartBoxProps) {
-  const { addItem } = useCartContext();
-
+  addItem,
+}: AddToCartFormProps) {
   const label1 = option1Label || "Option 1";
   const label2 = option2Label || "Option 2";
 
-  // --- Smart auto-detect: does this product use 2-group or 1-group variants? ---
-  // If every variant has option1 === "Default", treat it as 1-group (show only option2).
-  // Otherwise treat it as 2-group (show option1 as first selector).
-  const allDefaultOpt1 = variants.every((v) => v.option1 === "Default" || v.option1 === "");
-  const isOneGroup = allDefaultOpt1;
+  // Check if any variant has a non-null, non-empty option2 value (true size/dimension exists)
+  const hasRealOption2 = variants.some((v) => v.option2 && v.option2 !== "");
 
-  // Effective option1 value for a variant (use legacyColor if option1 is useless)
+  // Determine if we need two-dimensional selection (has meaningful option1 AND option2)
+  const usesTwoDimensionalSelection = hasRealOption2 &&
+    variants.some((v) => v.option1 && v.option1 !== "" && v.option1 !== "Default");
+
+  // Effective option1 value for a variant (use option1 if meaningful, fallback to legacyColor or empty)
   const effectiveOpt1 = (v: Variant) => {
-    if (v.option1 && v.option1 !== "Default") return v.option1;
-    return v.legacyColor || "Default";
+    if (v.option1 && v.option1 !== "" && v.option1 !== "Default") return v.option1;
+    return v.legacyColor || "";
   };
 
+  // Initial state: for one-group or no meaningful option1, use the first variant's values
   const [selectedOpt1, setSelectedOpt1] = useState(
-    isOneGroup ? (variants[0]?.legacyColor || "Default") : (variants[0]?.option1 || "")
+    usesTwoDimensionalSelection ? (variants[0]?.option1 || "") : (variants[0]?.legacyColor || variants[0]?.option1 || "")
   );
   const [selectedOpt2, setSelectedOpt2] = useState("");
   const [quantity, setQuantity] = useState(1);
@@ -65,35 +67,51 @@ export default function AddToCartBox({
   const [submitting, setSubmitting] = useState(false);
 
   // --- Derived data ---
+  // Only show option1 selector when we have a two-dimensional structure with multiple option1 values
   const opt1Options = useMemo(() => {
-    if (isOneGroup) return [];
-    const unique = Array.from(
-      new Set(variants.map((v) => effectiveOpt1(v)).filter(Boolean))
-    );
+    if (!usesTwoDimensionalSelection) return [];
+    const unique = Array.from(new Set(variants.map((v) => effectiveOpt1(v)).filter((v) => v && v !== "")));
     return unique as string[];
-  }, [variants, isOneGroup, effectiveOpt1]);
+  }, [variants, usesTwoDimensionalSelection, effectiveOpt1]);
 
+  // Filter variants based on selected option1 (only applies in two-dimensional mode)
   const filteredVariants = useMemo(() => {
-    if (isOneGroup) return variants;
+    if (!usesTwoDimensionalSelection) return variants;
     return variants.filter((v) => effectiveOpt1(v) === selectedOpt1);
-  }, [variants, isOneGroup, selectedOpt1, effectiveOpt1]);
+  }, [variants, usesTwoDimensionalSelection, selectedOpt1, effectiveOpt1]);
 
+  // Get available option2 (size) values from filtered variants
   const opt2Options = useMemo(() => {
+    if (!hasRealOption2) return [];
     const vals = Array.from(new Set(filteredVariants.map((v) => v.option2))).filter(Boolean) as string[];
-    // Sort sizes logically: M < L < XL < XXL < XXXL
+    // Sort sizes logically: M < L < XL < XXL < XXXL < XXXXL < XXXXXL
     const order: Record<string, number> = {
       XS: 1, S: 2, M: 3, L: 4, XL: 5, XXL: 6, XXXL: 7, XXXXL: 8, XXXXXL: 9,
     };
     vals.sort((a, b) => (order[a] ?? a.length * 100) - (order[b] ?? b.length * 100));
     return vals;
-  }, [filteredVariants]);
+  }, [filteredVariants, hasRealOption2, usesTwoDimensionalSelection]);
 
+  // Select the variant based on current selections
   const selectedVariant = useMemo(() => {
+    if (!hasRealOption2) {
+      // Product truly has no size dimension — use the first variant directly
+      return variants[0] || null;
+    }
+    if (!usesTwoDimensionalSelection) {
+      // Has option2 but no meaningful option1 — treat as single-dimension with only size selector
+      return filteredVariants.find((v) => v.option2 === selectedOpt2) || variants[0] || null;
+    }
+    // Two-dimensional product: need both option1 and option2 selected
     if (!selectedOpt2) return null;
     return filteredVariants.find((v) => v.option2 === selectedOpt2);
-  }, [filteredVariants, selectedOpt2]);
+  }, [filteredVariants, selectedOpt2, hasRealOption2, usesTwoDimensionalSelection, variants]);
 
-  const maxStock = Number(selectedVariant?.stock || 0);
+  // Calculate stock availability
+  const maxStock = usesTwoDimensionalSelection
+    ? Number(selectedVariant?.stock || 0)
+    : Number(variants[0]?.stock || 0);
+
   const isSoldOut = maxStock <= 0;
   const allSoldOut = filteredVariants.length > 0 && filteredVariants.every((v) => Number(v.stock || 0) <= 0);
 
@@ -113,17 +131,23 @@ export default function AddToCartBox({
 
   // --- Submit ---
   async function addToCart() {
-    if (!selectedVariant || isSoldOut) return;
     if (submitting) return;
+
+    // Validate we have a valid selected variant
+    if (!selectedVariant) return;
+    if (isSoldOut) return;
 
     setSubmitting(true);
     try {
+      // For single-dimension products (no size), send empty string for size field
+      const sizeToSend = !hasRealOption2 ? "" : (selectedVariant.option2 || "");
+
       const success = await addItem({
         product_id: productId,
         variant_id: selectedVariant.id,
         name,
         slug,
-        size: selectedVariant.option2!,
+        size: sizeToSend,
         image_url: image,
         price,
         quantity,
@@ -138,7 +162,7 @@ export default function AddToCartBox({
     }
   }
 
-  // --- Sold Out state ---
+  // --- Sold Out state (all variants sold out) ---
   if (allSoldOut) {
     return (
       <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.02] p-6 backdrop-blur-md">
@@ -163,8 +187,8 @@ export default function AddToCartBox({
   // --- Render ---
   return (
     <div className="space-y-5">
-      {/* Option 1 — only shown when it has meaningful (non-Default) values */}
-      {!isOneGroup && opt1Options.length > 1 ? (
+      {/* Option 1 selector — only shown for two-dimensional products with multiple option1 values */}
+      {usesTwoDimensionalSelection && opt1Options.length > 1 && (
         <div>
           <div className="mb-3 flex items-center justify-between">
             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50">
@@ -192,63 +216,64 @@ export default function AddToCartBox({
             })}
           </div>
         </div>
-      ) : !isOneGroup && opt1Options.length === 1 ? (
-        /* Only 1 option1 value — hide the selector, just show value */
+      )}
+
+      {/* Single option1 value display (when only 1 option1 exists) */}
+      {usesTwoDimensionalSelection && opt1Options.length === 1 && (
         <div className="text-xs text-white/50">{label1}: {opt1Options[0]}</div>
-      ) : null}
+      )}
 
-      {/* Option 2 — always shown */}
-      <div>
-        <div className="mb-3 flex items-center justify-between">
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50">
-            {label2}
-          </p>
-          <Link
-            href="#size-guide"
-            className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40 transition hover:text-[#d7ff53]"
-          >
-            Size Guide →
-          </Link>
-        </div>
-        {opt2Options.length > 0 ? (
-          <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
-            {opt2Options.map((val) => {
-              const variant = filteredVariants.find((v) => v.option2 === val);
-              const stock = variant ? Number(variant.stock || 0) : 0;
-              const isOut = stock <= 0;
-              const isActive = selectedOpt2 === val;
-              return (
-                <button
-                  key={val}
-                  type="button"
-                  disabled={isOut}
-                  onClick={() => chooseOpt2(val)}
-                  className={`relative overflow-hidden rounded-xl border px-3 py-3 text-sm font-black transition-all duration-300 ${
-                    isActive
-                      ? "border-[#d7ff53] bg-[#d7ff53] text-black"
-                      : isOut
-                      ? "cursor-not-allowed border-white/5 bg-white/[0.02] text-white/25 line-through"
-                      : "border-white/10 bg-white/5 text-white hover:border-white/30"
-                  }`}
-                >
-                  {val}
-                </button>
-              );
-            })}
+      {/* Option 2 (size) selector — only shown when product has real size options */}
+      {hasRealOption2 && (
+        <div>
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50">
+              {label2}
+            </p>
+            <Link
+              href="#size-guide"
+              className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40 transition hover:text-[#d7ff53]"
+            >
+              Size Guide →
+            </Link>
           </div>
-        ) : (
-          <p className="py-3 text-center text-sm text-white/40">
-            Tidak ada pilihan yang tersedia.
-          </p>
-        )}
-      </div>
+          {opt2Options.length > 0 ? (
+            <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
+              {opt2Options.map((val) => {
+                const variant = filteredVariants.find((v) => v.option2 === val);
+                const stock = variant ? Number(variant.stock || 0) : 0;
+                const isOut = stock <= 0;
+                const isActive = selectedOpt2 === val;
+                return (
+                  <button
+                    key={val}
+                    type="button"
+                    disabled={isOut}
+                    onClick={() => chooseOpt2(val)}
+                    className={`relative overflow-hidden rounded-xl border px-3 py-3 text-sm font-black transition-all duration-300 ${
+                      isActive
+                        ? "border-[#d7ff53] bg-[#d7ff53] text-black"
+                        : isOut
+                          ? "cursor-not-allowed border-white/5 bg-white/[0.02] text-white/25 line-through"
+                          : "border-white/10 bg-white/5 text-white hover:border-white/30"
+                    }`}
+                  >
+                    {val}
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="py-3 text-center text-sm text-white/40">
+              Tidak ada pilihan yang tersedia.
+            </p>
+          )}
+        </div>
+      )}
 
-      {/* Quantity */}
-      {selectedOpt2 && (
-        <div
-          className="flex items-center justify-between"
-          style={{ animation: "fade-in 400ms ease-out" }}
-        >
+      {/* Quantity selector — shown when we can make a selection */}
+      {(!hasRealOption2 || selectedOpt2) && (
+        <div className="flex items-center justify-between" style={{ animation: "fade-in 400ms ease-out" }}>
           <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50">
             Quantity
           </p>
@@ -278,7 +303,7 @@ export default function AddToCartBox({
         </div>
       )}
 
-      {/* Price & CTA */}
+      {/* Price & CTA button */}
       <div className="rounded-3xl border border-white/10 bg-white/[0.02] p-5 backdrop-blur-md">
         <div className="flex items-baseline justify-between gap-3">
           <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50">
@@ -297,13 +322,13 @@ export default function AddToCartBox({
         <button
           type="button"
           onClick={addToCart}
-          disabled={!selectedOpt2 || isSoldOut || submitting}
+          disabled={!selectedVariant || isSoldOut || submitting}
           className={`group relative mt-5 inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-full px-6 py-4 text-sm font-black uppercase tracking-[0.2em] transition-all duration-500 ${
             added
               ? "bg-white text-black"
-              : !selectedOpt2 || isSoldOut || submitting
-              ? "cursor-not-allowed bg-white/5 text-white/30"
-              : "bg-[#d7ff53] text-black hover:shadow-[0_0_50px_-8px_rgba(215,255,83,0.5)]"
+              : (!selectedVariant || isSoldOut || submitting)
+                ? "cursor-not-allowed bg-white/5 text-white/30"
+                : "bg-[#d7ff53] text-black hover:shadow-[0_0_50px_-8px_rgba(215,255,83,0.5)]"
           }`}
         >
           {!added && (

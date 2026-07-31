@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="bg3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a3300"/>
+      <stop offset="100%" stop-color="#0b0b0b"/>
+    </linearGradient>
+    <radialGradient id="glow3" cx="80%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#d7ff53" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#d7ff53" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glowText3" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Base -->
+  <rect width="800" height="400" fill="url(#bg3)"/>
+  <rect width="800" height="400" fill="url(#glow3)"/>
+
+  <!-- Diagonal stripes -->
+  <g stroke="#d7ff53" stroke-width="1" opacity="0.15">
+    <line x1="-100" y1="100" x2="900" y2="100"/>
+    <line x1="-100" y1="150" x2="900" y2="150"/>
+    <line x1="-100" y1="250" x2="900" y2="250"/>
+    <line x1="-100" y1="300" x2="900" y2="300"/>
+  </g>
+
+  <!-- Diagonal lines -->
+  <g stroke="#d7ff53" stroke-width="1" opacity="0.3">
+    <line x1="500" y1="0" x2="800" y2="200"/>
+    <line x1="600" y1="0" x2="900" y2="200"/>
+  </g>
+
+  <!-- Star sparkles -->
+  <g fill="#d7ff53">
+    <circle cx="100" cy="80" r="2"/>
+    <circle cx="200" cy="50" r="1.5"/>
+    <circle cx="50" cy="180" r="1.5"/>
+    <circle cx="650" cy="100" r="2"/>
+    <circle cx="730" cy="60" r="1.5"/>
+  </g>
+
+  <!-- Eyebrow tag -->
+  <g transform="translate(50, 80)">
+    <rect x="0" y="0" width="180" height="34" rx="17" fill="none" stroke="#d7ff53" stroke-width="2"/>
+    <text x="90" y="22" font-family="'Courier New', monospace" font-weight="700" font-size="12" fill="#d7ff53" text-anchor="middle" letter-spacing="3">⚡ FLASH SALE</text>
+  </g>
+
+  <!-- Main text -->
+  <g font-family="Impact, 'Arial Black', sans-serif" font-weight="900">
+    <text x="50" y="200" font-size="86" fill="#ffffff" letter-spacing="-2">UP TO</text>
+    <text x="50" y="295" font-size="120" fill="#d7ff53" letter-spacing="-3" filter="url(#glowText3)">50% OFF</text>
+  </g>
+
+  <!-- Subtitle -->
+  <text x="50" y="335" font-family="'Helvetica', sans-serif" font-weight="400" font-size="14" fill="#ffffff" opacity="0.65" letter-spacing="1">Hanya untuk waktu terbatas — buruan checkout!</text>
+
+  <!-- Bottom CTA arrow -->
+  <g transform="translate(50, 360)">
+    <text x="0" y="20" font-family="'Arial Black', sans-serif" font-weight="900" font-size="14" fill="#d7ff53" letter-spacing="3">AMBIL PROMO</text>
+    <text x="140" y="22" font-family="'Arial Black', sans-serif" font-weight="900" font-size="16" fill="#d7ff53">→</text>
+  </g>
+
+  <!-- Big % watermark -->
+  <text x="720" y="320" font-family="Impact, 'Arial Black', sans-serif" font-weight="900" font-size="220" fill="#d7ff53" opacity="0.1" text-anchor="end">%</text>
+</svg>

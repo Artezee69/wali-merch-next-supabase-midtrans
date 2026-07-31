@@ -126,31 +126,24 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#0b0b0b] px-4 py-12">
+    <main className="min-h-screen bg-[#0b0b0b] text-white dark:bg-[#0b0b0b] dark:text-gray-100 px-4 py-12">
       <div className="mx-auto max-w-md space-y-6">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-sm text-white/60 transition hover:text-white"
-        >
-          <ArrowLeft size={14} />
-          Kembali ke Beranda
-        </Link>
-
         <div className="text-center">
-          <h1 className="text-2xl font-black tracking-[0.25em] text-white">WALI</h1>
-          <p className="mt-2 text-sm text-white/50">Masuk ke akun Anda</p>
+          <h1 className="text-2xl font-black tracking-[0.25em] text-white dark:text-white">WALI</h1>
+          <p className="mt-2 text-sm text-white/60 dark:text-gray-400">Masuk ke akun Anda</p>
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 md:p-8">
+        <div className="rounded-2xl border border-white/10 dark:border-white/10 bg-white/[0.04] dark:bg-white/[0.04] p-6 md:p-8">
+          {/* Moved back button to bottom */}
           {error && (
-            <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+            <div className="mb-4 rounded-xl border border-red-500/30 dark:border-red-500/50 bg-red-500/10 dark:bg-red-900/20 px-4 py-3 text-sm text-red-600 dark:text-red-300">
               {error}
             </div>
           )}
 
           <form onSubmit={handleLogin} className="space-y-4" noValidate>
             <div>
-              <label htmlFor="email" className="mb-1.5 block text-sm font-semibold text-white/80">
+              <label htmlFor="email" className="mb-1.5 block text-sm font-semibold text-white/80 dark:text-gray-300">
                 Email
               </label>
               <input
@@ -159,14 +152,14 @@ export default function LoginPage() {
                 autoComplete="email"
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); setError(""); }}
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/30 outline-none transition focus:border-[#d7ff53] focus:ring-1 focus:ring-[#d7ff53]/30"
+                className="w-full rounded-xl border border-white/15 dark:border-white/20 bg-black/40 dark:bg-black/40 px-4 py-3 text-white dark:text-gray-100 placeholder-white/30 dark:placeholder-gray-500 outline-none transition focus:border-[#d7ff53] focus:ring-1 focus:ring-[#d7ff53]/30"
                 placeholder="nama@email.com"
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="mb-1.5 block text-sm font-semibold text-white/80">
+              <label htmlFor="password" className="mb-1.5 block text-sm font-semibold text-white/80 dark:text-gray-300">
                 Kata Sandi
               </label>
               <div className="relative">
@@ -176,14 +169,14 @@ export default function LoginPage() {
                   autoComplete="current-password"
                   value={password}
                   onChange={(e) => { setPassword(e.target.value); validatePassword(); setError(""); }}
-                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 pr-12 text-sm text-white placeholder-white/30 outline-none transition focus:border-[#d7ff53] focus:ring-1 focus:ring-[#d7ff53]/30"
+                  className="w-full rounded-xl border border-white/15 dark:border-white/20 bg-black/40 dark:bg-black/40 px-4 py-3 pr-12 text-white dark:text-gray-100 placeholder-white/30 dark:placeholder-gray-500 outline-none transition focus:border-[#d7ff53] focus:ring-1 focus:ring-[#d7ff53]/30"
                   placeholder="Minimal 8 karakter"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 transition hover:text-white/70"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 dark:text-gray-400 transition hover:text-[#d7ff53]"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
@@ -194,7 +187,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-xl bg-[#d7ff53] px-4 py-3 text-sm font-black text-black transition hover:bg-[#c7ef33] disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full rounded-xl bg-white dark:bg-white px-4 py-3 text-sm font-black text-black dark:text-gray-900 transition hover:bg-white/90 dark:hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -210,16 +203,26 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={handleForgotPassword}
-                className="text-xs text-white/50 underline transition hover:text-[#d7ff53]"
+                className="text-xs text-white/50 dark:text-gray-400 underline transition hover:text-[#d7ff53]"
               >
                 Lupa Kata Sandi?
               </button>
             </div>
+
+            <div className="mt-6 border-t border-white/10 dark:border-white/10 pt-4">
+              <Link
+                href="/"
+                className="inline-flex items-center gap-2 text-sm text-white/60 dark:text-gray-400 transition hover:text-[#d7ff53]"
+              >
+                <ArrowLeft size={14} />
+                Kembali
+              </Link>
+            </div>
           </form>
 
-          <div className="mt-6 border-t border-white/10 pt-4 text-center text-sm text-white/50">
+          <div className="mt-6 border-t border-white/10 dark:border-white/10 pt-4 text-center text-sm text-white/60 dark:text-gray-400">
             Belum punya akun?{" "}
-            <Link href="/register" className="font-bold text-[#d7ff53] underline">
+            <Link href="/register" className="font-bold text-[#d7ff53] dark:text-[#d7ff53] underline">
               Daftar sekarang
             </Link>
           </div>

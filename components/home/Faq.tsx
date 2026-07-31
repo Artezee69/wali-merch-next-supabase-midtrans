@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Minus, HelpCircle, MessageCircle, Sparkles } from "lucide-react";
+import { ChevronDown, ChevronUp, HelpCircle, MessageCircle, Sparkles } from "lucide-react";
 import Reveal from "./Reveal";
 import { useT } from "../LocaleProvider";
 
@@ -25,7 +25,7 @@ export default function Faq() {
       <div className="mx-auto max-w-4xl">
         {/* Header */}
         <Reveal className="text-center">
-          <span className="inline-flex items-center gap-2 rounded-full border border-[#d7ff53]/20 bg-[#d7ff53]/5 px-3 py-1 text-[10px] font-black uppercase tracking-[0.3em] text-[#d7ff53]">
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.3em] text-white/80">
             <HelpCircle className="h-3 w-3" />
             {t.home.faq.badge}
           </span>
@@ -47,7 +47,7 @@ export default function Faq() {
                   className={`group relative overflow-hidden rounded-2xl border transition-all duration-500 ${
                     isOpen
                       ? "border-[#d7ff53]/30 bg-gradient-to-b from-white/[0.05] to-white/[0.01] shadow-[0_0_30px_-15px_rgba(215,255,83,0.4)]"
-                      : "border-white/10 bg-white/[0.02] hover:border-white/20"
+                      : "border-white/10 bg-black/30 hover:border-white/20"
                   }`}
                 >
                   {/* Open glow */}
@@ -80,14 +80,14 @@ export default function Faq() {
                     <div
                       className={`relative flex h-9 w-9 flex-none items-center justify-center rounded-full border transition-all duration-500 ${
                         isOpen
-                          ? "rotate-180 border-[#d7ff53]/40 bg-[#d7ff53]/15"
-                          : "border-white/15 bg-white/5"
+                          ? "border-[#d7ff53]/40 bg-[#d7ff53]/15"
+                          : "border-white/15 bg-black/50"
                       }`}
                     >
                       {isOpen ? (
-                        <Minus className="h-4 w-4 text-[#d7ff53]" />
+                        <ChevronUp className="h-4 w-4 text-[#d7ff53]" />
                       ) : (
-                        <Plus className="h-4 w-4 text-white/70" />
+                        <ChevronDown className="h-4 w-4 text-white/70" />
                       )}
                     </div>
                   </button>
@@ -120,7 +120,7 @@ export default function Faq() {
             href="https://wa.me/6281234567890"
             target="_blank"
             rel="noopener noreferrer"
-            className="group inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-5 py-3 text-xs font-black uppercase tracking-[0.2em] text-white/70 transition-all duration-500 hover:border-[#d7ff53]/40 hover:bg-[#d7ff53]/5 hover:text-white"
+            className="group inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/30 px-5 py-3 text-xs font-black uppercase tracking-[0.2em] text-white/70 transition-all duration-500 hover:border-[#d7ff53]/40 hover:bg-[#d7ff53]/5 hover:text-white"
           >
             <Sparkles className="h-3.5 w-3.5 text-[#d7ff53]" />
             Tanya langsung via WhatsApp

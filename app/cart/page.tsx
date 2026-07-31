@@ -43,7 +43,7 @@ export default function CartPage() {
   const cartCopy: CartCopy = useT().cart;
 
   const [products, setProducts] = useState<Record<string, ProductMeta>>({});
-  const [variants, setVariants] = useState<Record<string, { size: string | null; stock: number | null }>>({});
+  const [variants, setVariants] = useState<Record<string, { size?: string | null; option1Name?: string | null; option1Value?: string | null; option2Name?: string | null; option2Value?: string | null; stock?: number | null; sku?: string | null }>>({});
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
 
@@ -83,7 +83,7 @@ export default function CartPage() {
             .in("id", productIds),
           supabasePublic
             .from("product_variants")
-            .select("id, size, stock")
+            .select("id, option_1_name, option_1_value, option_2_name, option_2_value, stock, sku")
             .in("id", variantIds),
         ]);
 
@@ -104,9 +104,23 @@ export default function CartPage() {
         });
         setProducts(next);
 
-        const nextVars: Record<string, { size: string | null; stock: number | null }> = {};
+        const nextVars: Record<string, {
+          option1Name: string | null;
+          option1Value: string | null;
+          option2Name: string | null;
+          option2Value: string | null;
+          stock: number | null;
+          sku: string | null;
+        }> = {};
         (vars ?? []).forEach((v: any) => {
-          nextVars[v.id] = { size: v.size ?? null, stock: v.stock ?? null };
+          nextVars[v.id] = {
+            option1Name: v.option_1_name ?? null,
+            option1Value: v.option_1_value ?? null,
+            option2Name: v.option_2_name ?? null,
+            option2Value: v.option_2_value ?? null,
+            stock: v.stock ?? null,
+            sku: v.sku ?? null,
+          };
         });
         setVariants(nextVars);
       } catch (err) {
@@ -170,9 +184,9 @@ export default function CartPage() {
     return (
       <>
         <Navbar />
-        <main className="min-h-screen bg-[#0b0b0b] px-4 py-16">
+        <main className="min-h-screen bg-gray-900 text-gray-300 dark:bg-black dark:text-gray-200 px-4 py-16">
           <div className="mx-auto max-w-3xl">
-            <p className="flex items-center gap-3 text-white/60">
+            <p className="flex items-center gap-3 text-gray-600 dark:text-gray-400">
               <Loader2 className="h-5 w-5 animate-spin" /> Memuat...
             </p>
           </div>
@@ -188,16 +202,16 @@ export default function CartPage() {
     return (
       <>
         <Navbar />
-        <main className="min-h-screen bg-[#0b0b0b] px-4 py-16">
+        <main className="min-h-screen bg-gray-900 text-gray-300 dark:bg-black dark:text-gray-200 px-4 py-16">
           <div className="mx-auto max-w-3xl space-y-6 text-center">
-            <ShoppingCart size={56} className="mx-auto text-white/20" />
-            <h1 className="text-2xl font-black tracking-wide text-white">
+            <ShoppingCart size={56} className="mx-auto text-gray-300 dark:text-gray-600" />
+            <h1 className="text-2xl font-black tracking-wide text-gray-900 dark:text-gray-100">
               Keranjang
             </h1>
-            <p className="text-base text-white/70">
+            <p className="text-base text-gray-600 dark:text-gray-400">
               Keranjang hanya tersedia untuk customer yang sudah login.
             </p>
-            <p className="text-sm text-white/50">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               Silakan login atau daftar terlebih dahulu untuk mulai belanja.
             </p>
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -233,54 +247,51 @@ export default function CartPage() {
   return (
     <>
       <Navbar />
-      <main className="min-h-screen bg-[#0b0b0b] px-4 py-16">
+      <main className="min-h-screen bg-gray-900 text-gray-300 dark:bg-black dark:text-gray-200 px-4 py-16">
         <div className="mx-auto max-w-3xl space-y-6">
           {toast && (
             <div
               className={`rounded-xl border px-4 py-3 text-sm ${
                 toast.type === "success"
-                  ? "border-green-500/30 bg-green-500/10 text-green-400"
-                  : "border-red-500/30 bg-red-500/10 text-red-400"
+                  ? "border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400"
+                  : "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-400"
               }`}
             >
               {toast.msg}
             </div>
           )}
 
-          <div className="flex items-end justify-between gap-3">
-            <h1 className="text-2xl font-black tracking-wide text-white">
+          <div>
+            <h1 className="text-2xl font-black tracking-wide text-gray-900 dark:text-gray-100">
               {cartCopy.title}
             </h1>
-            {items.length > 0 && (
-              <button
-                type="button"
-                onClick={() => clearCart()}
-                className="text-xs font-bold uppercase tracking-wider text-white/40 transition hover:text-red-400"
-              >
-                {cartCopy.empty}
-              </button>
-            )}
           </div>
 
           {cartLoading ? (
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-12 text-center">
-              <p className="flex items-center justify-center gap-3 text-white/60">
-                <Loader2 className="h-5 w-5 animate-spin" /> Memuat keranjang...
+            <div className="rounded-2xl border border-black/20 dark:border-white/10 bg-gray-50 dark:bg-gray-800/30 p-12 text-center">
+              <p className="flex items-center justify-center gap-3 text-gray-500 dark:text-gray-400">
+                <Loader2 className="h-5 w-5 animate-spin text-gray-500 dark:text-gray-400" /> Memuat keranjang...
               </p>
             </div>
           ) : items.length === 0 ? (
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-12 text-center">
-              <ShoppingCart size={48} className="mx-auto mb-4 text-white/20" />
-              <h2 className="text-lg font-bold text-white/70">Keranjang Kosong</h2>
-              <p className="mt-2 text-sm text-white/40">
-                Belum ada produk di keranjang
-              </p>
-              <button
-                onClick={() => router.push("/products")}
-                className="mt-4 rounded-xl bg-[#d7ff53] px-6 py-3 text-sm font-bold text-black transition hover:bg-[#c7ef33]"
-              >
-                Lihat Produk
-              </button>
+            <div className="rounded-2xl border border-black/20 dark:border-white/10 bg-gray-50 dark:bg-gray-800/30 p-12 text-center">
+              <div className="space-y-4">
+                <ShoppingCart size={48} className="mx-auto mb-4 text-gray-500 dark:text-gray-400" />
+                <div className="bg-green-600/10 dark:bg-green-900/20 rounded-xl px-4 py-3 border border-green-600/20 dark:border-green-900/30">
+                  <p className="text-sm text-green-700 dark:text-green-400 font-bold">
+                    Keranjangmu masih kosong 😊
+                  </p>
+                  <p className="text-xs text-green-600 dark:text-green-500 mt-1">
+                    Yuk mulai belanja sekarang!
+                  </p>
+                </div>
+                <button
+                  onClick={() => router.push("/products")}
+                  className="mt-4 rounded-xl bg-green-600 dark:bg-green-500 px-6 py-3 text-sm font-bold text-white transition hover:bg-green-700 dark:hover:bg-green-500/90"
+                >
+                  Lihat Produk
+                </button>
+              </div>
             </div>
           ) : (
             <>
@@ -288,18 +299,16 @@ export default function CartPage() {
                 {items.map((item) => {
                   const meta = products[item.product_id];
                   const variant = variants[item.variant_id];
-                  const imageSrc = meta?.image_url
-                    ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/products${meta.image_url}`
-                    : "";
+                  const imageSrc = meta?.image_url;
                   const stock = variant?.stock ?? null;
 
                   return (
                     <div
                       key={item.id}
-                      className="rounded-2xl border border-white/10 bg-white/5 p-4"
+                      className="rounded-2xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-gray-800/30 p-4"
                     >
                       <div className="flex gap-4">
-                        <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-white/10">
+                        <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-700/50">
                           {imageSrc ? (
                             <Image
                               src={imageSrc}
@@ -311,29 +320,38 @@ export default function CartPage() {
                               }}
                             />
                           ) : (
-                            <div className="flex h-full w-full items-center justify-center text-xs text-white/30">
+                            <div className="flex h-full w-full items-center justify-center text-xs text-gray-400 dark:text-gray-500">
                               No Image
                             </div>
                           )}
                         </div>
                         <div className="flex-1">
-                          <h3 className="text-sm font-bold text-white">
+                          <h3 className="text-sm font-bold text-gray-900 dark:text-white">
                             {meta?.name || item.name || "Produk"}
                           </h3>
-                          <p className="text-xs text-white/40">
-                            {variant?.size || item.size || "-"}
-                          </p>
+                          <div className="text-xs text-gray-600 dark:text-gray-400">
+                            {variant ? (
+                              <span>
+                                {[
+                                  variant.option1Name ? `${variant.option1Name}: ${variant.option1Value}` : undefined,
+                                  variant.option2Name ? `${variant.option2Name}: ${variant.option2Value}` : undefined,
+                                ].filter(Boolean).join(", ") || "-"}
+                              </span>
+                            ) : (
+                              item.size?.trim() ? item.size.trim() : "-"
+                            )}
+                          </div>
                           {meta && !meta.is_active && (
-                            <p className="mt-1 text-xs text-red-400">
+                            <p className="mt-1 text-xs text-red-600 dark:text-red-300">
                               Produk tidak aktif
                             </p>
                           )}
                           {stock !== null && item.quantity > stock && (
-                            <p className="mt-1 text-xs text-yellow-400">
+                            <p className="mt-1 text-xs text-yellow-700 dark:text-yellow-400">
                               Stok tersisa {stock}
                             </p>
                           )}
-                          <p className="mt-1 text-sm font-bold text-[#d7ff53]">
+                          <p className="mt-1 text-sm font-bold text-green-700 dark:text-green-400">
                             {formatPrice(item.price)}
                           </p>
                         </div>
@@ -346,11 +364,11 @@ export default function CartPage() {
                               disabled={
                                 item.quantity <= 1 || !!actionLoading
                               }
-                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 text-white/60 transition hover:border-[#d7ff53]/50 hover:text-[#d7ff53] disabled:opacity-30"
+                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 dark:border-white/20 text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/30 transition hover:border-green-600 dark:hover:border-green-500 hover:text-green-700 dark:hover:text-green-400 disabled:opacity-30"
                             >
                               <Minus size={14} />
                             </button>
-                            <span className="w-8 text-center text-sm font-bold text-white">
+                            <span className="w-8 text-center text-sm font-bold text-gray-900 dark:text-white">
                               {item.quantity}
                             </span>
                             <button
@@ -361,7 +379,7 @@ export default function CartPage() {
                                 !!actionLoading ||
                                 (stock !== null && item.quantity >= stock)
                               }
-                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 text-white/60 transition hover:border-[#d7ff53]/50 hover:text-[#d7ff53] disabled:opacity-30"
+                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 dark:border-white/20 text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/30 transition hover:border-green-600 dark:hover:border-green-500 hover:text-green-700 dark:hover:text-green-400 disabled:opacity-30"
                             >
                               <Plus size={14} />
                             </button>
@@ -369,7 +387,7 @@ export default function CartPage() {
                           <button
                             onClick={() => handleRemove(item.id)}
                             disabled={!!actionLoading}
-                            className="rounded-lg p-1.5 text-red-400/60 transition hover:bg-red-500/10 hover:text-red-400 disabled:opacity-30"
+                            className="rounded-lg p-1.5 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 transition hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-700 dark:hover:text-red-300 disabled:opacity-30"
                             aria-label="Hapus item"
                           >
                             <Trash2 size={14} />
@@ -381,16 +399,16 @@ export default function CartPage() {
                 })}
               </div>
 
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-                <div className="mb-4 flex justify-between text-sm text-white/60">
+              <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-gray-800/30 p-6">
+                <div className="mb-4 flex justify-between text-sm text-gray-600 dark:text-gray-400">
                   <span>
-                    Subtotal ({items.reduce((s, i) => s + i.quantity, 0)} item)
+                    Subtotal ({items.reduce((s, i) => s + i.quantity, 0)} item{items.length !== 1 ? 's' : ''})
                   </span>
-                  <span className="text-white">{formatPrice(subtotal)}</span>
+                  <span className="text-gray-900 dark:text-white font-bold">{formatPrice(subtotal)}</span>
                 </div>
                 <button
                   onClick={() => router.push("/checkout")}
-                  className="w-full rounded-xl bg-[#d7ff53] py-3 text-sm font-black text-black transition hover:bg-[#c7ef33]"
+                  className="w-full rounded-xl bg-green-600 dark:bg-green-500 py-3 text-sm font-black text-white transition hover:bg-green-700 dark:hover:bg-green-500/90"
                 >
                   Checkout
                 </button>

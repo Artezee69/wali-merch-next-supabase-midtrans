@@ -95,10 +95,16 @@ export default function ProductShowcase({
     <section
       id="section-products"
       className="relative pt-20 pb-28 md:pt-28 md:pb-36"
-      style={{ backgroundColor }}
     >
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#0b0b0b] to-transparent" />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#0b0b0b] to-transparent" />
+      {/* Light/dark adaptive background. Dark mode uses admin-set color, light mode uses white. */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `:root.dark #section-products { background-color: ${backgroundColor}; }
+:root:not(.dark) #section-products { background-color: #ffffff; }`,
+        }}
+      />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-white to-transparent dark:from-[#0b0b0b]" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-white to-transparent dark:from-[#0b0b0b]" />
 
       <style
         dangerouslySetInnerHTML={{
@@ -115,7 +121,7 @@ export default function ProductShowcase({
         {/* — Section header — */}
         <div className="mb-8 md:mb-12">
           {description && (
-            <p className="text-[11px] text-white/40 md:text-sm">{description}</p>
+            <p className="text-[11px] text-gray-500 md:text-sm dark:text-white/40">{description}</p>
           )}
           <HeadingRotator />
         </div>
@@ -127,7 +133,7 @@ export default function ProductShowcase({
         <div className="mt-8 flex justify-center md:mt-10">
           <Link
             href={ctaUrl}
-            className="rounded-full border border-white/10 bg-white/[0.03] px-6 py-3 text-[11px] font-bold uppercase tracking-[0.2em] text-white/60 backdrop-blur transition-all duration-300 hover:border-[#d7ff53]/40 hover:bg-[#d7ff53]/10 hover:text-[#d7ff53]"
+            className="rounded-full border border-gray-300 bg-gray-100 px-6 py-3 text-[11px] font-bold uppercase tracking-[0.2em] text-gray-700 backdrop-blur transition-all duration-300 hover:border-[#d7ff53]/60 hover:bg-[#d7ff53]/10 hover:text-[#d7ff53] dark:border-white/10 dark:bg-white/[0.03] dark:text-white/60 dark:hover:border-[#d7ff53]/40 dark:hover:bg-[#d7ff53]/10 dark:hover:text-[#d7ff53]"
           >
             {ctaLabel}
           </Link>

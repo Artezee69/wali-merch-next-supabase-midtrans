@@ -153,7 +153,6 @@ export default function HeroAurora({ content, trustBadges, stats }: HeroAuroraPr
   }, []);
 
   // ── Content values (with fallbacks matching the reference screenshot) ─────
-  const badgeText = content.badge || "LIVE DROP 2026 ACTIVE";
   const subtitleText = content.subheadline || "";
   const primaryLabel = content.primaryCtaLabel || "KOLEKSI TOKO";
   const primaryHref = content.primaryCtaHref || "/products";
@@ -268,19 +267,6 @@ export default function HeroAurora({ content, trustBadges, stats }: HeroAuroraPr
           ═══════════════════════════════════════════════════════════════ */}
       <div className="relative z-10 flex min-h-[60vh] flex-col items-center justify-center md:min-h-[70vh]">
         <div className="mx-auto flex max-w-3xl flex-col items-center gap-5 px-4 md:gap-6 md:px-6">
-
-          {/* Badge pill */}
-          <div
-            className="relative inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.02] px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.3em] text-white/40"
-            style={{
-              animation: revealed
-                ? "logo-reveal 700ms cubic-bezier(0.16, 1, 0.3, 1) 0ms both"
-                : undefined,
-              opacity: revealed ? undefined : 0,
-            }}
-          >
-            <span className="relative">{badgeText}</span>
-          </div>
 
           {/* ── WALI Logo ── */}
           <div

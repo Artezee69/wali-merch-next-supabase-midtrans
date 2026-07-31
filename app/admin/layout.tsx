@@ -28,10 +28,12 @@ export const viewport: Viewport = {
   themeColor: "#0b0b0b",
 };
 
+import ClientLayout from "@/app/client-layout";
+
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return <ClientLayout>{children}</ClientLayout>;
 }

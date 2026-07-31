@@ -1,6 +1,5 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import PageHeader from "@/components/PageHeader";
 import ProductsExplorer, { Product } from "@/components/ProductsExplorer";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
@@ -8,7 +7,7 @@ const fallbackProducts: Product[] = [
   {
     id: "fallback-1",
     name: "WALI Player Edition T-Shirt",
-    slug: "wali-player-edition-tshirt",
+    slug: "fallback-wali-player",
     price: 199000,
     category: "T-Shirt",
     description: "Official merchandise WALI Player Edition regular fit.",
@@ -24,11 +23,13 @@ const fallbackProducts: Product[] = [
       { size: "L", stock: 10 },
       { size: "XL", stock: 5 },
     ],
+    soldCount: 142, // Contoh data penjualan
+    rating: { avg: 4.7, count: 28 }, // Contoh rating
   },
   {
     id: "fallback-2",
     name: "Regular Logo T-Shirt",
-    slug: "regular-logo-tshirt",
+    slug: "fallback-regular-logo",
     price: 159000,
     category: "T-Shirt",
     description: "Clean daily wear merchandise dengan desain minimal premium.",
@@ -43,11 +44,13 @@ const fallbackProducts: Product[] = [
       { size: "L", stock: 12 },
       { size: "XL", stock: 4 },
     ],
+    soldCount: 89,
+    rating: { avg: 4.5, count: 15 },
   },
   {
     id: "fallback-3",
     name: "Vintage Stage Series",
-    slug: "vintage-stage-series",
+    slug: "fallback-vintage-stage",
     price: 0,
     category: "Coming Soon",
     description: "Limited drop dengan vibe vintage stage culture.",
@@ -58,6 +61,8 @@ const fallbackProducts: Product[] = [
       },
     ],
     product_variants: [{ size: "Coming Soon", stock: 0 }],
+    soldCount: 0,
+    // rating omited for coming soon products (no reviews available)
   },
 ];
 
@@ -70,14 +75,33 @@ export default async function ProductsPage({
   const initialQuery = params?.q || "";
   const initialCategory = params?.category || "All";
 
-  const { data } = await supabaseAdmin
+  const { data: productsData } = await supabaseAdmin
     .from("products")
     .select("*, product_images(*), product_variants(*)")
     .eq("is_active", true)
     .order("created_at", { ascending: false });
 
-  const products: Product[] =
-    data && data.length > 0 ? (data as Product[]) : fallbackProducts;
+  // Fetch order_items to calculate sold quantities
+  const { data: orderItems } = await supabaseAdmin
+    .from("order_items")
+    .select("product_id, quantity");
+
+  // Compute total sold per product ID
+  const soldByProduct: Record<string, number> = {};
+  if (orderItems) {
+    orderItems.forEach(item => {
+      if (item.product_id && item.quantity !== undefined) {
+        soldByProduct[item.product_id] = (soldByProduct[item.product_id] || 0) + Number(item.quantity);
+      }
+    });
+  }
+
+  // Enrich products with soldCount
+  const products = (productsData ?? []).map((p: any) => ({
+    ...p,
+    soldCount: soldByProduct[p.id] || 0,
+    rating: null, // Placeholder - ratings will be added when reviews table exists
+  })) as Product[];
 
   const categories: string[] = [
     "All",
@@ -91,15 +115,8 @@ export default async function ProductsPage({
   ];
 
   return (
-    <main className="min-h-screen bg-[#0b0b0b] text-white">
+    <main className="min-h-screen bg-black text-white dark:bg-black dark:text-white">
       <Navbar />
-
-      <PageHeader
-        badge="Official Store"
-        title="Shop"
-        highlight="Collection"
-        description="Pilih merchandise resmi WALI dengan tampilan premium, stok size, detail produk, dan checkout yang simple."
-      />
 
       <ProductsExplorer
         products={products}

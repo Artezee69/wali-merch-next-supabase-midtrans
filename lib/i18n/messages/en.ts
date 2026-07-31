@@ -151,9 +151,9 @@ const en: Messages = {
       empty: "No products yet.",
     },
     cta: {
-      title: "Ready to wear the stage story?",
+      title: "Your Stage. Your Story.",
       subtitle:
-        "Join the WALI community. Each drop gets early access, member discounts, and behind-the-stage content.",
+        "Shop the official WALI marketplace. Premium stage merch, limited drops, and authentic pieces — all in one place.",
       primary: "Shop Collection",
       secondary: "Track Order",
     },

@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import Image from "next/image";
 import ProductImageGallery from "@/components/ProductImageGallery";
-import AddToCartBox from "@/components/AddToCart";
+import AddToCartBox from "@/components/AddToCartBox";
+import ProductCard from "@/components/ProductCard";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export const dynamic = "force-dynamic";
@@ -31,6 +33,8 @@ type Product = {
   slug: string;
   description: string | null;
   price: number;
+  base_price?: number | null;    // Harga asli (untuk diskon)
+  sale_price?: number | null;   // Harga diskon
   image_url: string | null;
   category: string | null;
   fit: string | null;
@@ -38,6 +42,11 @@ type Product = {
   is_active: boolean | null;
   product_images: ProductImage[] | null;
   product_variants: ProductVariant[] | null;
+  soldCount?: number;           // Jumlah terjual (opsional)
+  rating?: {                    // Rating ulasan (opsional)
+    avg: number;
+    count: number;
+  };
 };
 
 type PageProps = {
@@ -118,6 +127,14 @@ export default async function ProductDetailPage({ params }: PageProps) {
     0
   );
 
+  // Discount detection - determine effective price and discount info
+  const hasDiscount = Boolean(
+    product.base_price != null &&
+    product.sale_price != null &&
+    Number(product.sale_price) < Number(product.base_price)
+  );
+  const effectivePrice = hasDiscount ? Number(product.sale_price) : Number(product.price);
+
   const galleryImages =
     product.product_images && product.product_images.length > 0
       ? product.product_images
@@ -135,6 +152,37 @@ export default async function ProductDetailPage({ params }: PageProps) {
   const sortedGalleryImages = [...galleryImages].sort(
     (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
   );
+
+  // Fetch semua product lain (excl current) untuk catalog produk terkait
+  let relatedProducts: Product[] = [];
+  const { data: related, error: relatedError } = await supabaseAdmin
+    .from("products")
+    .select(
+      `
+      *,
+      product_images (
+        id,
+        product_id,
+        image_url,
+        sort_order
+      ),
+      product_variants (
+        id,
+        product_id,
+        color,
+        size,
+        option_1_name,
+        option_1_value,
+        option_2_name,
+        option_2_value,
+        stock
+      )
+    `
+    )
+    .neq("id", product.id);
+  if (!relatedError && related) {
+    relatedProducts = related as Product[];
+  }
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#050505] text-white">
@@ -189,9 +237,31 @@ export default async function ProductDetailPage({ params }: PageProps) {
           </h1>
 
           <div className="mt-7 flex flex-wrap items-center gap-3">
-            <span className="rounded-full bg-[#d7ff53] px-5 py-3 text-xl font-black text-black shadow-[0_0_24px_-6px_rgba(215,255,83,0.5)]">
-              {rupiah(Number(product.price || 0))}
-            </span>
+            {/* Price display with optional discount */}
+            {(product.base_price !== undefined && product.base_price != null &&
+                product.sale_price !== undefined &&
+                product.sale_price != null &&
+                Number(product.sale_price) < Number(product.base_price))
+              ? (
+                  <div className="flex items-baseline gap-2">
+                    {/* Original price (strikethrough) */}
+                    <span className="font-display text-base font-black text-gray-400 line-through">
+                      {rupiah(product.base_price)}
+                    </span>
+                    {/* Sale price prominent */}
+                    <span className="font-display text-lg font-black text-[#d7ff53] px-5 py-3 rounded-full shadow-[0_0_24px_-6px_rgba(215,255,83,0.5)] bg-[#d7ff53] text-black">
+                      {rupiah(product.sale_price)}
+                    </span>
+                    {/* Discount percentage badge */}
+                    <span className="text-sm font-bold bg-red-500/20 text-red-400 px-2 py-0.5 rounded">
+                      {Math.round(((Number(product.base_price) - Number(product.sale_price)) / Number(product.base_price)) * 100)}%
+                    </span>
+                  </div>
+              ) : (
+                <span className="rounded-full bg-[#d7ff53] px-5 py-3 text-xl font-black text-black shadow-[0_0_24px_-6px_rgba(215,255,83,0.5)]">
+                  {rupiah(Number(product.price))}
+                </span>
+              )}
 
             <span className="rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm font-black uppercase text-white backdrop-blur-sm">
               Stock: {totalStock} PCS
@@ -244,23 +314,47 @@ export default async function ProductDetailPage({ params }: PageProps) {
                   productId={product.id}
                   name={product.name}
                   slug={product.slug}
-                  price={Number(product.price || 0)}
+                  price={effectivePrice}
                   image={sortedGalleryImages[0]?.image_url || product.image_url || ""}
                   option1Label={sampleVariant?.option_1_name || "Color"}
                   option2Label={sampleVariant?.option_2_name || "Size"}
-                  variants={variants.map((variant) => ({
-                    id: variant.id,
-                    option1: variant.option_1_value || variant.color || null,
-                    option2: variant.option_2_value || variant.size || null,
-                    legacyColor: variant.color || null,
-                    stock: Number(variant.stock || 0),
-                  }))}
+                  variants={variants.map((variant) => {
+                    // Only use the actual variant values, don't fall back to color/size fields indiscriminately
+                    const opt1Value = variant.option_1_value !== null ? variant.option_1_value : null;
+                    const opt2Value = variant.option_2_value !== null ? variant.option_2_value : null;
+
+                    return {
+                      id: variant.id,
+                      option1: opt1Value,
+                      option2: opt2Value,
+                      legacyColor: variant.color || null,
+                      stock: Number(variant.stock || 0),
+                    };
+                  })}
                 />
               );
             })()}
           </div>
         </div>
       </section>
+
+      {/* Related Products */}
+      {relatedProducts.length > 0 && (
+        <section className="py-12">
+          <div className="max-w-7xl mx-auto px-5">
+            <h2 className="text-2xl font-black uppercase tracking-wider text-white mb-8">Produk Terkait</h2>
+            {/* Horizontal scroll container - katalog produk (sama seperti di /products) */}
+            <div className="flex gap-6 overflow-x-auto pb-4 pr-2">
+              {relatedProducts.map((p, i) => (
+                <div key={p.id} className="flex-shrink-0 w-72">
+                  <ProductCard product={p as any} index={i} />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
     </main>
   );
 }

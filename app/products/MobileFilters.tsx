@@ -68,7 +68,7 @@ export default function MobileFilters({
           <Filter size={14} />
           Filter
           {selectedCategory !== "All" && (
-            <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-[#d7ff53] ring-2 ring-[#0b0b0b]" />
+            <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-[#d7ff53] ring-2 ring-black dark:ring-white" />
           )}
         </button>
       </div>
@@ -76,9 +76,9 @@ export default function MobileFilters({
       {/* Filter modal */}
       {open && (
         <div className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-md md:hidden">
-          <div className="absolute inset-x-0 bottom-0 max-h-[85vh] overflow-y-auto rounded-t-3xl border-t border-white/10 bg-[#0b0b0b]">
+          <div className="absolute inset-x-0 bottom-0 max-h-[85vh] overflow-y-auto rounded-t-3xl border-t border-black/20 dark:border-white/10 bg-gray-900 dark:bg-gray-800">
             {/* Drag handle */}
-            <div className="sticky top-0 z-10 bg-[#0b0b0b]">
+            <div className="sticky top-0 z-10 bg-gray-900 dark:bg-gray-800">
               <div className="flex justify-center pt-3 pb-2">
                 <div className="h-1 w-10 rounded-full bg-white/20" />
               </div>
@@ -149,7 +149,7 @@ export default function MobileFilters({
             </div>
 
             {/* Apply button */}
-            <div className="sticky bottom-0 border-t border-white/10 bg-[#0b0b0b] p-5">
+            <div className="sticky bottom-0 border-t border-white/10 bg-gray-900 dark:bg-gray-800 p-5">
               <div className="flex gap-2">
                 <Link
                   href="/products"

@@ -21,7 +21,7 @@ export default function HeadingRotator() {
         <p className="text-[10px] font-black uppercase tracking-[0.35em] text-[#d7ff53]/50">
           Season 01 · Collection 26
         </p>
-        <h2 className="text-3xl font-black uppercase tracking-tighter text-white transition-all duration-600 md:text-6xl lg:text-7xl">
+        <h2 className="text-3xl font-black uppercase tracking-tighter text-gray-900 transition-all duration-600 md:text-6xl lg:text-7xl dark:text-white">
           <span
             key={headingIdx}
             className="inline-block"

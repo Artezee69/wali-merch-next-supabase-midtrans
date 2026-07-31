@@ -18,6 +18,12 @@ export type AdminAuditAction =
   | "customer.role_changed"
   | "settings.updated"
   | "homepage.updated"
+  | "banner.created"
+  | "banner.updated"
+  | "banner.deleted"
+  | "banner.activated"
+  | "banner.deactivated"
+  | "banner.uploaded"
   // Auth lifecycle events. `entity` is "admin_auth" for these, and
   // `entityId` is either the user id (login success) or a placeholder
   // like "unknown" / email (login failure). actor_id may be null for

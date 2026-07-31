@@ -36,7 +36,7 @@ export default async function AdminLoginPage({
   }
 
   return (
-    <main className="min-h-screen bg-[#0b0b0b] text-white">
+    <main className="min-h-screen bg-[#0b0b0b] text-white dark:bg-[#0b0b0b] dark:text-gray-100">
       <Navbar activeKey="admin" variant="admin" />
       <section className="relative flex min-h-[calc(100vh-200px)] items-center overflow-hidden px-4 py-12 sm:px-8 sm:py-16">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,#d7ff532e,transparent_40%),radial-gradient(circle_at_bottom_right,#ff3b3033,transparent_40%)]" />

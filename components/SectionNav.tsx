@@ -67,16 +67,16 @@ export default function SectionNav() {
   return (
     <nav
       aria-label="Section navigation"
-      className="fixed right-3 top-1/2 z-40 -translate-y-1/2 md:right-4"
+      className="hidden md:block fixed right-4 top-1/2 z-40 -translate-y-1/2"
     >
-      <div className="flex flex-col items-center gap-3">
+      <div className="flex flex-col items-center gap-2">
         {/* Up button */}
         <button
           onClick={goUp}
           disabled={activeIdx <= 0}
           aria-label={t.sectionNav.prev}
           title={t.sectionNav.prev}
-          className="group relative grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-black/60 text-white/70 backdrop-blur-xl transition hover:border-[#d7ff53]/40 hover:bg-[#d7ff53]/10 hover:text-[#d7ff53] disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:border-white/10 disabled:hover:bg-black/60 disabled:hover:text-white/70 md:h-12 md:w-12"
+          className="group relative grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-black/70 text-white/70 backdrop-blur-xl transition hover:border-[#d7ff53]/40 hover:bg-[#d7ff53]/10 hover:text-[#d7ff53] disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:border-white/10 disabled:hover:bg-black/70 disabled:hover:text-white/70"
         >
           <ChevronUp size={18} strokeWidth={2.5} className="transition group-hover:-translate-y-0.5" />
         </button>
@@ -87,7 +87,7 @@ export default function SectionNav() {
           disabled={activeIdx >= SECTIONS.length - 1}
           aria-label={t.sectionNav.next}
           title={t.sectionNav.next}
-          className="group relative grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-black/60 text-white/70 backdrop-blur-xl transition hover:border-[#d7ff53]/40 hover:bg-[#d7ff53]/10 hover:text-[#d7ff53] disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:border-white/10 disabled:hover:bg-black/60 disabled:hover:text-white/70 md:h-12 md:w-12"
+          className="group relative grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-black/70 text-white/70 backdrop-blur-xl transition hover:border-[#d7ff53]/40 hover:bg-[#d7ff53]/10 hover:text-[#d7ff53] disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:border-white/10 disabled:hover:bg-black/70 disabled:hover:text-white/70"
         >
           <ChevronDown size={18} strokeWidth={2.5} className="transition group-hover:translate-y-0.5" />
         </button>
