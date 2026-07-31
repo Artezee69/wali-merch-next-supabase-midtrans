@@ -60,6 +60,7 @@ function isItemActive(item: NavItem, activeKey: NavKey | undefined, pathname: st
   return pathname === item.href || pathname.startsWith(item.href + "/");
 }
 
+// Default avatar with initials
 function getInitials(name: string) {
   return name
     .split(" ")
@@ -69,6 +70,10 @@ function getInitials(name: string) {
     .slice(0, 2) || "?";
 }
 
+// Resolves the customer name to display. Order:
+//   1. profiles.full_name (authoritative — set by trigger or upsert)
+//   2. auth.user_metadata.full_name (passed at signUp)
+//   3. email local-part (e.g. "ada" of "ada@x.com")
 function resolveDisplayName(
   profile: { full_name?: string | null } | null | undefined,
   user: { email?: string | null; user_metadata?: Record<string, unknown> | null } | null | undefined
@@ -118,6 +123,7 @@ export default function Navbar({
     };
   }, [open]);
 
+  // Close profile dropdown on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
@@ -138,14 +144,20 @@ export default function Navbar({
     router.push("/account");
   }, [router]);
 
+  // Theme Toggle removed — pure dark mode only (no light mode option available)
+
+  const items = variant === "admin" ? adminNav : customerNav;
+  const brandHref = variant === "admin" ? "/admin" : "/";
+
+  // Customer nav CTA (auth buttons)
   const { itemCount } = useCart();
   const customerCta = (
-    <div className="flex items-center gap-2 sm:gap-3">
-      {/* Cart icon */}
-      <Link href="/cart" className="relative p-2 text-gray-600 dark:text-white hover:text-[#d7ff53] transition">
-        <ShoppingCart size={20} className="sm:size-[22]" />
+    <div className="flex items-center gap-3">
+      {/* Cart icon — only icon, right before account */}
+      <Link href="/cart" className="relative mr-1 text-gray-600 dark:text-white hover:text-green-600 dark:hover:text-[#d7ff53] transition">
+        <ShoppingCart size={22} />
         {itemCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 sm:h-5 sm:min-w-5 items-center justify-center rounded-full bg-[#d7ff53] text-[9px] font-bold text-black sm:text-[10px]">
+          <span className="absolute -top-2 -right-2 flex h-5 min-w-5 px-1 items-center justify-center rounded-full bg-green-600 dark:bg-[#d7ff53] text-[10px] font-bold text-white dark:text-gray-800">
             {itemCount}
           </span>
         )}
@@ -155,9 +167,9 @@ export default function Navbar({
           <button
             type="button"
             onClick={() => setProfileOpen((p) => !p)}
-            className="flex items-center gap-1.5 sm:gap-2 rounded-xl border border-white/20 bg-white/5 dark:bg-white/10 px-2 py-1.5 transition hover:border-[#d7ff53]/50 hover:bg-white/10 dark:hover:bg-white/20"
+            className="flex items-center gap-2 rounded-xl border border-gray-300 bg-gray-100 dark:border-white/20 dark:bg-gray-800/30 px-2.5 py-1.5 transition hover:border-gray-400 hover:bg-gray-200 dark:hover:border-green-600 dark:hover:bg-gray-700/30"
           >
-            <div className="relative h-6 w-6 sm:h-7 sm:w-7 shrink-0 overflow-hidden rounded-full bg-white/10">
+            <div className="relative h-7 w-7 shrink-0 overflow-hidden rounded-full bg-white/10 dark:bg-gray-600/30 light:bg-gray-300 dark:light:bg-gray-600/30">
               {profile?.profile_image_url ? (
                 <Image
                   src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars${profile.profile_image_url}`}
@@ -169,37 +181,45 @@ export default function Navbar({
                   }}
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-[10px] font-black text-white/70">
+                <div className="flex h-full w-full items-center justify-center text-[10px] font-black text-white/60 dark:text-gray-400 light:text-gray-600 dark:light:text-white/60">
                   {initials}
                 </div>
               )}
             </div>
-            <span className="hidden text-sm font-semibold text-white sm:inline-block">
+            <span className="hidden text-sm font-semibold text-gray-700 md:inline-block dark:text-white light:text-gray-700 dark:light:text-white">
               {displayName}
             </span>
-            <ChevronDown size={14} className="hidden text-white/60 sm:block" />
+            <ChevronDown size={14} className="hidden text-gray-500 dark:text-white md:block light:text-gray-500 dark:light:text-white" />
           </button>
 
           {/* Profile dropdown */}
           {profileOpen && (
-            <div className="absolute right-0 top-full mt-2 w-52 rounded-2xl p-2 shadow-2xl z-20 border border-white/10 bg-gray-900/95 backdrop-blur-xl">
-              <div className="px-3 py-2 border-b border-white/10">
-                <p className="truncate text-sm font-bold text-white">{displayName}</p>
-                <p className="truncate text-[11px] text-white/50">{user.email}</p>
+            <div
+              className="absolute right-0 top-full mt-2 w-56 rounded-2xl p-2 shadow-xl z-20 light:bg-white dark:light:bg-gray-800/90"
+              style={{
+                backgroundColor: "var(--bg-secondary)",
+                borderColor: "var(--border-color)",
+                borderWidth: "1px",
+                borderStyle: "solid",
+              }}
+            >
+              <div className="px-3 py-2 border-b border-gray-300 dark:border-white/10 light:border-gray-300">
+                <p className="truncate text-sm font-bold" style={{ color: "var(--text-primary) light:text-gray-900 dark:light:text-gray-400" }}>{displayName}</p>
+                <p className="truncate text-[11px]" style={{ color: "var(--text-secondary) light:text-gray-600 dark:light:text-gray-400" }}>{user.email}</p>
               </div>
               <button
                 type="button"
                 onClick={goToAccount}
-                className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm text-white/80 hover:bg-white/10 transition"
-              >
+                className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm transition hover:bg-gray-100 dark:hover:bg-gray-700/30 light:bg-gray-100"
+                style={{ color: "var(--text-secondary) light:text-gray-700 dark:light:text-gray-400" }}>
                 <User size={15} />
                 Profil Saya
               </button>
               <button
                 type="button"
                 onClick={handleSignOut}
-                className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition"
-              >
+                className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm transition hover:bg-red-100 dark:hover:bg-red-900/20 light:bg-gray-100"
+                style={{ color: "var(--danger-color) light:text-red-600 dark:light:text-red-400", backgroundColor: "transparent" }}>
                 <LogOut size={15} />
                 Keluar
               </button>
@@ -211,7 +231,7 @@ export default function Navbar({
           {headerSettings.showLogin && (
             <Link
               href="/login"
-              className="rounded-xl border border-white/20 px-3 py-2 text-xs font-bold uppercase tracking-wider text-white transition hover:border-[#d7ff53] hover:text-[#d7ff53]"
+              className="rounded-xl border border-green-600 dark:border-white/20 bg-gray-100 dark:bg-transparent px-4 py-2 text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-white light:text-gray-700 transition hover:border-green-600 dark:hover:border-[#d7ff53] hover:bg-gray-200 dark:hover:bg-[#d7ff53]/10 light:bg-gray-100 dark:light:bg-transparent"
             >
               {headerSettings.loginLabel}
             </Link>
@@ -219,7 +239,7 @@ export default function Navbar({
           {headerSettings.showRegister && (
             <Link
               href="/register"
-              className="rounded-xl bg-[#d7ff53] px-3 py-2 text-xs font-bold uppercase tracking-wider text-black transition hover:bg-[#c7ef33]"
+              className="rounded-xl bg-green-600 dark:bg-[#d7ff53] px-4 py-2 text-xs font-bold uppercase tracking-wider text-white dark:text-gray-800 light:text-white transition hover:bg-green-700 dark:hover:bg-[#b8e633] hover:text-black"
             >
               {headerSettings.registerLabel}
             </Link>
@@ -229,196 +249,220 @@ export default function Navbar({
     </div>
   );
 
-  const items = variant === "admin" ? adminNav : customerNav;
-  const brandHref = variant === "admin" ? "/admin" : "/";
-
   return (
-    <div className="sticky top-0 z-50 bg-black/95 backdrop-blur-xl border-b border-white/10">
-      <header>
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-3 md:px-8 md:py-4">
-          {/* Brand */}
-          <Link href={brandHref} className="shrink-0">
-            {headerSettings.logoUrl ? (
-              <img
-                src={headerSettings.logoUrl}
-                alt={headerSettings.logoText}
-                className="h-8 w-auto sm:h-9 transition-transform duration-500 hover:scale-105"
-              />
-            ) : (
-              <>
-                <div className="text-sm font-black uppercase tracking-[0.2em] text-white transition-colors duration-300 hover:text-[#d7ff53] sm:text-lg">
-                  {headerSettings.logoText}
-                </div>
-                {headerSettings.showSubtitle && (
-                  <div className="text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.35em] text-white/40">
-                    {headerSettings.logoSubtitle}
-                  </div>
-                )}
-              </>
-            )}
-          </Link>
-
-          {/* Desktop nav */}
-          <nav className="hidden items-center gap-6 md:flex">
-            {items.map((item) => {
-              const active = isItemActive(item, activeKey, pathname);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`relative flex items-center gap-1.5 text-sm font-semibold text-white/80 transition hover:text-[#d7ff53] ${
-                    active ? "text-[#d7ff53]" : ""
-                  }`}
-                >
-                  {item.icon}
-                  <span>{item.label}</span>
-                  {active && (
-                    <span className="absolute -bottom-2 left-1/2 h-0.5 w-4 -translate-x-1/2 rounded-full bg-[#d7ff53]" />
-                  )}
-                </Link>
-              );
-            })}
-          </nav>
-
-          {/* Right side CTA */}
-          <div className="hidden shrink-0 md:flex">{desktopCta || customerCta}</div>
-
-          {/* Mobile hamburger */}
-          <button
-            type="button"
-            onClick={() => setOpen((prev) => !prev)}
-            aria-label={open ? "Close menu" : "Open menu"}
-            aria-expanded={open}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/5 text-white transition hover:border-[#d7ff53] hover:bg-[#d7ff53]/10 hover:text-[#d7ff53] md:hidden"
-          >
-            {open ? <X size={18} /> : <Menu size={18} className="text-white" />}
-          </button>
-        </div>
-
-        {/* Mobile menu */}
-        {open && (
-          <div className="md:hidden border-t border-white/10 bg-black/95 backdrop-blur-xl">
-            <nav className="mx-auto max-w-7xl flex-col gap-1 px-4 py-4">
-              {/* Search */}
-              <form
-                action="/products"
-                method="GET"
-                className="mb-3 flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5"
-              >
-                <Search size={16} className="text-white/40" />
-                <input
-                  type="text"
-                  name="q"
-                  placeholder="Cari produk..."
-                  className="w-full bg-transparent text-sm text-white placeholder:text-white/30 focus:outline-none"
-                />
-              </form>
-
-              {items.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold uppercase tracking-wider transition ${
-                    isItemActive(item, activeKey, pathname)
-                      ? "bg-[#d7ff53] text-black"
-                      : "text-white/80 hover:bg-white/5 hover:text-[#d7ff53]"
-                  }`}
-                >
-                  {item.icon && <span className="shrink-0">{item.icon}</span>}
-                  {item.label}
-                </Link>
-              ))}
-
-              {/* Cart */}
-              <Link
-                href="/cart"
-                className={`flex items-center justify-between rounded-xl px-4 py-3 text-sm font-bold uppercase tracking-wider transition ${
-                  pathname === "/cart"
-                    ? "bg-[#d7ff53] text-black"
-                    : "text-white/80 hover:bg-white/5 hover:text-[#d7ff53]"
-                }`}
-              >
-                <span className="flex items-center gap-3">
-                  <ShoppingCart size={16} />
-                  {headerSettings.menuLabels.cart}
-                </span>
-                {itemCount > 0 && (
-                  <span className={`flex h-5 min-w-5 px-1.5 items-center justify-center rounded-full text-[10px] font-bold ${
-                    pathname === "/cart" ? "bg-black text-[#d7ff53]" : "bg-[#d7ff53] text-black"
-                  }`}>
-                    {itemCount}
-                  </span>
-                )}
-              </Link>
-
-              {mobileExtras && (
-                <div className="mt-3 grid gap-2 border-t border-white/10 pt-3">
-                  {mobileExtras}
+    <div className="sticky top-0 z-50 bg-black/90 backdrop-blur-md shadow-sm transition-all duration-300 border-b border-white/5">
+      <header className="border-b border-transparent">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 md:px-8">
+        {/* Brand — top left: big bold text, subtitle below */}
+        <Link href={brandHref} className="shrink-0">
+          {headerSettings.logoUrl ? (
+            <img
+              src={headerSettings.logoUrl}
+              alt={headerSettings.logoText}
+              className="h-9 w-auto transition-transform duration-500 group-hover:scale-105"
+            />
+          ) : (
+            <>
+              <div className="text-base font-black uppercase tracking-[0.22em] text-gray-900 dark:text-white transition-colors duration-300 group-hover:text-green-600 dark:group-hover:text-[#d7ff53] md:text-lg animate-pulse-light">
+                {headerSettings.logoText}
+              </div>
+              {headerSettings.showSubtitle && (
+                <div className="text-[9px] font-bold uppercase tracking-[0.35em] text-white/40">
+                  {headerSettings.logoSubtitle}
                 </div>
               )}
+            </>
+          )}
+        </Link>
 
-              {/* Auth */}
-              <div className="mt-3 grid gap-2 border-t border-white/10 pt-3">
-                {user && !profileLoading ? (
-                  <>
-                    <div className="flex items-center gap-3 rounded-xl bg-white/5 p-3">
-                      <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-white/10">
-                        {profile?.profile_image_url ? (
-                          <Image
-                            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars${profile.profile_image_url}`}
-                            alt="Avatar"
-                            fill
-                            className="object-cover"
-                            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center text-xs font-black text-white/60">
-                            {initials}
-                          </div>
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-bold text-white">{displayName}</p>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setOpen(false);
-                            goToAccount();
-                          }}
-                          className="text-xs text-[#d7ff53]"
-                        >
-                          Kelola Profil
-                        </button>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleSignOut}
-                      className="flex items-center gap-2 rounded-xl border border-white/10 bg-red-500/10 p-3 text-sm font-bold text-red-400 transition hover:bg-red-500/20"
-                    >
-                      <LogOut size={16} />
-                      Keluar
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    {headerSettings.showLogin && (
-                      <Link href="/login" className="rounded-xl border border-[#d7ff53]/60 bg-transparent px-4 py-3 text-center text-sm font-bold text-[#d7ff53] transition hover:bg-[#d7ff53]/10">
-                        {headerSettings.loginLabel}
-                      </Link>
-                    )}
-                    {headerSettings.showRegister && (
-                      <Link href="/register" className="rounded-xl bg-[#d7ff53] px-4 py-3 text-center text-sm font-bold text-black transition hover:bg-[#c7ef33]">
-                        {headerSettings.registerLabel}
-                      </Link>
-                    )}
-                  </>
+        {/* Center nav links */}
+        <nav className="hidden items-center gap-8 text-sm font-semibold text-gray-700 dark:text-white light:text-gray-700 md:flex">
+          {items.map((item) => {
+            const active = isItemActive(item, activeKey, pathname);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`relative flex items-center gap-1.5 text-gray-700 dark:text-white light:text-gray-700 transition hover:text-green-600 dark:hover:text-[#d7ff53] ${
+                  active ? "text-green-600 dark:text-[#d7ff53] font-bold" : ""
+                }`}
+              >
+                {item.icon}
+                <span>{item.label}</span>
+                {active && (
+                  <span
+                    className="absolute -bottom-[14px] left-1/2 h-[3px] w-5 -translate-x-1/2 rounded-full bg-green-600 dark:bg-[#d7ff53]"
+                    style={{ boxShadow: "0 0 8px rgba(16,185,129,0.6) dark:shadow-[0_0_8px_rgba(215,255,83,0.6)]" }}
+                  />
                 )}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Right side CTA */}
+        <div className="hidden shrink-0 md:flex">{desktopCta || customerCta}</div>
+
+        {/* Mobile hamburger */}
+        <button
+          type="button"
+          onClick={() => setOpen((prev) => !prev)}
+          aria-label={open ? "Close menu" : "Open menu"}
+          aria-expanded={open}
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-gray-300 dark:border-white/15 bg-gray-100 dark:bg-gray-800/30 text-gray-900 dark:text-white transition hover:border-green-600 dark:hover:border-[#d7ff53] hover:text-green-600 dark:hover:text-[#d7ff53] md:hidden"
+        >
+          {open ? <X size={20} /> : <Menu size={20} className="text-gray-900 dark:text-white" />}
+        </button>
+      </div>
+
+      {/* Mobile menu */}
+      {open && (
+        <div
+          className="animate-slide-down-spring border-t border-white/10 bg-black/85 backdrop-blur-sm md:hidden"
+          style={{ transformOrigin: "top" }}
+        >
+          <nav className="mx-auto flex max-w-7xl flex-col gap-1 px-4 py-4">
+            {/* Mobile search bar */}
+            <form
+              action="/products"
+              method="GET"
+              className="mb-2 flex items-center gap-2 rounded-2xl border border-gray-300 dark:border-white/10 bg-gray-200 dark:bg-gray-800/50 px-4 py-3"
+            >
+              <Search size={16} className="text-gray-500 dark:text-white/40" />
+              <input
+                type="text"
+                name="q"
+                placeholder="Cari produk..."
+                aria-label="Search products"
+                className="w-full bg-transparent text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none dark:text-white dark:placeholder:text-gray-400 focus:bg-white dark:focus:bg-gray-800/50"
+              />
+            </form>
+
+            {items.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex items-center gap-3 rounded-2xl px-4 py-4 text-sm font-black uppercase tracking-wider transition ${
+                  isItemActive(item, activeKey, pathname)
+                    ? "bg-green-600 dark:bg-[#d7ff53] text-white dark:text-gray-800 light:bg-green-600 light:text-white dark:light:text-gray-800"
+                    : "text-gray-700 dark:text-white light:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800/30 light:bg-gray-100 dark:light:bg-gray-800/30 hover:text-green-600 dark:hover:text-[#d7ff53] light:hover:text-green-600 dark:light:hover:text-[#d7ff53]"
+                }`}
+              >
+                {item.icon && <span className="shrink-0">{item.icon}</span>}
+                {item.label}
+              </Link>
+            ))}
+
+            {/* Cart link in mobile menu */}
+            <Link
+              href="/cart"
+              className={`flex items-center justify-between rounded-2xl px-4 py-4 text-sm font-black uppercase tracking-wider transition ${
+                pathname === "/cart"
+                  ? "bg-green-600 dark:bg-[#d7ff53] text-white dark:text-gray-800 light:bg-green-600 light:text-white dark:light:text-gray-800"
+                  : "text-white/75 hover:bg-white/5 hover:text-white"
+              }`}
+            >
+              <span className="flex items-center gap-3">
+                <ShoppingCart size={16} />
+                {headerSettings.menuLabels.cart}
+              </span>
+              {itemCount > 0 && (
+                <span className={`flex h-6 min-w-6 px-2 items-center justify-center rounded-full text-[11px] font-bold ${
+                  pathname === "/cart" ? "bg-black text-[#d7ff53]" : "bg-green-600 dark:bg-[#d7ff53] text-white dark:text-gray-800 light:bg-green-600 light:text-white dark:light:text-gray-800"
+                }`}>
+                  {itemCount}
+                </span>
+              )}
+            </Link>
+
+            {mobileExtras && (
+              <div className="mt-3 grid gap-2 border-t border-white/10 pt-4">
+                {mobileExtras}
               </div>
-            </nav>
-          </div>
-        )}
-      </header>
+            )}
+
+            {/* Mobile auth CTA */}
+            <div className="mt-3 grid gap-2 border-t border-white/10 pt-4">
+              {user && !profileLoading ? (
+                <>
+                  <div className="flex items-center gap-3 rounded-xl bg-white/5 p-3">
+                    <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-white/10">
+                      {profile?.profile_image_url ? (
+                        <Image
+                          src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars${profile.profile_image_url}`}
+                          alt="Avatar"
+                          fill
+                          className="object-cover"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-xs font-black text-white/60">
+                          {initials}
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-bold text-white">{displayName}</p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setOpen(false);
+                          goToAccount();
+                        }}
+                        className="text-xs text-[#d7ff53]"
+                      >
+                        Kelola Profil
+                      </button>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleSignOut}
+                    className="flex items-center gap-2 rounded-xl border border-white/10 bg-red-500/10 p-3 text-sm font-bold text-red-400 transition hover:bg-red-500/20"
+                  >
+                    <LogOut size={16} />
+                    Keluar
+                  </button>
+                </>
+              ) : (
+                <>
+                  {headerSettings.showLogin && (
+                    <Link href="/login" className="rounded-xl border border-[#d7ff53]/60 bg-transparent px-4 py-3 text-center text-sm font-bold text-[#d7ff53] transition hover:bg-[#d7ff53]/10">
+                      {headerSettings.loginLabel}
+                    </Link>
+                  )}
+                  {headerSettings.showRegister && (
+                    <Link href="/register" className="rounded-xl bg-[#d7ff53] px-4 py-3 text-center text-sm font-bold text-black transition hover:bg-[#c7ef33]">
+                      {headerSettings.registerLabel}
+                    </Link>
+                  )}
+                </>
+              )}
+            </div>
+          </nav>
+        </div>
+      )}
+    </header>
+
+    {/* Sub-header search bar — sits below the main navbar, sticks together on scroll */}
+    <div className="bg-transparent">
+      <form
+        action="/products"
+        method="GET"
+        className="mx-auto flex max-w-md items-center justify-center gap-2 px-4 py-2.5 md:px-8"
+      >
+        <div className="flex w-full items-center gap-2 rounded-full border border-gray-300 bg-gray-100 px-4 py-2 transition focus-within:border-gray-500 focus-within:bg-white dark:border-white/10 dark:bg-white/5 dark:focus-within:border-white/30 dark:focus-within:bg-white/10">
+          <Search size={16} className="shrink-0 text-gray-500 dark:text-white/40" />
+          <input
+            type="text"
+            name="q"
+            placeholder="Cari produk..."
+            aria-label="Search products"
+            className="w-full bg-transparent text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none dark:text-white dark:placeholder:text-white/30"
+          />
+        </div>
+      </form>
     </div>
+  </div>
   );
 }

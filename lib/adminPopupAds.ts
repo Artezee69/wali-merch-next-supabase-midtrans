@@ -1,17 +1,20 @@
-import { createClient } from "@supabase/supabase-js";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-export const supabaseAdmin = createClient(supabaseUrl, supabaseKey, {
-  auth: { autoRefreshToken: false, persistSession: false },
-});
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export type PopupAd = {
   id: number;
+  title: string;
+  subtitle?: string;
+  body: string;
   image_url: string;
-  link: string;
+  storage_path: string;
+  button_text?: string;
+  button_link?: string;
+  position: "center" | "bottom_right";
   status: boolean;
+  start_date?: string | null;
+  end_date?: string | null;
+  dismiss_minutes: number;
+  audience: "logged_in" | "all" | "guest";
   sort_order: number;
   created_at: string;
   updated_at: string;
@@ -22,14 +25,51 @@ export async function getAllPopupAds(): Promise<PopupAd[]> {
     .from("popup_ads")
     .select("*")
     .order("sort_order", { ascending: true });
-  if (error) return [];
+
+  if (error) {
+    console.error("ERROR MEMUAT POPUP ADS:", error);
+    return [];
+  }
+
   return data as PopupAd[];
 }
 
-export async function savePopupAds(popup: Partial<PopupAd>): Promise<void> {
-  await supabaseAdmin.from("popup_ads").upsert(popup);
+export async function savePopupAds(popup: Omit<PopupAd, "id" | "created_at" | "updated_at">): Promise<PopupAd | null> {
+  const { data, error } = await supabaseAdmin
+    .from("popup_ads")
+    .upsert([popup])
+    .select("*");
+
+  if (error) {
+    console.error("ERROR SIMPAN POPUP ADS:", error);
+    return null;
+  }
+
+  return data?.[0] as PopupAd;
 }
 
 export async function deletePopupAds(id: number): Promise<void> {
-  await supabaseAdmin.from("popup_ads").delete().eq("id", id);
+  const { error } = await supabaseAdmin
+    .from("popup_ads")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    console.error("ERROR HAPUS POPUP ADS:", error);
+  }
+}
+
+// Create new popup
+export async function createPopupAds(popup: Omit<PopupAd, "id" | "created_at" | "updated_at">): Promise<PopupAd | null> {
+  const { data, error } = await supabaseAdmin
+    .from("popup_ads")
+    .insert([popup])
+    .select("*");
+
+  if (error) {
+    console.error("ERROR CREATE POPUP ADS:", error);
+    return null;
+  }
+
+  return data?.[0] as PopupAd;
 }

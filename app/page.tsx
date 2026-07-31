@@ -99,16 +99,23 @@ async function fetchManualLatestDropProducts(ids: string[]) {
 
   // Sort by admin-set order (unknown ids get pushed to the end).
   mapped.sort((a, b) => {
-    const ai = adminOrder.get(a.id) ?? Number.MAX_SAFE_INTEGER;
-    const bi = adminOrder.get(b.id) ?? Number.MAX_SAFE_INTEGER;
-    return ai - bi;
+    const ai = adminOrder.get(a.id);
+    const bi = adminOrder.get(b.id);
+    if (ai !== undefined && bi !== undefined) return ai - bi;
+    if (ai !== undefined) return -1;
+    if (bi !== undefined) return 1;
+    return 0;
   });
-
-  return mapped.slice(0, ids.length);
+  return mapped;
 }
 
-export default async function Home() {
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+export default async function HomePage() {
   const home = await getHomepageSettings();
+
+  // — Banner DB (hero + promo kanan atas/bawah) —
   const [heroBanners, promoTop, promoBottom] = await Promise.all([
     getActiveBannersByPosition("hero"),
     getActiveBannersByPosition("right_top"),
@@ -131,50 +138,46 @@ export default async function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-black">
+    <main className="min-h-screen">
       <Navbar />
 
-      {/* Hero + Promo */}
       {heroBanners.length > 0 && (
-        <section className="px-4 pt-4 pb-0 md:px-6 md:pt-8">
-          <div className={`max-w-7xl mx-auto ${hasPromos ? "hidden md:grid md:grid-cols-[1.6fr_1fr] md:items-start md:gap-6" : ""}`}>
-            <HeroCarousel
-              banners={heroBanners}
-              fillHeight={hasPromos}
-              className={hasPromos ? "hidden md:block h-[480px] md:h-[520px]" : "h-[420px] sm:h-[500px] md:h-[600px]"}
-            />
-          </div>
+        <section className="px-6 pt-8">
+          <div
+            className={`max-w-[1320px] mx-auto ${
+              hasPromos
+                ? "grid grid-cols-[1.6fr_1fr] items-start gap-6 rounded-xl overflow-hidden"
+                : ""
+            }`}
+          >
+            <HeroCarousel banners={heroBanners} fillHeight={hasPromos} className={hasPromos ? "h-[520px]" : ""} />
+{(() => {
+  // Render promos jika data tersedia, atau fallback placeholder jika tidak ada
+  const renderPlaceholder = () => (
+    <div className="h-[248px] rounded-xl border border-black/10 dark:border-white/10 bg-gray-900/10 dark:bg-white/5 overflow-hidden flex items-center justify-center text-gray-600 dark:text-gray-300 text-sm">
+      [BANNER Iklan Placeholder]
+    </div>
+  );
 
-          {/* Promo banners - vertical on mobile, horizontal on desktop */}
-          {hasPromos && (
-            <div className={`max-w-7xl mx-auto mt-4 md:mt-0 ${hasPromos ? "hidden md:block" : ""}`}>
-              <div className={`${hasPromos ? "grid grid-cols-2 gap-3" : "flex flex-col gap-3"}`}>
-                {promoTopBanner && (
-                  <PromoBanner
-                    banner={promoTopBanner}
-                    className={hasPromos ? "h-[160px] sm:h-[200px]" : "h-[220px]"}
-                  />
-                )}
-                {promoBottomBanner && (
-                  <PromoBanner
-                    banner={promoBottomBanner}
-                    className={hasPromos ? "h-[160px] sm:h-[200px]" : "h-[220px]"}
-                  />
-                )}
-              </div>
-            </div>
-          )}
+  return (
+    <div className="flex flex-col gap-6 h-full">
+      {promoTopBanner ? (
+        <PromoBanner banner={promoTopBanner} className="h-[248px]" />
+      ) : renderPlaceholder()}
+      {promoBottomBanner ? (
+        <PromoBanner banner={promoBottomBanner} className="h-[248px]" />
+      ) : renderPlaceholder()}
+    </div>
+  );
+})()}
+          </div>
         </section>
       )}
 
-      {/* Marquee */}
       {home.sections.marquee && home.marqueeSection.enabled && (
-        <div className="py-4 md:py-6 bg-black/50 border-y border-white/5 overflow-hidden">
-          <Marquee items={home.marqueeSection.texts} />
-        </div>
+        <Marquee items={home.marqueeSection.texts} />
       )}
 
-      {/* Product Showcase */}
       {home.latestDrop.enabled && latestDropProducts.length > 0 && (
         <ProductShowcase
           products={latestDropProducts}
@@ -185,23 +188,34 @@ export default async function Home() {
         />
       )}
 
-      {/* How To Order */}
       {home.sections.howToOrder && home.howToOrderSection.enabled && (
         <HowToOrder />
       )}
 
-      {/* CTA Section */}
       {home.sections.cta && home.ctaSection.enabled && (
         <CtaSection />
       )}
 
-      {/* FAQ */}
       {home.sections.faq && home.faqSection.enabled && (
         <Faq />
       )}
 
       <Footer />
+
       <SectionNav />
+
+      {/* SEO meta — read by app/layout.tsx via cookies? fallback below */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            name: home.seo.metaTitle,
+            description: home.seo.metaDescription,
+          }),
+        }}
+      />
     </main>
   );
 }
