@@ -215,20 +215,26 @@ export default function AdminProductsClient({
 
   async function handleToggleStatus(id: string, currentStatus: string) {
     const newStatus: AdminProduct["status"] = currentStatus === "active" ? "inactive" : "active";
+    console.log("[TOGGLE] Clicked:", { id, currentStatus, newStatus });
     try {
       const res = await fetch(`/api/admin/products/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
       });
+      console.log("[TOGGLE] Response status:", res.status);
       if (!res.ok) {
         const data = await res.json();
+        console.error("[TOGGLE] Error response:", data);
         throw new Error(data.error || "Toggle failed");
       }
+      const data = await res.json();
+      console.log("[TOGGLE] Success:", data);
       addToast(newStatus === "active" ? "Produk diaktifkan" : "Produk dinonaktifkan");
       fetchProducts();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Gagal mengubah status";
+      console.error("[TOGGLE] Caught error:", err);
       addToast(msg, "error");
     }
   }

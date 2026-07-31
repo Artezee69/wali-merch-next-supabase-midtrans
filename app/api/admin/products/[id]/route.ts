@@ -74,6 +74,7 @@ export async function PATCH(
 
   try {
     const body = await request.json();
+    console.log("[PATCH] Received body:", JSON.stringify(body));
     const input = body as Record<string, unknown>;
 
     const productInput = {
@@ -270,10 +271,15 @@ export async function PATCH(
     if (productInput.status) after.status = productInput.status;
 
     // Update produk
-    const { error: updateError } = await supabaseAdmin
+    console.log("[PATCH] Updating product with:", JSON.stringify(buildUpdate));
+    const { error: updateError, data } = await supabaseAdmin
       .from("products")
       .update(buildUpdate)
-      .eq("id", productId);
+      .eq("id", productId)
+      .select("id, status, is_active")
+      .single();
+
+    console.log("[PATCH] Update result:", { error: updateError, data });
 
     if (updateError) {
       console.error("[API /api/admin/products/:id] PATCH error:", updateError.message);
