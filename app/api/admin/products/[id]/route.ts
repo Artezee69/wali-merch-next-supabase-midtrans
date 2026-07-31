@@ -74,8 +74,45 @@ export async function PATCH(
 
   try {
     const body = await request.json();
-    console.log("[PATCH] Received body:", JSON.stringify(body));
     const input = body as Record<string, unknown>;
+
+    // Fast path: if only status is being toggled, do a targeted update
+    const hasOnlyStatus = Object.keys(input).length === 1 && input.status !== undefined;
+    if (hasOnlyStatus) {
+      const newStatus = ["draft", "active", "inactive", "archived"].includes(input.status)
+        ? input.status
+        : null;
+
+      if (!newStatus) {
+        return NextResponse.json({ error: "Status tidak valid" }, { status: 400 });
+      }
+
+      const is_active = newStatus === "active";
+      const { error: updateError } = await supabaseAdmin
+        .from("products")
+        .update({ status: newStatus, is_active })
+        .eq("id", productId);
+
+      if (updateError) {
+        console.error("[PATCH] Toggle status error:", updateError.message);
+        return NextResponse.json({ error: "Gagal mengubah status" }, { status: 500 });
+      }
+
+      await logAdminAction({
+        actorId: admin.id,
+        actorEmail: admin.email,
+        action: "product.updated",
+        entity: "product",
+        entityId: productId,
+        before: { status: existing.status },
+        after: { status: newStatus },
+      });
+
+      return NextResponse.json(
+        { success: true, product: { id: productId, status: newStatus, is_active } },
+        { headers: { "content-type": "application/json" } }
+      );
+    }
 
     const productInput = {
       name: typeof input.name === "string" ? input.name : undefined,
