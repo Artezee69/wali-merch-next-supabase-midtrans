@@ -41,10 +41,6 @@ export default function ProductTrack({ items }: { items: Product[] }) {
 
   return (
     <div className="relative">
-      {/* Side fades */}
-      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-20 bg-gradient-to-r from-white to-transparent md:w-40 dark:from-black dark:md:from-gray-950" />
-      <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-20 bg-gradient-to-l from-white to-transparent md:w-40 dark:from-black dark:md:from-gray-950" />
-
       <div
         ref={trackRef}
         className="flex gap-4 sm:gap-5 md:gap-7 overflow-x-auto px-4 sm:px-5 md:px-10 pb-6 pt-8 touch-pan-x"
