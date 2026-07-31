@@ -31,9 +31,13 @@ export default function HowToOrder() {
         </Reveal>
 
         <div className="relative mt-12 sm:mt-20">
-          <div className="absolute left-0 right-0 top-8 h-0.5 bg-white/5" />
+          {/* Desktop horizontal line */}
+          <div className="hidden sm:block absolute left-0 right-0 top-10 h-0.5 bg-white/10" />
 
-          <div className="relative flex flex-col sm:flex items-start sm:justify-between sm:pl-8 sm:pr-8 sm:pt-8">
+          {/* Mobile vertical line */}
+          <div className="sm:hidden absolute left-8 top-0 bottom-0 w-0.5 bg-white/10" />
+
+          <div className="relative flex flex-col sm:flex sm:items-start">
             {steps.map((step, i) => {
               const Icon = icons[i];
               const isLast = i === steps.length - 1;
@@ -41,40 +45,54 @@ export default function HowToOrder() {
               return (
                 <div
                   key={step.title}
-                  className={`group relative flex-1 flex flex-col items-center ${
-                    !isLast && "sm:mr-8 mb-8 sm:mb-0"
+                  className={`group relative flex items-start sm:items-stretch ${
+                    !isLast ? "sm:mr-8 mb-10 sm:mb-0" : ""
                   }`}
                 >
-                  <div className="mb-3">
-                    <span className="text-xs font-black text-white/40 tracking-wide group-hover:text-[#d7ff53] transition-colors duration-300">
+                  {/* Number badge - Desktop */}
+                  <div className="hidden sm:flex flex-col items-center mr-6">
+                    <span className="text-xs font-black text-white/40 tracking-wide group-hover:text-[#d7ff53] transition-colors duration-300 mb-3">
+                      0{String(i + 1)}
+                    </span>
+                    {!isLast && (
+                      <div className="w-0.5 h-full bg-white/10" />
+                    )}
+                  </div>
+
+                  {/* Number badge - Mobile */}
+                  <div className="sm:hidden absolute left-0 flex items-center justify-center w-16 h-16 rounded-full bg-black/50 border border-white/10 group-hover:border-[#d7ff53]/50 transition-colors duration-300 z-10">
+                    <span className="text-xs font-black text-[#d7ff53]">
                       0{String(i + 1)}
                     </span>
                   </div>
 
-                  <div className="mb-4">
-                    <Icon
-                      className="h-8 w-8 sm:h-10 sm:w-10 text-white/60 transition-colors duration-300 group-hover:text-[#d7ff53]"
-                      strokeWidth={1.5}
-                    />
+                  {/* Content card */}
+                  <div className="flex-1 pl-20 sm:pl-0 sm:pt-4">
+                    {/* Icon */}
+                    <div className="mb-4">
+                      <Icon
+                        className="h-10 w-10 text-white/60 transition-colors duration-300 group-hover:text-[#d7ff53]"
+                        strokeWidth={1.5}
+                      />
+                    </div>
+
+                    {/* Title */}
+                    <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-[#d7ff53] transition-colors duration-300">
+                      {step.title}
+                    </h3>
+
+                    {/* Description */}
+                    <p className="mt-2 text-sm text-white/70 leading-relaxed">
+                      {step.desc}
+                    </p>
+
+                    {/* Time badge */}
+                    <div className="mt-4">
+                      <span className="text-xs font-black uppercase tracking-wide text-white/50 bg-white/5 border border-white/10 px-3 py-1.5 rounded-full">
+                        {step.time}
+                      </span>
+                    </div>
                   </div>
-
-                  <h3 className="text-sm sm:text-base font-bold text-white group-hover:text-[#d7ff53] transition-colors duration-300 text-center max-w-[180px] sm:max-w-none">
-                    {step.title}
-                  </h3>
-
-                  <p className="mt-2 text-xs sm:text-sm text-white/70 text-center leading-relaxed max-w-[200px]">
-                    {step.desc}
-                  </p>
-
-                  <div className="mt-4">
-                    <span className="text-[10px] sm:text-xs font-black uppercase tracking-wide text-white/50 bg-black/30 border border-white/5 px-3 py-1.5 rounded-full">
-                      {step.time}
-                    </span>
-                  </div>
-
-                  {!isLast && (
-                    <div className="absolute left-1/2 top-full w-0.5 h-8 sm:h-12 bg-white/5 -translate-x-1/2" />
-                  )}
                 </div>
               );
             })}
