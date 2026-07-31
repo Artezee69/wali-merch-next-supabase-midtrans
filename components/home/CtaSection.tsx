@@ -12,7 +12,7 @@ export default function CtaSection() {
     <section
       id="cta"
       data-section-nav
-      className="relative overflow-hidden border-t border-white/5 px-4 py-24 md:px-8 md:py-32 bg-[#0b0b0b]"
+      className="relative overflow-hidden border-t border-white/5 px-4 sm:px-6 py-16 sm:py-24 md:px-8 md:py-32 bg-[#0b0b0b]"
     >
       <div className="mx-auto max-w-7xl relative z-10">
         {/* Simple header */}
@@ -26,7 +26,7 @@ export default function CtaSection() {
         </Reveal>
 
         {/* Main content grid — simple layout, no heavy bg box */}
-        <div className="grid md:grid-cols-2 gap-12 items-start">
+        <div className="grid md:grid-cols-2 gap-8 sm:gap-12 items-start">
           {/* Left: Trust & features list */}
           <Reveal variant="blur-in" delay={0.1}>
             <div className="space-y-6">
@@ -65,7 +65,7 @@ export default function CtaSection() {
               {/* Primary CTA button — minimal style */}
               <Link
                 href="/products"
-                className="block w-full group relative overflow-hidden rounded-full bg-[#1a1a11] border border-[#d7ff53]/30 px-8 py-4 text-sm font-black uppercase tracking-wider text-[#d7ff53] transition-all duration-300 hover:bg-[#d7ff53] hover:text-black hover:shadow-[0_0_30px_rgba(215,255,83,0.4)]"
+                className="block w-full group relative overflow-hidden rounded-full bg-[#1a1a11] border border-[#d7ff53]/30 px-6 sm:px-8 py-3.5 sm:py-4 text-xs sm:text-sm font-black uppercase tracking-wider text-[#d7ff53] transition-all duration-300 hover:bg-[#d7ff53] hover:text-black hover:shadow-[0_0_30px_rgba(215,255,83,0.4)] active:scale-95"
               >
                 <span className="relative">{t.home.cta.primary}</span>
                 <ArrowRight className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-2" />
@@ -76,13 +76,13 @@ export default function CtaSection() {
               {/* Secondary CTA button */}
               <Link
                 href="/track-order"
-                className="block w-full rounded-full border border-white/20 bg-white/5 px-8 py-4 text-sm font-black uppercase tracking-wider text-white/85 backdrop-blur transition-all duration-300 hover:border-white/40 hover:bg-white/10 hover:text-white"
+                className="block w-full rounded-full border border-white/20 bg-white/5 px-6 sm:px-8 py-3.5 sm:py-4 text-xs sm:text-sm font-black uppercase tracking-wider text-white/85 backdrop-blur transition-all duration-300 hover:border-white/40 hover:bg-white/10 hover:text-white active:scale-95"
               >
                 {t.home.cta.secondary}
               </Link>
 
               {/* Stats strip — minimal inline */}
-              <div className="mt-6 flex items-center justify-between gap-3 text-xs font-black uppercase tracking-[0.2em] text-white/40 border-t border-white/5 pt-4">
+              <div className="mt-5 sm:mt-6 flex flex-wrap items-center justify-between gap-3 text-[10px] sm:text-xs font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] text-white/40 border-t border-white/5 pt-4">
                 <span>2,400+ Members</span>
                 <span className="border-l border-white/10 px-3">18,000+ Orders</span>
                 <span className="border-l border-white/10 px-3">Global Reach</span>

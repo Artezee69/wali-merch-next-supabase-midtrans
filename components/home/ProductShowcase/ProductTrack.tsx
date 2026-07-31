@@ -47,7 +47,7 @@ export default function ProductTrack({ items }: { items: Product[] }) {
 
       <div
         ref={trackRef}
-        className="flex gap-5 overflow-x-auto px-5 pb-6 pt-8 md:gap-7 md:px-10"
+        className="flex gap-4 sm:gap-5 md:gap-7 overflow-x-auto px-4 sm:px-5 md:px-10 pb-6 pt-8 touch-pan-x"
         style={{ scrollbarWidth: "none", cursor: dragging ? "grabbing" : "grab" }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
@@ -90,7 +90,7 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      <article className="w-[260px] sm:w-[300px] md:w-[340px]">
+      <article className="w-[240px] sm:w-[280px] md:w-[320px] lg:w-[340px]">
         {/* Image */}
         <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-gray-200 dark:bg-[#111]">
           {imgSrc && (
@@ -116,8 +116,8 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
 
           {/* Hover CTA */}
           {!comingSoon && (
-            <div className="absolute inset-0 z-10 flex items-end justify-center pb-4 opacity-0 transition-opacity duration-300 group-hover/card:opacity-100">
-              <span className="rounded-full bg-[#d7ff53] px-6 py-2.5 text-[10px] font-black uppercase tracking-[0.2em] text-black">
+            <div className="absolute inset-0 z-10 flex items-end justify-center pb-4 sm:pb-6 opacity-0 transition-opacity duration-300 group-hover/card:opacity-100">
+              <span className="rounded-full bg-[#d7ff53] px-5 py-2.5 text-[10px] font-black uppercase tracking-[0.2em] text-black shadow-lg">
                 Quick View
               </span>
             </div>
@@ -135,16 +135,16 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
 
         {/* Info */}
         <div className="mt-3 flex items-start justify-between gap-2 px-1">
-          <div className="min-w-0">
-            <h3 className="truncate text-sm font-bold leading-snug text-gray-900 transition-colors duration-300 group-hover/card:text-[#d7ff53] dark:text-white/90">
+          <div className="min-w-0 flex-1">
+            <h3 className="truncate text-[13px] sm:text-sm font-bold leading-snug text-gray-900 dark:text-white/90 transition-colors duration-300 group-hover/card:text-[#d7ff53]">
               {product.name}
             </h3>
-            <p className="mt-0.5 truncate text-[11px] text-gray-500 dark:text-white/35">
+            <p className="mt-0.5 truncate text-[11px] text-gray-500 dark:text-white/35 line-clamp-1">
               {product.description}
             </p>
           </div>
           {!comingSoon && (
-            <p className="shrink-0 pt-0.5 text-sm font-black text-gray-700 dark:text-white/70">
+            <p className="shrink-0 pt-0.5 text-[12px] sm:text-sm font-black text-gray-700 dark:text-white/70">
               Rp{(product.price || 0).toLocaleString("id-ID")}
             </p>
           )}

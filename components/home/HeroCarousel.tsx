@@ -99,7 +99,7 @@ export default function HeroCarousel({ banners, autoRotateMs = 6000, fillHeight 
     >
       <div
         ref={containerRef}
-        className="flex w-full snap-x snap-mandatory overflow-x-hidden h-full"
+        className="flex w-full snap-x snap-mandatory overflow-x-hidden h-full touch-pan-x"
         style={{ scrollBehavior: "smooth" }}
       >
         {validBanners.map((b, i) => (
@@ -121,24 +121,24 @@ export default function HeroCarousel({ banners, autoRotateMs = 6000, fillHeight 
             type="button"
             onClick={() => goTo(-1)}
             aria-label="Slide sebelumnya"
-            className="absolute left-3 top-1/2 z-10 -translate-y-1/2 rounded-full border border-white/15 bg-gray-900/40 p-2 text-white/85 backdrop-blur transition hover:border-[#d7ff53] hover:text-[#d7ff53] dark:bg-gray-800/40"
+            className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full border border-white/20 bg-gray-900/60 p-2.5 text-white/90 backdrop-blur-md transition-all duration-300 hover:border-[#d7ff53] hover:bg-[#d7ff53]/20 hover:text-[#d7ff53] dark:bg-gray-800/60 active:scale-90 hidden sm:flex"
           >
-            <ChevronLeft size={18} strokeWidth={2.5} />
+            <ChevronLeft size={20} strokeWidth={2.5} />
           </button>
           <button
             type="button"
             onClick={() => goTo(1)}
             aria-label="Slide berikutnya"
-            className="absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-full border border-white/15 bg-gray-900/40 p-2 text-white/85 backdrop-blur transition hover:border-[#d7ff53] hover:text-[#d7ff53] dark:bg-gray-800/40"
+            className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full border border-white/20 bg-gray-900/60 p-2.5 text-white/90 backdrop-blur-md transition-all duration-300 hover:border-[#d7ff53] hover:bg-[#d7ff53]/20 hover:text-[#d7ff53] dark:bg-gray-800/60 active:scale-90 hidden sm:flex"
           >
-            <ChevronRight size={18} strokeWidth={2.5} />
+            <ChevronRight size={20} strokeWidth={2.5} />
           </button>
         </>
       )}
 
       {/* Dots */}
       {validBanners.length > 1 && (
-        <div className="pointer-events-auto absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-2">
+        <div className="pointer-events-auto absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-2 sm:bottom-4">
           {validBanners.map((b, i) => (
             <button
               key={`dot-${b.id}`}
@@ -148,10 +148,10 @@ export default function HeroCarousel({ banners, autoRotateMs = 6000, fillHeight 
                 scrollToIndex(i);
               }}
               aria-label={`Pergi ke slide ${i + 1}`}
-              className={`h-2 rounded-full transition-all ${
+              className={`transition-all duration-300 ease-out ${
                 i === activeIndex
-                  ? "w-6 bg-accent"
-                  : "w-2 bg-gray-400/50 hover:bg-gray-500/70 dark:bg-gray-600/50 dark:hover:bg-gray-700/70"
+                  ? "h-2 w-8 rounded-full bg-[#d7ff53] shadow-[0_0_10px_rgba(215,255,83,0.5)]"
+                  : "h-2 w-2 rounded-full bg-white/40 hover:bg-white/70"
               }`}
             />
           ))}
@@ -171,7 +171,7 @@ function BannerSlide({ banner, fillHeight = false }: { banner: Banner; fillHeigh
 
   const sizeClass = fillHeight
     ? "relative h-full w-full"
-    : "relative aspect-[16/7] sm:aspect-[16/6] w-full";
+    : "relative aspect-[16/9] sm:aspect-[16/7] md:aspect-[16/6] w-full";
 
   return (
     <div className={`${sizeClass} overflow-hidden bg-gray-900 dark:bg-gray-950`}>
@@ -187,24 +187,24 @@ function BannerSlide({ banner, fillHeight = false }: { banner: Banner; fillHeigh
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent dark:from-gray-950/85 dark:via-gray-900/30" />
       )}
       {showOverlay && (
-        <div className="absolute inset-x-0 bottom-0 z-10 px-6 pb-12 sm:px-12 sm:pb-16">
-          <div className="mx-auto max-w-3xl">
+        <div className="absolute inset-x-0 bottom-0 z-10 px-4 pb-10 sm:px-8 sm:pb-14 md:px-12 md:pb-16">
+          <div className="mx-auto max-w-2xl sm:max-w-3xl">
             {banner.title && (
-              <h2 className="text-2xl font-black uppercase tracking-tight text-white sm:text-4xl md:text-5xl">
+              <h2 className="text-xl font-black uppercase tracking-tight text-white sm:text-3xl md:text-4xl lg:text-5xl leading-[1.05]">
                 {banner.title}
               </h2>
             )}
             {banner.subtitle && (
-              <p className="mt-2 max-w-xl text-sm text-white/75 sm:text-base">
+              <p className="mt-2 max-w-xl text-xs text-white/75 sm:text-sm md:text-base leading-relaxed">
                 {banner.subtitle}
               </p>
             )}
             {banner.button_text && (
-              <div className="mt-4">
+              <div className="mt-4 sm:mt-5">
                 {/* @ts-expect-error - dynamic tag with conditional props */}
                 <Cta
                   {...ctaProps}
-                  className="inline-flex items-center gap-2 rounded-full bg-[#d7ff53] px-5 py-2.5 text-xs font-black uppercase tracking-wider text-black transition hover:bg-[#c7ef33]"
+                  className="inline-flex items-center gap-2 rounded-full bg-[#d7ff53] px-5 py-3 text-xs font-black uppercase tracking-wider text-black transition-all duration-300 hover:bg-[#c7ef33] hover:shadow-lg hover:shadow-[#d7ff53]/30 active:scale-95"
                 >
                   {banner.button_text}
                 </Cta>

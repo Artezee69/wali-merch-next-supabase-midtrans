@@ -128,7 +128,7 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
           aria-hidden
         />
 
-        <div className="relative overflow-hidden rounded-2xl border border-white/5 bg-black/30 backdrop-blur-sm transition-all duration-500 group-hover:border-white/10 group-hover:bg-black/50 sm:p-3 dark:border-gray-800 dark:bg-gray-900/[0.1] group-hover:dark:border-[#d7ff53]/30 group-hover:dark:bg-[#d7ff53]/5 flex flex-col h-full">
+        <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-white/5 bg-black/30 backdrop-blur-sm transition-all duration-500 group-hover:border-white/10 group-hover:bg-black/50 sm:p-3 dark:border-gray-800 dark:bg-gray-900/[0.1] group-hover:dark:border-[#d7ff53]/30 group-hover:dark:bg-[#d7ff53]/5 flex flex-col h-full">
           {/* Subtle inner frame glow */}
           <div
             className="pointer-events-none absolute inset-px rounded-[1.4rem] bg-gradient-to-br from-white/5 via-transparent to-black/20 dark:from-white/5 dark:via-transparent dark:to-black/30"
@@ -234,16 +234,16 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
           {/* Body */}
           <div className="flex flex-col h-full min-h-[0]">
             {/* Fixed-height description section - ALL BOXES SAME HEIGHT */}
-            <div className="p-4 sm:p-5 bg-black/20 backdrop-blur-sm overflow-hidden">
+            <div className="p-3 sm:p-5 bg-black/20 backdrop-blur-sm overflow-hidden">
               <div className="h-[3.5rem] overflow-hidden flex flex-col justify-end"> {/* Fixed height ~56px */}
-                <p className="text-sm leading-relaxed text-gray-300 dark:text-gray-300 line-clamp-2">
+                <p className="text-xs sm:text-sm leading-relaxed text-gray-300 dark:text-gray-300 line-clamp-2">
                   {product.description || "Premium official merchandise collection."}
                 </p>
               </div>
             </div>
 
             {/* Price & CTA section - Remaining space */}
-            <div className="p-4 sm:p-5 pt-3 bg-black/20 backdrop-blur-sm flex flex-col gap-4">
+            <div className="p-3 sm:p-5 pt-2 sm:pt-3 bg-black/20 backdrop-blur-sm flex flex-col gap-3 sm:gap-4">
               {/* Price display */}
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 sm:text-xs mb-1">Price</p>
@@ -278,7 +278,7 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
 
               {/* Rating & Sold count - display if available */}
               {hasRating || soldCount > 0 && (
-                <div className="flex items-center justify-between text-xs py-2 border-b border-white/5 mb-2">
+                <div className="flex items-center justify-between text-[11px] sm:text-xs py-2 border-b border-white/5 mb-2">
                   {/* Rating stars + count */}
                   {hasRating && (
                     <div className="flex items-center gap-1">
@@ -297,16 +297,16 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
               )}
 
               {/* Elegant CTA button */}
-              <div className="pt-3 border-t border-white/5">
+              <div className="pt-2 sm:pt-3 border-t border-white/5">
                 <div
-                  className={`flex items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-sm font-black uppercase tracking-wider transition-all duration-500 ${
+                  className={`flex items-center justify-center gap-2 rounded-xl px-4 py-3 sm:px-6 sm:py-3.5 text-xs sm:text-sm font-black uppercase tracking-wider transition-all duration-500 active:scale-95 ${
                     isComingSoon
                       ? "bg-gray-800/50 text-gray-400 cursor-not-allowed"
                       : "bg-gradient-to-r from-[#d7ff53] to-[#c7ef33] text-black hover:scale-[1.02] shadow-lg hover:shadow-[0_10px_30px_rgba(215,255,83,0.3)]"
                   }`}>
                   <span>{isComingSoon ? "Coming Soon" : "View Detail"}</span>
                   {!isComingSoon && (
-                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 transition-transform group-hover:translate-x-1" />
                   )}
                 </div>
               </div>

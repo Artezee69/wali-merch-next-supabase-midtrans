@@ -14,7 +14,7 @@ export default function HowToOrder() {
     <section
       id="how-to-order"
       data-section-nav
-      className="relative overflow-hidden px-4 py-24 md:px-8 md:py-32 bg-[#0b0b0b]"
+      className="relative overflow-hidden px-4 sm:px-6 py-16 sm:py-24 md:px-8 md:py-32 bg-[#0b0b0b]"
     >
       <div className="mx-auto max-w-6xl relative z-10">
         <Reveal className="text-center mb-16">
@@ -22,7 +22,7 @@ export default function HowToOrder() {
             <Sparkles className="h-3 w-3" />
             {t.home.howToOrder.badge}
           </span>
-          <h2 className="mx-auto mt-6 text-2xl md:text-4xl font-black leading-[1.1] tracking-tight text-white">
+          <h2 className="mx-auto mt-6 text-xl sm:text-2xl md:text-4xl font-black leading-[1.1] tracking-tight text-white">
             {t.home.howToOrder.title}
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-sm md:text-base text-white/65">
@@ -30,10 +30,10 @@ export default function HowToOrder() {
           </p>
         </Reveal>
 
-        <div className="relative mt-20">
+        <div className="relative mt-12 sm:mt-20">
           <div className="absolute left-0 right-0 top-8 h-0.5 bg-white/5" />
 
-          <div className="relative flex items-start justify-between pl-8 pr-8 pt-8">
+          <div className="relative flex flex-col sm:flex items-start sm:justify-between sm:pl-8 sm:pr-8 sm:pt-8">
             {steps.map((step, i) => {
               const Icon = icons[i];
               const isLast = i === steps.length - 1;
@@ -42,7 +42,7 @@ export default function HowToOrder() {
                 <div
                   key={step.title}
                   className={`group relative flex-1 flex flex-col items-center ${
-                    i !== steps.length - 1 ? "mr-8" : ""
+                    !isLast && "sm:mr-8 mb-8 sm:mb-0"
                   }`}
                 >
                   <div className="mb-3">
@@ -53,27 +53,27 @@ export default function HowToOrder() {
 
                   <div className="mb-4">
                     <Icon
-                      className="h-10 w-10 text-white/60 transition-colors duration-300 group-hover:text-[#d7ff53]"
+                      className="h-8 w-8 sm:h-10 sm:w-10 text-white/60 transition-colors duration-300 group-hover:text-[#d7ff53]"
                       strokeWidth={1.5}
                     />
                   </div>
 
-                  <h3 className="text-base font-bold text-white group-hover:text-[#d7ff53] transition-colors duration-300 text-center">
+                  <h3 className="text-sm sm:text-base font-bold text-white group-hover:text-[#d7ff53] transition-colors duration-300 text-center max-w-[180px] sm:max-w-none">
                     {step.title}
                   </h3>
 
-                  <p className="mt-2 text-sm text-white/70 text-center leading-relaxed max-w-[200px]">
+                  <p className="mt-2 text-xs sm:text-sm text-white/70 text-center leading-relaxed max-w-[200px]">
                     {step.desc}
                   </p>
 
                   <div className="mt-4">
-                    <span className="text-xs font-black uppercase tracking-wide text-white/50 bg-black/30 border border-white/5 px-3 py-1 rounded-full">
+                    <span className="text-[10px] sm:text-xs font-black uppercase tracking-wide text-white/50 bg-black/30 border border-white/5 px-3 py-1.5 rounded-full">
                       {step.time}
                     </span>
                   </div>
 
                   {!isLast && (
-                    <div className="absolute left-1/2 top-full w-0.5 h-12 bg-white/5 -translate-x-1/2" />
+                    <div className="absolute left-1/2 top-full w-0.5 h-8 sm:h-12 bg-white/5 -translate-x-1/2" />
                   )}
                 </div>
               );
@@ -81,7 +81,7 @@ export default function HowToOrder() {
           </div>
         </div>
 
-        <Reveal variant="blur-in" delay={0.4} className="mt-24 text-center">
+        <Reveal variant="blur-in" delay={0.4} className="mt-16 sm:mt-24 text-center">
           <div className="inline-flex items-center justify-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-white/50 hover:text-white hover:[#d7ff53] transition-colors duration-300">
             Status: Live & accepting orders
             <ArrowRight className="h-3.5 w-3.5 text-[#d7ff53] transition-transform duration-300 group-hover:translate-x-1"></ArrowRight>

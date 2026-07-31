@@ -250,24 +250,24 @@ export default function Navbar({
   );
 
   return (
-    <div className="sticky top-0 z-50 bg-black/90 backdrop-blur-md shadow-sm transition-all duration-300 border-b border-white/5">
+    <div className="sticky top-0 z-50 bg-black/95 backdrop-blur-xl shadow-lg transition-all duration-300 border-b border-white/10">
       <header className="border-b border-transparent">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 md:px-8">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 sm:gap-3 px-4 py-3 sm:py-4 md:px-8">
         {/* Brand — top left: big bold text, subtitle below */}
-        <Link href={brandHref} className="shrink-0">
+        <Link href={brandHref} className="shrink-0 flex items-center gap-2">
           {headerSettings.logoUrl ? (
             <img
               src={headerSettings.logoUrl}
               alt={headerSettings.logoText}
-              className="h-9 w-auto transition-transform duration-500 group-hover:scale-105"
+              className="h-8 sm:h-9 w-auto transition-transform duration-500 group-hover:scale-105"
             />
           ) : (
             <>
-              <div className="text-base font-black uppercase tracking-[0.22em] text-gray-900 dark:text-white transition-colors duration-300 group-hover:text-green-600 dark:group-hover:text-[#d7ff53] md:text-lg animate-pulse-light">
+              <div className="text-sm sm:text-base font-black uppercase tracking-[0.2em] sm:tracking-[0.22em] text-gray-900 dark:text-white transition-colors duration-300 group-hover:text-green-600 dark:group-hover:text-[#d7ff53] animate-pulse-light">
                 {headerSettings.logoText}
               </div>
               {headerSettings.showSubtitle && (
-                <div className="text-[9px] font-bold uppercase tracking-[0.35em] text-white/40">
+                <div className="hidden sm:block text-[9px] font-bold uppercase tracking-[0.35em] text-white/40">
                   {headerSettings.logoSubtitle}
                 </div>
               )}
@@ -309,24 +309,24 @@ export default function Navbar({
           onClick={() => setOpen((prev) => !prev)}
           aria-label={open ? "Close menu" : "Open menu"}
           aria-expanded={open}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-gray-300 dark:border-white/15 bg-gray-100 dark:bg-gray-800/30 text-gray-900 dark:text-white transition hover:border-green-600 dark:hover:border-[#d7ff53] hover:text-green-600 dark:hover:text-[#d7ff53] md:hidden"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 dark:bg-white/5 text-white transition-all duration-200 hover:bg-white/10 hover:border-[#d7ff53]/30 active:scale-95 md:hidden"
         >
-          {open ? <X size={20} /> : <Menu size={20} className="text-gray-900 dark:text-white" />}
+          {open ? <X size={20} className="text-[#d7ff53]" /> : <Menu size={20} className="text-white" />}
         </button>
       </div>
 
       {/* Mobile menu */}
       {open && (
         <div
-          className="animate-slide-down-spring border-t border-white/10 bg-black/85 backdrop-blur-sm md:hidden"
-          style={{ transformOrigin: "top" }}
+          className="animate-slide-down-spring border-t border-white/10 bg-black/95 backdrop-blur-xl md:hidden overflow-y-auto"
+          style={{ transformOrigin: "top", maxHeight: "85dvh" }}
         >
-          <nav className="mx-auto flex max-w-7xl flex-col gap-1 px-4 py-4">
+          <nav className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-4">
             {/* Mobile search bar */}
             <form
               action="/products"
               method="GET"
-              className="mb-2 flex items-center gap-2 rounded-2xl border border-gray-300 dark:border-white/10 bg-gray-200 dark:bg-gray-800/50 px-4 py-3"
+              className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
             >
               <Search size={16} className="text-gray-500 dark:text-white/40" />
               <input
@@ -344,8 +344,8 @@ export default function Navbar({
                 href={item.href}
                 className={`flex items-center gap-3 rounded-2xl px-4 py-4 text-sm font-black uppercase tracking-wider transition ${
                   isItemActive(item, activeKey, pathname)
-                    ? "bg-green-600 dark:bg-[#d7ff53] text-white dark:text-gray-800 light:bg-green-600 light:text-white dark:light:text-gray-800"
-                    : "text-gray-700 dark:text-white light:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800/30 light:bg-gray-100 dark:light:bg-gray-800/30 hover:text-green-600 dark:hover:text-[#d7ff53] light:hover:text-green-600 dark:light:hover:text-[#d7ff53]"
+                    ? "bg-[#d7ff53] text-black font-black"
+                    : "text-white/80 hover:text-white hover:bg-white/5"
                 }`}
               >
                 {item.icon && <span className="shrink-0">{item.icon}</span>}
@@ -356,10 +356,10 @@ export default function Navbar({
             {/* Cart link in mobile menu */}
             <Link
               href="/cart"
-              className={`flex items-center justify-between rounded-2xl px-4 py-4 text-sm font-black uppercase tracking-wider transition ${
+              className={`flex items-center justify-between rounded-2xl px-4 py-4 text-sm font-black uppercase tracking-wider transition-all duration-200 active:scale-98 ${
                 pathname === "/cart"
-                  ? "bg-green-600 dark:bg-[#d7ff53] text-white dark:text-gray-800 light:bg-green-600 light:text-white dark:light:text-gray-800"
-                  : "text-white/75 hover:bg-white/5 hover:text-white"
+                  ? "bg-[#d7ff53] text-black font-black"
+                  : "text-white/80 hover:text-white hover:bg-white/5"
               }`}
             >
               <span className="flex items-center gap-3">
@@ -368,7 +368,7 @@ export default function Navbar({
               </span>
               {itemCount > 0 && (
                 <span className={`flex h-6 min-w-6 px-2 items-center justify-center rounded-full text-[11px] font-bold ${
-                  pathname === "/cart" ? "bg-black text-[#d7ff53]" : "bg-green-600 dark:bg-[#d7ff53] text-white dark:text-gray-800 light:bg-green-600 light:text-white dark:light:text-gray-800"
+                  pathname === "/cart" ? "bg-black text-[#d7ff53]" : "bg-black text-[#d7ff53]"
                 }`}>
                   {itemCount}
                 </span>
@@ -382,7 +382,7 @@ export default function Navbar({
             )}
 
             {/* Mobile auth CTA */}
-            <div className="mt-3 grid gap-2 border-t border-white/10 pt-4">
+            <div className="mt-4 grid gap-2 border-t border-white/10 pt-4">
               {user && !profileLoading ? (
                 <>
                   <div className="flex items-center gap-3 rounded-xl bg-white/5 p-3">
@@ -427,12 +427,12 @@ export default function Navbar({
               ) : (
                 <>
                   {headerSettings.showLogin && (
-                    <Link href="/login" className="rounded-xl border border-[#d7ff53]/60 bg-transparent px-4 py-3 text-center text-sm font-bold text-[#d7ff53] transition hover:bg-[#d7ff53]/10">
+                    <Link href="/login" className="rounded-xl border border-[#d7ff53]/60 bg-transparent px-4 py-3.5 text-center text-sm font-black uppercase tracking-wider text-[#d7ff53] transition-all duration-200 hover:bg-[#d7ff53]/10 active:scale-95">
                       {headerSettings.loginLabel}
                     </Link>
                   )}
                   {headerSettings.showRegister && (
-                    <Link href="/register" className="rounded-xl bg-[#d7ff53] px-4 py-3 text-center text-sm font-bold text-black transition hover:bg-[#c7ef33]">
+                    <Link href="/register" className="rounded-xl bg-[#d7ff53] px-4 py-3.5 text-center text-sm font-black uppercase tracking-wider text-black transition-all duration-200 hover:bg-[#c7ef33] active:scale-95">
                       {headerSettings.registerLabel}
                     </Link>
                   )}

@@ -142,30 +142,30 @@ export default async function HomePage() {
       <Navbar />
 
       {heroBanners.length > 0 && (
-        <section className="px-6 pt-8">
+        <section className="px-4 sm:px-6 pt-6 sm:pt-8">
           <div
             className={`max-w-[1320px] mx-auto ${
               hasPromos
-                ? "grid grid-cols-[1.6fr_1fr] items-start gap-6 rounded-xl overflow-hidden"
+                ? "grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] items-start gap-4 sm:gap-6 rounded-xl overflow-hidden"
                 : ""
             }`}
           >
-            <HeroCarousel banners={heroBanners} fillHeight={hasPromos} className={hasPromos ? "h-[520px]" : ""} />
+            <HeroCarousel banners={heroBanners} fillHeight={hasPromos} className={hasPromos ? "h-[320px] sm:h-[420px] lg:h-[520px]" : ""} />
 {(() => {
   // Render promos jika data tersedia, atau fallback placeholder jika tidak ada
   const renderPlaceholder = () => (
-    <div className="h-[248px] rounded-xl border border-black/10 dark:border-white/10 bg-gray-900/10 dark:bg-white/5 overflow-hidden flex items-center justify-center text-gray-600 dark:text-gray-300 text-sm">
-      [BANNER Iklan Placeholder]
+    <div className="h-[160px] sm:h-[200px] lg:h-[248px] rounded-xl border border-white/5 dark:border-white/10 bg-white/5 dark:bg-white/5 overflow-hidden flex items-center justify-center text-white/30 text-xs sm:text-sm">
+      <span className="px-4 text-center">[BANNER Iklan Placeholder]</span>
     </div>
   );
 
   return (
-    <div className="flex flex-col gap-6 h-full">
+    <div className="flex flex-col gap-4 sm:gap-6 h-full">
       {promoTopBanner ? (
-        <PromoBanner banner={promoTopBanner} className="h-[248px]" />
+        <PromoBanner banner={promoTopBanner} className="h-[160px] sm:h-[200px] lg:h-[248px]" />
       ) : renderPlaceholder()}
       {promoBottomBanner ? (
-        <PromoBanner banner={promoBottomBanner} className="h-[248px]" />
+        <PromoBanner banner={promoBottomBanner} className="h-[160px] sm:h-[200px] lg:h-[248px]" />
       ) : renderPlaceholder()}
     </div>
   );

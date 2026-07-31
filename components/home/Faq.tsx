@@ -14,7 +14,7 @@ export default function Faq() {
     <section
       id="faq"
       data-section-nav
-      className="relative overflow-hidden border-t border-white/5 px-4 py-24 md:px-8 md:py-32"
+      className="relative overflow-hidden border-t border-white/5 px-4 sm:px-6 py-16 sm:py-24 md:px-8 md:py-32"
     >
       {/* Ambient layers */}
       <div className="pointer-events-none absolute inset-0 -z-10">
@@ -29,7 +29,7 @@ export default function Faq() {
             <HelpCircle className="h-3 w-3" />
             {t.home.faq.badge}
           </span>
-          <h2 className="mx-auto mt-6 max-w-2xl text-balance text-4xl font-black leading-[1.05] tracking-tight text-white md:text-5xl">
+          <h2 className="mx-auto mt-6 max-w-2xl text-balance text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black leading-[1.05] tracking-tight text-white">
             {t.home.faq.title}
           </h2>
           <p className="mx-auto mt-5 max-w-xl text-balance text-sm text-white/55 md:text-base">
@@ -59,7 +59,7 @@ export default function Faq() {
                     type="button"
                     onClick={() => setOpen(isOpen ? null : i)}
                     aria-expanded={isOpen}
-                    className="flex w-full items-center justify-between gap-4 px-5 py-5 text-left md:px-6"
+                    className="flex w-full items-center justify-between gap-3 sm:gap-4 px-4 sm:px-5 py-4 sm:py-5 text-left"
                   >
                     <div className="flex flex-1 items-center gap-4">
                       <span
@@ -70,7 +70,7 @@ export default function Faq() {
                         0{i + 1}
                       </span>
                       <span
-                        className={`text-sm font-black transition-colors duration-500 md:text-base ${
+                        className={`text-xs sm:text-sm font-black transition-colors duration-500 ${
                           isOpen ? "text-white" : "text-white/85"
                         }`}
                       >
@@ -100,9 +100,9 @@ export default function Faq() {
                     }}
                   >
                     <div className="overflow-hidden">
-                      <div className="px-5 pb-5 pl-12 md:px-6 md:pl-14">
+                      <div className="px-4 sm:px-5 pb-4 sm:pb-5 pl-10 sm:pl-12">
                         <div className="h-px w-full bg-gradient-to-r from-white/10 via-white/5 to-transparent" />
-                        <p className="mt-4 text-sm leading-relaxed text-white/60 md:text-[15px]">
+                        <p className="mt-3 sm:mt-4 text-xs sm:text-sm leading-relaxed text-white/60">
                           {item.a}
                         </p>
                       </div>
