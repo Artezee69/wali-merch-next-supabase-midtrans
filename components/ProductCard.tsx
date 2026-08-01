@@ -136,32 +136,15 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
           />
 
           {/* Image container */}
-          <div className="group/img relative aspect-[4/5] overflow-hidden rounded-2xl bg-gradient-to-br from-black/40 to-black/60 dark:from-black/70 dark:to-black/90">
-            {/* Shimmer on hover */}
-            <div
-              className="pointer-events-none absolute inset-0 z-10 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-              style={{
-                background:
-                  "linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.10) 50%, transparent 70%)",
-                backgroundSize: "200% 200%",
-                animation: hover ? "shimmer 1.8s linear infinite" : "none",
-              }}
-              aria-hidden
-            />
-
+          <div className="group/img relative aspect-[4/5] overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-900">
             <Image
               src={getImage(product)}
               alt={product.name}
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              className="object-cover transition-all duration-700 ease-out group-hover:scale-110"
-              style={{
-                filter: hover ? "saturate(1.05)" : "saturate(1)",
-              }}
+              className="object-cover transition-all duration-700 ease-out group-hover:scale-105"
+              style={{ filter: "saturate(1)" }}
             />
-
-            {/* Subtle bottom shade for badge readability */}
-            <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-b from-transparent to-black/40 dark:to-black/60" />
 
             {/* Top-left badges */}
             <div className="absolute left-3 top-3 z-20 flex flex-col gap-2 sm:left-4 sm:top-4 sm:gap-2">
