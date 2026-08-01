@@ -66,7 +66,7 @@ export default function ProductCardV2({
           className={`absolute inset-0 h-full w-full object-cover transition-all duration-700 ${
             isHovered && hoverImage !== mainImage
               ? "scale-110 opacity-0"
-              : "scale-100 opacity-100 grayscale-[40%] group-hover:scale-105 group-hover:grayscale-0"
+              : "scale-100 opacity-100 group-hover:scale-105"
           }`}
         />
         {hoverImage !== mainImage && (
