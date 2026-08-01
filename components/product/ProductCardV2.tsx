@@ -80,8 +80,6 @@ export default function ProductCardV2({
           />
         )}
 
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-
         {/* Top badges */}
         <div className="absolute left-3 right-3 top-3 flex items-start justify-between gap-2">
           <div className="flex flex-col gap-1.5">
