@@ -39,7 +39,7 @@ const statusClass: Record<string, string> = {
     "bg-yellow-500/10 text-yellow-300 border-yellow-500/30 shadow-[0_0_30px_-10px_rgba(234,179,8,0.5)]",
   pending:
     "bg-yellow-500/10 text-yellow-300 border-yellow-500/30 shadow-[0_0_30px_-10px_rgba(234,179,8,0.5)]",
-  paid: "bg-blue-500/10 text-blue-300 border-blue-500/30 shadow-[0_0_30px_-10px_rgba(59,130,246,0.5)]",
+  paid: "bg-[#d7ff53]/10 text-[#d7ff53] border-[#d7ff53]/30 shadow-[0_0_30px_-10px_rgba(215,255,83,0.4)]",
   processing:
     "bg-purple-500/10 text-purple-300 border-purple-500/30 shadow-[0_0_30px_-10px_rgba(168,85,247,0.5)]",
   shipped:
