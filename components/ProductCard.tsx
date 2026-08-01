@@ -156,13 +156,12 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               className="object-cover transition-all duration-700 ease-out group-hover:scale-110"
               style={{
-                filter: hover ? "saturate(1.05)" : "saturate(0.92)",
+                filter: hover ? "saturate(1.05)" : "saturate(1)",
               }}
             />
 
-            {/* Cinematic overlays */}
-            <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/60 to-transparent dark:from-black dark:via-black/60" />
-            <div className="absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-gray-900/70 to-transparent dark:from-black/70 dark:to-transparent" />
+            {/* Subtle bottom shade for badge readability */}
+            <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-b from-transparent to-black/40 dark:to-black/60" />
 
             {/* Top-left badges */}
             <div className="absolute left-3 top-3 z-20 flex flex-col gap-2 sm:left-4 sm:top-4 sm:gap-2">
