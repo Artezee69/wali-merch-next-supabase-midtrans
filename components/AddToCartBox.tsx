@@ -17,6 +17,7 @@ type AddToCartBoxProps = {
     option2: string | null;
     legacyColor?: string | null;
     stock: number;
+    price?: number | null;
   }[];
 };
 

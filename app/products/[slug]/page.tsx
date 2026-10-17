@@ -25,6 +25,8 @@ type ProductVariant = {
   option_2_name: string | null;
   option_2_value: string | null;
   stock: number;
+  price: number | null;
+  sale_price: number | null;
 };
 
 type Product = {
@@ -100,7 +102,10 @@ export default async function ProductDetailPage({ params }: PageProps) {
         option_1_value,
         option_2_name,
         option_2_value,
-        stock
+        stock,
+        is_active,
+        price,
+        sale_price
       )
     `
     )
@@ -329,6 +334,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
                       option2: opt2Value,
                       legacyColor: variant.color || null,
                       stock: Number(variant.stock || 0),
+                      price: Number(variant.sale_price ?? variant.price ?? effectivePrice),
                     };
                   })}
                 />

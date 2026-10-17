@@ -19,15 +19,15 @@ export default function PageHeader({
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute left-1/2 top-0 h-[120%] w-[140%] -translate-x-1/2 bg-[radial-gradient(ellipse_at_center_top,_rgba(215,255,83,0.18),_transparent_55%)]" />
         <div
-          className="absolute -left-32 top-1/3 h-96 w-96 rounded-full bg-[#5e8bff]/10 blur-[140px] animate-aurora-2"
+          className="absolute -left-32 top-1/3 h-96 w-96 rounded-full bg-white/4 blur-[140px] animate-aurora-2"
           style={{ filter: "blur(140px)" }}
         />
         <div
-          className="absolute -right-32 bottom-1/4 h-96 w-96 rounded-full bg-[#ff5edb]/10 blur-[140px] animate-aurora-1"
+          className="absolute -right-32 bottom-1/4 h-96 w-96 rounded-full bg-white/3 blur-[140px] animate-aurora-1"
           style={{ filter: "blur(140px)" }}
         />
         <div className="absolute inset-0 bg-grid-fade [background-size:48px_48px] opacity-[0.25]" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent,#0b0b0b_95%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent,#000000_95%)]" />
       </div>
 
       {/* Top metadata strip */}

@@ -15,12 +15,7 @@ import { requireAdmin } from "@/lib/adminAuth";
 import AdminShell from "@/components/admin/AdminShell";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { getStoreSettings } from "@/lib/storeSettings";
-import {
-  formatRupiah,
-  formatShortDate,
-  formatPaymentStatus,
-  formatOrderStatus,
-} from "@/lib/adminFormat";
+import { formatRupiah } from "@/lib/adminFormat";
 import DashboardOrderRow from "@/components/admin/DashboardOrderRow";
 
 export const dynamic = "force-dynamic";
@@ -81,28 +76,26 @@ async function loadDashboard(): Promise<{
     supabase
       .from("orders")
       .select("id", { count: "exact", head: true })
-      .in("fulfillment_status", ["menunggu_pembayaran", "perlu_diproses", "sedang_dikemas"])
-      .neq("payment_status", "cancelled"),
+      .eq("order_status", "processing"),
     supabase
       .from("orders")
       .select("id", { count: "exact", head: true })
-      .eq("fulfillment_status", "dikirim"),
+      .eq("order_status", "shipped"),
     supabase
       .from("orders")
       .select("id", { count: "exact", head: true })
-      .eq("fulfillment_status", "selesai"),
+      .eq("order_status", "completed"),
     supabase
       .from("profiles")
-      .select("id", { count: "exact", head: true })
-      .eq("role", "customer"),
+      .select("id", { count: "exact", head: true }),
     supabase
       .from("orders")
-      .select("total")
+      .select("total_amount")
       .eq("payment_status", "paid"),
     supabase
       .from("orders")
       .select(
-        "id, order_number, created_at, total, payment_status, fulfillment_status, profiles(full_name, email)"
+        "id, order_code, created_at, total_amount, payment_status, order_status, customer_name, customer_phone"
       )
       .order("created_at", { ascending: false })
       .limit(ORDER_FETCH_LIMIT),
@@ -131,13 +124,13 @@ async function loadDashboard(): Promise<{
 
   const recentOrders = (recentOrdersRes.data ?? []).map((row: any) => ({
     id: row.id,
-    order_number: row.order_number,
+    order_code: row.order_code,
     created_at: row.created_at,
-    total: row.total,
+    total_amount: row.total_amount,
     payment_status: row.payment_status,
-    fulfillment_status: row.fulfillment_status,
-    customer_name: row.profiles?.full_name ?? null,
-    customer_email: row.profiles?.email ?? null,
+    order_status: row.order_status,
+    customer_name: row.customer_name ?? null,
+    customer_phone: row.customer_phone ?? null,
   }));
 
   const stockAlerts = (stockAlertsRes.data ?? [])
@@ -177,7 +170,7 @@ async function loadDashboard(): Promise<{
     .slice(0, 20);
 
   const revenue = (paidOrdersRevenue.data ?? []).reduce(
-    (s: number, r: any) => s + (Number(r.total) || 0),
+    (s: number, r: any) => s + (Number(r.total_amount) || 0),
     0
   );
 
@@ -343,14 +336,7 @@ export default async function AdminDashboardPage() {
                   </thead>
                   <tbody>
                     {recentOrders.map((o) => (
-                      <DashboardOrderRow
-                        key={o.id}
-                        order={o}
-                        formatPaymentStatus={formatPaymentStatus}
-                        formatOrderStatus={formatOrderStatus}
-                        formatRupiah={formatRupiah}
-                        formatShortDate={formatShortDate}
-                      />
+                      <DashboardOrderRow key={o.id} order={o} />
                     ))}
                   </tbody>
                 </table>

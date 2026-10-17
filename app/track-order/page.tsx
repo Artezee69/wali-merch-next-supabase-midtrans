@@ -46,8 +46,8 @@ export default async function TrackOrderPage({
         order = orderByCode;
       } else {
         // 2) Cari by customer_phone / customer_name
-        const isPhone = /^\d{8,}$/.test(q.replace(/[^0-9]/g, ""));
-        const probe = isPhone ? q.replace(/[^0-9]/g, "") : q;
+        const isPhone = /^\d{8,}$/.test(q.replace(/[^-]/g, ""));
+        const probe = isPhone ? q.replace(/[^-]/g, "") : q;
 
         const filters: string[] = [];
         if (isPhone) filters.push(`customer_phone.ilike.%${probe}%`);
@@ -82,7 +82,7 @@ export default async function TrackOrderPage({
   );
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
+    <main className="min-h-screen overflow-x-hidden bg-black text-white">
       <MidtransScript />
       <Navbar activeKey="track-order" />
 

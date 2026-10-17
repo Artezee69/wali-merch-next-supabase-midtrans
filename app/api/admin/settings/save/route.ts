@@ -21,7 +21,31 @@ const ALLOWED_GROUPS = new Set([
   "homepage_sections",
   "homepage_footer",
   "homepage_seo",
+  "bank",
 ]);
+
+// Bank group: split into individual store_settings keys
+async function saveBankSettings(
+  value: Record<string, unknown>,
+  session: { id: string; email: string | null },
+) {
+  const keys: Record<string, string> = {
+    bank_name: (value.bankName as string) ?? "",
+    bank_account_number: (value.bankAccountNumber as string) ?? "",
+    bank_account_holder: (value.bankAccountHolder as string) ?? "",
+  };
+  for (const [key, val] of Object.entries(keys)) {
+    const { error } = await supabaseAdmin
+      .from("store_settings")
+      .upsert(
+        { key, value: val, updated_at: new Date().toISOString(), updated_by: session.id },
+        { onConflict: "key" }
+      );
+    if (error) {
+      throw new Error(`Gagal menyimpan ${key}: ${error.message}`);
+    }
+  }
+}
 
 export async function POST(req: NextRequest) {
   const guard = await requireAdminApi();
@@ -61,35 +85,40 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    console.log("[settings/save] Saving group:", group, "size:", serialized.length);
-    const { error } = await supabaseAdmin
-      .from("store_settings")
-      .upsert(
-        {
-          key: group,
-          value: serialized,
-          updated_at: new Date().toISOString(),
-          updated_by: session.id,
-        },
-        { onConflict: "key" }
-      );
-    if (error) {
-      console.error("[settings/save] Upsert error:", error.message, error.details);
-      return NextResponse.json(
-        { error: error.message || "Gagal menyimpan" },
-        { status: 500 }
-      );
+    if (group === "bank") {
+      await saveBankSettings(body.value as Record<string, unknown>, session);
+      console.log("[settings/save] Bank settings saved");
+    } else {
+      console.log("[settings/save] Saving group:", group, "size:", serialized.length);
+      const { error } = await supabaseAdmin
+        .from("store_settings")
+        .upsert(
+          {
+            key: group,
+            value: serialized,
+            updated_at: new Date().toISOString(),
+            updated_by: session.id,
+          },
+          { onConflict: "key" }
+        );
+      if (error) {
+        console.error("[settings/save] Upsert error:", error.message, error.details);
+        return NextResponse.json(
+          { error: error.message || "Gagal menyimpan" },
+          { status: 500 }
+        );
+      }
+      console.log("[settings/save] Success");
     }
-    console.log("[settings/save] Success");
 
-  await logAdminAction({
-    actorId: session.id,
-    actorEmail: session.email,
-    action: "settings.updated",
-    entity: "store_settings",
-    entityId: group,
-    after: { group, size: serialized.length },
-  });
+    await logAdminAction({
+      actorId: session.id,
+      actorEmail: session.email,
+      action: "settings.updated",
+      entity: "store_settings",
+      entityId: group,
+      after: { group, size: serialized.length },
+    });
 
   } catch (saveErr) {
     console.error("[settings/save] Unexpected error:", saveErr);

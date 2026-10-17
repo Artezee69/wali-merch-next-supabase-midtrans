@@ -14,6 +14,8 @@ type Variant = {
   /** legacy color field, used as fallback when option1 is just "Default" */
   legacyColor?: string | null;
   stock: number;
+  /** per-variant price (overrides product-level price) */
+  price?: number | null;
 };
 
 type AddToCartFormProps = {
@@ -47,9 +49,14 @@ export default function AddToCartForm({
   // Check if any variant has a non-null, non-empty option2 value (true size/dimension exists)
   const hasRealOption2 = variants.some((v) => v.option2 && v.option2 !== "");
 
+  // Check if any variant has a non-null, non-empty option1 value
+  const hasRealOption1 = variants.some((v) => v.option1 && v.option1 !== "" && v.option1 !== "Default");
+
   // Determine if we need two-dimensional selection (has meaningful option1 AND option2)
-  const usesTwoDimensionalSelection = hasRealOption2 &&
-    variants.some((v) => v.option1 && v.option1 !== "" && v.option1 !== "Default");
+  const usesTwoDimensionalSelection = hasRealOption2 && hasRealOption1;
+
+  // Single-dimension with option1 only (no option2) — show option1 as the main selector
+  const isSingleDimOption1 = !hasRealOption2 && hasRealOption1;
 
   // Effective option1 value for a variant (use option1 if meaningful, fallback to legacyColor or empty)
   const effectiveOpt1 = (v: Variant) => {
@@ -57,9 +64,27 @@ export default function AddToCartForm({
     return v.legacyColor || "";
   };
 
-  // Initial state: for one-group or no meaningful option1, use the first variant's values
+  // Unique option1 values sorted logically for single-dim products
+  const opt1Options = useMemo(() => {
+    if (!isSingleDimOption1 && !usesTwoDimensionalSelection) return [] as string[];
+    const unique = Array.from(new Set(variants.map((v) => effectiveOpt1(v)).filter((v) => v && v !== "")));
+    // Sort sizes logically: XS < S < M < L < XL < XXL < XXXL < XXXXL < XXXXXL
+    const order: Record<string, number> = {
+      XS: 1, S: 2, M: 3, L: 4, XL: 5, XXL: 6, XXXL: 7, XXXXL: 8, XXXXXL: 9,
+    };
+    unique.sort((a, b) => {
+      const oa = order[a] ?? 0, ob = order[b] ?? 0;
+      if (oa && ob) return oa - ob;
+      return a.localeCompare(b);
+    });
+    return unique;
+  }, [variants, isSingleDimOption1, usesTwoDimensionalSelection, effectiveOpt1]);
+
+  // Initial state
   const [selectedOpt1, setSelectedOpt1] = useState(
-    usesTwoDimensionalSelection ? (variants[0]?.option1 || "") : (variants[0]?.legacyColor || variants[0]?.option1 || "")
+    isSingleDimOption1 || usesTwoDimensionalSelection
+      ? (opt1Options[0] || variants[0]?.option1 || variants[0]?.legacyColor || "")
+      : (variants[0]?.legacyColor || variants[0]?.option1 || "")
   );
   const [selectedOpt2, setSelectedOpt2] = useState("");
   const [quantity, setQuantity] = useState(1);
@@ -67,35 +92,33 @@ export default function AddToCartForm({
   const [submitting, setSubmitting] = useState(false);
 
   // --- Derived data ---
-  // Only show option1 selector when we have a two-dimensional structure with multiple option1 values
-  const opt1Options = useMemo(() => {
-    if (!usesTwoDimensionalSelection) return [];
-    const unique = Array.from(new Set(variants.map((v) => effectiveOpt1(v)).filter((v) => v && v !== "")));
-    return unique as string[];
-  }, [variants, usesTwoDimensionalSelection, effectiveOpt1]);
-
-  // Filter variants based on selected option1 (only applies in two-dimensional mode)
+  // Filter variants based on selected option1 (applies to single-dim option1 and two-dim modes)
   const filteredVariants = useMemo(() => {
-    if (!usesTwoDimensionalSelection) return variants;
+    if (!isSingleDimOption1 && !usesTwoDimensionalSelection) return variants;
+    if (!selectedOpt1) return variants;
     return variants.filter((v) => effectiveOpt1(v) === selectedOpt1);
-  }, [variants, usesTwoDimensionalSelection, selectedOpt1, effectiveOpt1]);
+  }, [variants, isSingleDimOption1, usesTwoDimensionalSelection, selectedOpt1, effectiveOpt1]);
 
   // Get available option2 (size) values from filtered variants
   const opt2Options = useMemo(() => {
-    if (!hasRealOption2) return [];
+    if (!hasRealOption2) return [] as string[];
     const vals = Array.from(new Set(filteredVariants.map((v) => v.option2))).filter(Boolean) as string[];
-    // Sort sizes logically: M < L < XL < XXL < XXXL < XXXXL < XXXXXL
     const order: Record<string, number> = {
       XS: 1, S: 2, M: 3, L: 4, XL: 5, XXL: 6, XXXL: 7, XXXXL: 8, XXXXXL: 9,
     };
     vals.sort((a, b) => (order[a] ?? a.length * 100) - (order[b] ?? b.length * 100));
     return vals;
-  }, [filteredVariants, hasRealOption2, usesTwoDimensionalSelection]);
+  }, [filteredVariants, hasRealOption2]);
 
   // Select the variant based on current selections
   const selectedVariant = useMemo(() => {
+    if (isSingleDimOption1) {
+      // No option2 — find variant matching selected option1
+      if (!selectedOpt1) return variants[0] || null;
+      return variants.find((v) => effectiveOpt1(v) === selectedOpt1) || variants[0] || null;
+    }
     if (!hasRealOption2) {
-      // Product truly has no size dimension — use the first variant directly
+      // No size dimension and no meaningful option1 — use the first variant directly
       return variants[0] || null;
     }
     if (!usesTwoDimensionalSelection) {
@@ -105,15 +128,19 @@ export default function AddToCartForm({
     // Two-dimensional product: need both option1 and option2 selected
     if (!selectedOpt2) return null;
     return filteredVariants.find((v) => v.option2 === selectedOpt2);
-  }, [filteredVariants, selectedOpt2, hasRealOption2, usesTwoDimensionalSelection, variants]);
+  }, [filteredVariants, selectedOpt2, selectedOpt1, hasRealOption2, isSingleDimOption1, usesTwoDimensionalSelection, variants, effectiveOpt1]);
 
   // Calculate stock availability
-  const maxStock = usesTwoDimensionalSelection
-    ? Number(selectedVariant?.stock || 0)
-    : Number(variants[0]?.stock || 0);
+  const maxStock = (isSingleDimOption1 || usesTwoDimensionalSelection)
+    ? Number(selectedVariant?.stock ?? 0)
+    : Number(variants[0]?.stock ?? 0);
 
-  const isSoldOut = maxStock <= 0;
-  const allSoldOut = filteredVariants.length > 0 && filteredVariants.every((v) => Number(v.stock || 0) <= 0);
+  // For two-dimensional products, only show "Sold Out" after the user has
+  // selected both option1 and option2. Before selection, show neutral state.
+  const hasSelectedVariant = !usesTwoDimensionalSelection || (usesTwoDimensionalSelection && !!selectedOpt1 && !!selectedOpt2);
+  const isSoldOut = hasSelectedVariant && maxStock <= 0;
+  const allSoldOut = filteredVariants.length > 0 && filteredVariants.every((v) => Number(v.stock ?? 0) <= 0);
+  const showQuantity = isSingleDimOption1 ? !!selectedOpt1 : hasRealOption2 ? !!selectedOpt2 : true;
 
   // --- Handlers ---
   function chooseOpt1(val: string) {
@@ -142,6 +169,7 @@ export default function AddToCartForm({
       // For single-dimension products (no size), send empty string for size field
       const sizeToSend = !hasRealOption2 ? "" : (selectedVariant.option2 || "");
 
+      const effectiveVariantPrice = Number(selectedVariant.price ?? price);
       const success = await addItem({
         product_id: productId,
         variant_id: selectedVariant.id,
@@ -149,7 +177,7 @@ export default function AddToCartForm({
         slug,
         size: sizeToSend,
         image_url: image,
-        price,
+        price: effectiveVariantPrice,
         quantity,
       });
 
@@ -187,28 +215,46 @@ export default function AddToCartForm({
   // --- Render ---
   return (
     <div className="space-y-5">
-      {/* Option 1 selector — only shown for two-dimensional products with multiple option1 values */}
-      {usesTwoDimensionalSelection && opt1Options.length > 1 && (
+      {/* Option 1 selector — shown for two-dimensional or single-dimension option1 products */}
+      {(isSingleDimOption1 || (usesTwoDimensionalSelection && opt1Options.length > 1)) && opt1Options.length > 1 && (
         <div>
           <div className="mb-3 flex items-center justify-between">
             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50">
-              {label1}
+              {isSingleDimOption1 ? label2 : label1}
             </p>
-            <p className="text-xs font-bold text-white/70">{selectedOpt1}</p>
+            {isSingleDimOption1 && (
+              <Link
+                href="#size-guide"
+                className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40 transition hover:text-[#d7ff53]"
+              >
+                Size Guide →
+              </Link>
+            )}
+            {!isSingleDimOption1 && (
+              <p className="text-xs font-bold text-white/70">{selectedOpt1}</p>
+            )}
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className={isSingleDimOption1 ? "grid grid-cols-4 gap-2 sm:grid-cols-5" : "flex flex-wrap gap-2"}>
             {opt1Options.map((val) => {
               const isActive = val === selectedOpt1;
+              const variantMatch = isSingleDimOption1
+                ? variants.find((v) => effectiveOpt1(v) === val)
+                : filteredVariants.find((v) => effectiveOpt1(v) === val);
+              const stock = variantMatch ? Number(variantMatch.stock || 0) : 0;
+              const isOut = isSingleDimOption1 && stock <= 0;
               return (
                 <button
                   key={val}
                   type="button"
+                  disabled={isOut}
                   onClick={() => chooseOpt1(val)}
-                  className={`relative rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all duration-300 ${
+                  className={`relative overflow-hidden rounded-xl border px-3 py-3 text-sm font-black transition-all duration-300 ${
                     isActive
                       ? "border-[#d7ff53] bg-[#d7ff53] text-black"
-                      : "border-white/10 bg-white/5 text-white/70 hover:border-white/30 hover:text-white"
-                  }`}
+                      : isOut
+                        ? "cursor-not-allowed border-white/5 bg-white/[0.02] text-white/25 line-through"
+                        : "border-white/10 bg-white/5 text-white hover:border-white/30"
+                  } ${!isSingleDimOption1 ? "px-4 py-2 text-xs uppercase tracking-wider" : ""}`}
                 >
                   {val}
                 </button>
@@ -218,7 +264,7 @@ export default function AddToCartForm({
         </div>
       )}
 
-      {/* Single option1 value display (when only 1 option1 exists) */}
+      {/* Single option1 value display (when only 1 option1 exists in two-dim mode) */}
       {usesTwoDimensionalSelection && opt1Options.length === 1 && (
         <div className="text-xs text-white/50">{label1}: {opt1Options[0]}</div>
       )}
@@ -271,8 +317,8 @@ export default function AddToCartForm({
         </div>
       )}
 
-      {/* Quantity selector — shown when we can make a selection */}
-      {(!hasRealOption2 || selectedOpt2) && (
+      {/* Quantity selector — shown when a variant can be selected */}
+      {showQuantity && (
         <div className="flex items-center justify-between" style={{ animation: "fade-in 400ms ease-out" }}>
           <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50">
             Quantity
@@ -310,7 +356,7 @@ export default function AddToCartForm({
             Subtotal
           </p>
           <p className="font-display text-2xl font-black tracking-tight text-white md:text-3xl">
-            {rupiah(price * quantity)}
+            {rupiah(Number(selectedVariant?.price ?? price) * quantity)}
           </p>
         </div>
         {selectedVariant && (

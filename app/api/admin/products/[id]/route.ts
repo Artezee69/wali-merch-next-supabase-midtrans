@@ -75,6 +75,24 @@ export async function PATCH(
   try {
     const body = await request.json();
     const input = body as Record<string, unknown>;
+    console.log("[PATCH] request body keys:", Object.keys(input).join(", "));
+    console.log("[PATCH] status input:", JSON.stringify(input.status));
+    console.log("[PATCH] condition input:", JSON.stringify(input.condition));
+
+    // Map form field aliases to canonical DB/API field names.
+    const preorderProcessingDays =
+      input.preorder_processing_days ?? input.preorder_days;
+    const adminNotes = input.admin_notes ?? input.internal_notes;
+
+    // Map display labels (Baru/Bekas) to canonical DB values (new/used/refurbished).
+    const CONDITION_LABEL_MAP: Record<string, string> = {
+      "Baru": "new",
+      "Bekas - Seperti Baru": "used",
+      "Bekas - Bagus": "used",
+      "Bekas - Wajar": "used",
+    };
+    const rawCondition = typeof input.condition === "string" ? input.condition : undefined;
+    const condition = rawCondition ? (CONDITION_LABEL_MAP[rawCondition] ?? rawCondition) : rawCondition;
 
     // Fast path: if only status is being toggled, do a targeted update
     const hasOnlyStatus = Object.keys(input).length === 1 && input.status !== undefined;
@@ -133,10 +151,7 @@ export async function PATCH(
       brand: input.brand !== undefined
         ? (typeof input.brand === "string" ? input.brand || null : null)
         : undefined,
-      condition: input.condition !== undefined
-        ? (input.condition === "new" || input.condition === "used" || input.condition === "refurbished"
-          ? input.condition : undefined)
-        : undefined,
+      condition: condition,
       status: input.status !== undefined
         ? (["draft", "active", "inactive", "archived"].includes(typeof input.status === "string" ? input.status : "")
           ? (input.status as string) : undefined)
@@ -182,15 +197,15 @@ export async function PATCH(
         ? (typeof input.seo_image_url === "string" ? input.seo_image_url || null : null)
         : undefined,
       is_preorder: input.is_preorder !== undefined ? input.is_preorder === true : undefined,
-      preorder_processing_days: input.preorder_processing_days !== undefined
-        ? (typeof input.preorder_processing_days === "number" ? input.preorder_processing_days : null)
+      preorder_processing_days: preorderProcessingDays !== undefined
+        ? (typeof preorderProcessingDays === "number" ? preorderProcessingDays : null)
         : undefined,
-      admin_notes: input.admin_notes !== undefined
-        ? (typeof input.admin_notes === "string" ? input.admin_notes || null : null)
+      admin_notes: adminNotes !== undefined
+        ? (typeof adminNotes === "string" ? adminNotes || null : null)
         : undefined,
-      stock: input.stock !== undefined
-        ? (typeof input.stock === "number" && input.stock >= 0 ? input.stock : 0)
-        : undefined,
+      // NOTE: `stock` TIDAK diset ke tabel products karena kolom itu
+      // tidak ada. Stok total dihitung dari product_variants.stock (lihat
+      // updateVariantStocks() di bawah).
     };
 
     // Coerce ProductInput fields to exact types
@@ -241,9 +256,13 @@ export async function PATCH(
 
     // Validasi
     const prodValidation = validateProductInput(coercedInput);
+    console.log("[PATCH] coercedInput keys:", Object.keys(coercedInput).filter((k) => (coercedInput as Record<string, unknown>)[k] !== undefined).join(", "));
+    console.log("[PATCH] coercedInput condition:", coercedInput.condition, "status:", coercedInput.status, "name:", coercedInput.name?.slice(0, 20));
     if (!prodValidation.valid) {
+      console.log("[PATCH] validation errors:", JSON.stringify(prodValidation.errors));
       return NextResponse.json({ error: "Validasi gagal", errors: prodValidation.errors }, { status: 400 });
     }
+    console.log("[PATCH] validation PASSED");
 
     // Cek slug unik (kecuali slug yang sama)
     if (productInput.slug && productInput.slug !== existing.slug) {
@@ -317,7 +336,10 @@ export async function PATCH(
       .select("id, status, is_active")
       .single();
 
-    console.log("[PATCH] Update result:", { error: updateError, data });
+    console.log("[PATCH] Update result:", { error: updateError?.message, data });
+    if (updateError) {
+      console.error("[PATCH] FULL UPDATE ERROR:", JSON.stringify(updateError, null, 2));
+    }
 
     if (updateError) {
       console.error("[API /api/admin/products/:id] PATCH error:", updateError.message);
@@ -368,17 +390,6 @@ export async function PATCH(
             .maybeSingle();
 
           if (existingVariant) {
-            // Check order_items
-            const { count: oiCount } = await supabaseAdmin
-              .from("order_items")
-              .select("id", { count: "exact", head: true })
-              .eq("variant_id", variantId);
-
-            if ((oiCount ?? 0) > 0) {
-              // Jika pernah dipesan, jangan hapus, hanya nonaktifkan
-              variantData.is_active = false;
-            }
-
             const { error: updateVarErr } = await supabaseAdmin
               .from("product_variants")
               .update(variantData)
@@ -416,7 +427,7 @@ export async function PATCH(
           .from("product_variants")
           .select("id")
           .eq("product_id", productId)
-          .filter("id", "not", ids);
+          .not("id", "in", ids);
 
         if (oldVariants) {
           for (const ov of oldVariants as { id: string }[]) {
@@ -453,14 +464,15 @@ export async function PATCH(
         }
       }
 
-      // Recompute total stock and price range from all active variants.
+      // Recompute price range from all active variants.
+      // NOTE: kolom `stock` TIDAK ADA di `products`. Stok total dihitung
+      // di product_variants.stock; clients harus sum variannya.
       const { data: allVariants, error: fetchErr } = await supabaseAdmin
         .from("product_variants")
         .select("stock, price, sale_price, is_active")
         .eq("product_id", productId);
       if (!fetchErr) {
         const active = (allVariants ?? []).filter((v) => v.is_active !== false);
-        const totalStock = active.reduce((s, v) => s + (v.stock || 0), 0);
         const minPrice = active.length
           ? Math.min(
               ...active.map((v) =>
@@ -469,12 +481,26 @@ export async function PATCH(
             )
           : (input.base_price ?? 0);
 
+        // Coba simpan stock ke produk untuk produk non-variant.
+        // (Jika kolom stock ada di products — sebagai hasil migrasi 024.)
+        if (rawVariants.length === 0 && typeof input.stock === "number") {
+          // Kolom `stock` hanya ada jika migrasi 024 sudah diterapkan.
+          // Non-blocking: log warning jika gagal, jangan error.
+          const { error: stockErr } = await supabaseAdmin
+            .from("products")
+            .update({ stock: input.stock })
+            .eq("id", productId);
+          if (stockErr) {
+            console.warn("[PATCH] stock update failed (migrasi 024 belum diterapkan?):", stockErr.message);
+          }
+        }
+
         await supabaseAdmin
           .from("products")
           .update({
             has_variants: rawVariants.length > 0,
-            stock: totalStock,
             base_price: minPrice,
+            price: minPrice,
           })
           .eq("id", productId);
       }
@@ -496,8 +522,9 @@ export async function PATCH(
       { headers: { "content-type": "application/json" } }
     );
   } catch (err: unknown) {
-    console.error("[API /api/admin/products/:id] PATCH error:", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    console.error("[API /api/admin/products/:id] PATCH FATAL error:", err);
+    console.error("[PATCH] stack:", (err as Error).stack);
+    return NextResponse.json({ error: "Internal server error", details: (err as Error).message }, { status: 500 });
   }
 }
 

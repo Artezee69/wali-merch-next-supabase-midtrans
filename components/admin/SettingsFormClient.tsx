@@ -20,11 +20,18 @@ import {
   DEFAULT_LATEST_DROP,
 } from "@/lib/storeSettings";
 
-type Group = "store_general" | "homepage_latest_drop";
+type Group = "store_general" | "homepage_latest_drop" | "bank";
+
+type BankSettings = {
+  bankName: string;
+  bankAccountNumber: string;
+  bankAccountHolder: string;
+};
 
 type Saved = {
   store_general: StoreGeneralSettings;
   homepage_latest_drop: LatestDropSettings;
+  bank: BankSettings;
 };
 
 type Props = {
@@ -36,6 +43,7 @@ type Props = {
 const TABS: { key: Group; label: string }[] = [
   { key: "store_general", label: "Identitas Toko" },
   { key: "homepage_latest_drop", label: "Latest Drop" },
+  { key: "bank", label: "Pembayaran" },
 ];
 
 export default function SettingsFormClient({ initial, products, initialTab }: Props) {
@@ -190,6 +198,17 @@ export default function SettingsFormClient({ initial, products, initialTab }: Pr
             products={products}
             open={openAccordion}
             setOpen={setOpenAccordion}
+          />
+        )}
+
+        {activeTab === "bank" && (
+          <BankSection
+            value={draft.bank}
+            saved={saved.bank}
+            onChange={(v) => setGroup("bank", v)}
+            onSave={() => saveGroup("bank")}
+            onReset={() => resetGroup("bank")}
+            saving={saving === "bank"}
           />
         )}
       </div>
@@ -680,6 +699,86 @@ function LatestDropSection({
           </div>
         )}
       </Accordion>
+
+      <SectionActions
+        onSave={onSave}
+        onReset={onReset}
+        saving={saving}
+        isDirty={isDirty}
+      />
+    </div>
+  );
+}
+
+function BankSection({
+  value,
+  saved,
+  onChange,
+  onSave,
+  onReset,
+  saving,
+}: {
+  value: BankSettings;
+  saved: BankSettings;
+  onChange: (v: BankSettings) => void;
+  onSave: () => void;
+  onReset: () => void;
+  saving: boolean;
+}) {
+  const isDirty = JSON.stringify(value) !== JSON.stringify(saved);
+  return (
+    <div className="space-y-4">
+      <div className="mb-2">
+        <h2 className="text-base font-black uppercase tracking-tight text-white">
+          Pembayaran Manual
+        </h2>
+        <p className="text-[11px] text-white/45">
+          Info rekening untuk pembayaran transfer bank. Customer akan melihat
+          data ini di halaman pembayaran.
+        </p>
+      </div>
+
+      <div className="space-y-4">
+        <Field
+          label="Nama Bank"
+          required
+          hint="Contoh: BCA, BRI, Mandiri, BNI."
+        >
+          <input
+            className={inputClass}
+            value={value.bankName}
+            placeholder="BCA"
+            onChange={(e) => onChange({ ...value, bankName: e.target.value })}
+          />
+        </Field>
+        <Field
+          label="Nomor Rekening"
+          required
+          hint="Tampilkan ke customer saat pembayaran manual."
+        >
+          <input
+            className={inputClass}
+            value={value.bankAccountNumber}
+            placeholder="0000000000"
+            onChange={(e) =>
+              onChange({ ...value, bankAccountNumber: e.target.value })
+            }
+          />
+        </Field>
+        <Field
+          label="Nama Pemilik Rekening"
+          hint="Nama yang terdaftar di bank."
+        >
+          <input
+            className={inputClass}
+            value={value.bankAccountHolder}
+            placeholder="WALI Merch"
+            onChange={(e) =>
+              onChange({ ...value, bankAccountHolder: e.target.value })
+            }
+          />
+        </Field>
+      </div>
 
       <SectionActions
         onSave={onSave}

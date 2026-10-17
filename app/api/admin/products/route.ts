@@ -159,6 +159,28 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const input = body as Record<string, unknown>;
 
+    // Map form field aliases to canonical DB/API field names.
+    const preorderProcessingDays =
+      input.preorder_processing_days ?? input.preorder_days;
+    const adminNotes = input.admin_notes ?? input.internal_notes;
+
+    // Map display labels (Baru/Bekas) to canonical DB values (new/used/refurbished).
+    const CONDITION_LABEL_MAP: Record<string, string> = {
+      "Baru": "new",
+      "Bekas - Seperti Baru": "used",
+      "Bekas - Bagus": "used",
+      "Bekas - Wajar": "used",
+    };
+    const rawCondition = typeof input.condition === "string" ? input.condition : undefined;
+    const normalizedCondition = rawCondition
+      ? (CONDITION_LABEL_MAP[rawCondition] ?? rawCondition)
+      : rawCondition;
+    const validCondition = (["new", "used", "refurbished"] as const).includes(
+      normalizedCondition as "new" | "used" | "refurbished"
+    )
+      ? (normalizedCondition as "new" | "used" | "refurbished")
+      : "new";
+
     const productInput = {
       name: typeof input.name === "string" ? input.name : "",
       slug: typeof input.slug === "string" ? input.slug : undefined,
@@ -167,9 +189,7 @@ export async function POST(request: NextRequest) {
       category: typeof input.category === "string" ? input.category || null : null,
       subcategory: typeof input.subcategory === "string" ? input.subcategory || null : null,
       brand: typeof input.brand === "string" ? input.brand || null : null,
-      condition: (["new", "used", "refurbished"] as const).includes(input.condition as import("@/lib/types").ProductCondition)
-        ? (input.condition as import("@/lib/types").ProductCondition)
-        : ("new" as const),
+      condition: validCondition,
       status: (["draft", "active", "inactive", "archived"] as const).includes(input.status as import("@/lib/types").ProductStatus)
         ? (input.status as import("@/lib/types").ProductStatus)
         : ("draft" as const),
@@ -190,8 +210,8 @@ export async function POST(request: NextRequest) {
       seo_description: typeof input.seo_description === "string" ? input.seo_description || null : null,
       seo_image_url: typeof input.seo_image_url === "string" ? input.seo_image_url || null : null,
       is_preorder: input.is_preorder === true,
-      preorder_processing_days: typeof input.preorder_processing_days === "number" ? input.preorder_processing_days : null,
-      admin_notes: typeof input.admin_notes === "string" ? input.admin_notes || null : null,
+      preorder_processing_days: typeof preorderProcessingDays === "number" ? preorderProcessingDays : null,
+      admin_notes: typeof adminNotes === "string" ? adminNotes || null : null,
     };
 
     // Validasi
@@ -326,7 +346,7 @@ export async function POST(request: NextRequest) {
         : (productInput.base_price ?? 0);
       await supabaseAdmin
         .from("products")
-        .update({ stock: totalStock, base_price: minPrice })
+        .update({ base_price: minPrice, price: minPrice })
         .eq("id", product.id);
     }
 

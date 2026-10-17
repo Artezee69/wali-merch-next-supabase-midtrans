@@ -125,12 +125,16 @@ export async function addCartItem(
   // Get variant stock
   const { data: variant } = await supabasePublic
     .from("product_variants")
-    .select("stock")
+    .select("stock, is_active")
     .eq("id", variantId)
     .maybeSingle();
 
   if (!variant) {
     return { success: false, error: "Ukuran produk tidak ditemukan." };
+  }
+
+  if (variant.is_active === false) {
+    return { success: false, error: "Varian produk ini tidak tersedia." };
   }
 
   const maxStock = Number(variant.stock || 0);

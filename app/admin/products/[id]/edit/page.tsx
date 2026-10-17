@@ -51,7 +51,10 @@ export default async function EditProductPage({ params }: { params: Promise<Para
     sku: (product as any).sku ?? "",
     base_price: product.price ?? 0,
     sale_price: (product as any).sale_price ?? null,
-    stock: (product as any).stock ?? 0,
+    // NOTE: kolom `stock` TIDAK ADA di tabel `products`.
+    // Untuk produk dengan varian, hitung dari sum variants.stock.
+    // Untuk produk tanpa varian, tetap 0 (stock global akan disimpan nanti).
+    stock: 0,
     weight: (product as any).weight ?? 0,
     length: (product as any).length_cm ?? (product as any).length ?? 0,
     width: (product as any).width_cm ?? (product as any).width ?? 0,
@@ -65,11 +68,23 @@ export default async function EditProductPage({ params }: { params: Promise<Para
     max_purchase: (product as any).max_purchase ?? 0,
     seo_title: (product as any).seo_title ?? "",
     seo_description: (product as any).seo_description ?? "",
-    internal_notes: (product as any).internal_notes ?? "",
+    internal_notes: (product as any).admin_notes ?? "",
     option_1_name: (product as any).option_1_name ?? "",
-    option_1_values: (product as any).option_1_values ?? [],
+    option_1_values: Array.from(
+      new Set(
+        (variants ?? [])
+          .map((va: any) => va.option_1_value)
+          .filter((v: string | null) => v && v !== "")
+      )
+    ),
     option_2_name: (product as any).option_2_name ?? "",
-    option_2_values: (product as any).option_2_values ?? [],
+    option_2_values: Array.from(
+      new Set(
+        (variants ?? [])
+          .map((va: any) => va.option_2_value)
+          .filter((v: string | null) => v && v !== "")
+      )
+    ),
     images: (images ?? []).map((img) => ({
       id: img.id,
       image_url: img.image_url,

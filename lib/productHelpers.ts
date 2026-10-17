@@ -41,6 +41,12 @@ export type ValidationResult = {
 
 const KNOWN_STATUSES: ProductStatus[] = ["draft", "active", "inactive", "archived"];
 const KNOWN_CONDITIONS = ["new", "used", "refurbished"] as const;
+const CONDITION_LABEL_MAP: Record<string, string> = {
+  "Baru": "new",
+  "Bekas - Seperti Baru": "used",
+  "Bekas - Bagus": "used",
+  "Bekas - Wajar": "used",
+};
 
 export function validateProductInput(input: ProductInput): ValidationResult {
   const errors: Record<string, string> = {};
@@ -107,24 +113,33 @@ export function validateProductInput(input: ProductInput): ValidationResult {
       errors.min_purchase = "Minimal pembelian minimal 1.";
     }
   }
-  if (input.max_purchase !== undefined) {
-    if (typeof input.max_purchase !== "number" || input.max_purchase < 1) {
-      errors.max_purchase = "Maksimal pembelian minimal 1.";
-    }
-    if (
-      input.min_purchase !== undefined &&
-      typeof input.min_purchase === "number" &&
-      input.max_purchase < input.min_purchase
-    ) {
-      errors.max_purchase = "Maksimal pembelian tidak boleh lebih kecil dari minimal.";
+  if (input.max_purchase !== undefined && input.max_purchase !== null) {
+    if (input.max_purchase > 0) {
+      if (typeof input.max_purchase !== "number" || input.max_purchase < 1) {
+        errors.max_purchase = "Maksimal pembelian minimal 1.";
+      }
+      if (
+        input.min_purchase !== undefined &&
+        typeof input.min_purchase === "number" &&
+        input.max_purchase < input.min_purchase
+      ) {
+        errors.max_purchase = "Maksimal pembelian tidak boleh lebih kecil dari minimal.";
+      }
     }
   }
 
   if (input.status !== undefined && !KNOWN_STATUSES.includes(input.status)) {
     errors.status = "Status tidak valid.";
   }
-  if (input.condition !== undefined && !KNOWN_CONDITIONS.includes(input.condition)) {
-    errors.condition = "Kondisi tidak valid.";
+  if (input.condition !== undefined) {
+    const normalized = typeof input.condition === "string"
+      ? (CONDITION_LABEL_MAP[input.condition] ?? input.condition)
+      : input.condition;
+    if (!KNOWN_CONDITIONS.includes(normalized as typeof KNOWN_CONDITIONS[number])) {
+      errors.condition = "Kondisi tidak valid.";
+    } else {
+      input.condition = normalized as import("./types").ProductCondition;
+    }
   }
 
   return { valid: Object.keys(errors).length === 0, errors };

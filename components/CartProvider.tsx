@@ -277,7 +277,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         return false;
       }
 
-      const priceAtAdd = Number(productData.price ?? item.price ?? 0);
+      const priceAtAdd = Number(item.price ?? productData.price ?? 0);
 
       // 3. Check if item already exists in this cart.
       const existing = itemsRef.current.find((i) => i.variant_id === variantId);

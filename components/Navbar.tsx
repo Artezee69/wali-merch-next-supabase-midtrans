@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, ReactNode, useCallback, useRef } from "react";
-import { Menu, X, User, LogOut, ChevronDown, Home, ShoppingBag, Truck, ShoppingCart, Search } from "lucide-react";
+import { Menu, X, User, LogOut, ChevronDown, Home, ShoppingBag, Truck, ShoppingCart, Search, Package } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
@@ -16,6 +16,7 @@ type NavKey =
   | "cart"
   | "checkout"
   | "order-detail"
+  | "payment"
   | "admin"
   | "admin-products"
   | "admin-orders";
@@ -214,6 +215,14 @@ export default function Navbar({
                 style={{ color: "var(--text-secondary) light:text-gray-700 dark:light:text-gray-400" }}>
                 <User size={15} />
                 Profil Saya
+              </button>
+              <button
+                type="button"
+                onClick={() => { setProfileOpen(false); router.push("/account/orders"); }}
+                className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm transition hover:bg-gray-100 dark:hover:bg-gray-700/30 light:bg-gray-100"
+                style={{ color: "var(--text-secondary) light:text-gray-700 dark:light:text-gray-400" }}>
+                <Package size={15} />
+                Pesanan Saya
               </button>
               <button
                 type="button"

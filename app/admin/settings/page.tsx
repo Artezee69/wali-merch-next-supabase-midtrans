@@ -12,6 +12,12 @@ import type {
   LatestDropSettings,
 } from "@/lib/storeSettings";
 
+type BankSettings = {
+  bankName: string;
+  bankAccountNumber: string;
+  bankAccountHolder: string;
+};
+
 type Row = { key: string; value: string | null };
 
 function safeParse<T>(raw: string | null | undefined): T | null {
@@ -54,6 +60,9 @@ export default async function AdminSettingsPage({
       "privacy_policy",
       "terms_of_service",
       "homepage_latest_drop",
+      "bank_name",
+      "bank_account_number",
+      "bank_account_holder",
     ]);
 
   if (error) {
@@ -102,6 +111,11 @@ export default async function AdminSettingsPage({
   const initial = {
     store_general: general,
     homepage_latest_drop: latestDrop,
+    bank: {
+      bankName: map.get("bank_name") ?? "",
+      bankAccountNumber: map.get("bank_account_number") ?? "",
+      bankAccountHolder: map.get("bank_account_holder") ?? "",
+    } as BankSettings,
   };
 
   return (
@@ -137,7 +151,11 @@ export default async function AdminSettingsPage({
         </div>
       </div>
 
-      <SettingsFormClient initial={initial} products={products} initialTab={initialTab} />
+      <SettingsFormClient
+        initial={initial as { store_general: StoreGeneralSettings; homepage_latest_drop: LatestDropSettings; bank: { bankName: string; bankAccountNumber: string; bankAccountHolder: string } }}
+        products={products}
+        initialTab={initialTab as "store_general" | "homepage_latest_drop" | "bank"}
+      />
     </AdminShell>
   );
 }

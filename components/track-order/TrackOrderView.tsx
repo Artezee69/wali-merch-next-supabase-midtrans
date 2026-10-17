@@ -23,6 +23,9 @@ import {
   Zap,
   Activity,
   Receipt,
+  Loader2,
+  ArrowRight,
+  Calendar,
 } from "lucide-react";
 
 type Props = {
@@ -41,9 +44,9 @@ const statusClass: Record<string, string> = {
     "bg-yellow-500/10 text-yellow-300 border-yellow-500/30 shadow-[0_0_30px_-10px_rgba(234,179,8,0.5)]",
   paid: "bg-white/10 text-white border-white/20 shadow-[0_0_30px_-10px_rgba(255,255,255,0.2)]",
   processing:
-    "bg-purple-500/10 text-purple-300 border-purple-500/30 shadow-[0_0_30px_-10px_rgba(168,85,247,0.5)]",
+    "bg-white/10 text-white border-white/20 shadow-[0_0_30px_-10px_rgba(255,255,255,0.15)]",
   shipped:
-    "bg-cyan-500/10 text-cyan-300 border-cyan-500/30 shadow-[0_0_30px_-10px_rgba(6,182,212,0.5)]",
+    "bg-white/10 text-white border-white/20 shadow-[0_0_30px_-10px_rgba(255,255,255,0.15)]",
   completed:
     "bg-emerald-500/10 text-emerald-300 border-emerald-500/30 shadow-[0_0_30px_-10px_rgba(16,185,129,0.5)]",
   cancelled: "bg-zinc-500/10 text-zinc-400 border-zinc-500/30",
@@ -161,9 +164,9 @@ export default function TrackOrderView({
     <>
       {/* CINEMATIC BACKGROUND */}
       <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute -left-1/4 top-0 h-[600px] w-[600px] rounded-full bg-[#d7ff53]/8 blur-[140px] animate-aurora-1" />
-        <div className="absolute -right-1/4 top-1/3 h-[500px] w-[500px] rounded-full bg-cyan-500/8 blur-[140px] animate-aurora-2" />
-        <div className="absolute left-1/2 bottom-0 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-purple-500/6 blur-[140px] animate-aurora-3" />
+        <div className="absolute -left-1/4 top-0 h-[600px] w-[600px] rounded-full bg-white/5 blur-[140px] animate-aurora-1" />
+        <div className="absolute -right-1/4 top-1/3 h-[500px] w-[500px] rounded-full bg-white/3 blur-[140px] animate-aurora-2" />
+        <div className="absolute left-1/2 bottom-0 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-white/4 blur-[140px] animate-aurora-3" />
         <div className="absolute inset-0 bg-grid-fade opacity-30" />
       </div>
 
@@ -236,14 +239,14 @@ export default function TrackOrderView({
                   title: "Processing",
                   desc: "Pembayaran sudah masuk dan pesanan sedang disiapkan.",
                   icon: Activity,
-                  color: "from-purple-500/20 to-purple-500/0",
+                  color: "from-white/10 to-white/0",
                   delay: "100ms",
                 },
                 {
                   title: "Shipped",
                   desc: "Pesanan sudah dikirim dan nomor resi akan ditampilkan.",
                   icon: Truck,
-                  color: "from-cyan-500/20 to-cyan-500/0",
+                  color: "from-white/8 to-white/0",
                   delay: "200ms",
                 },
               ].map((item) => (
@@ -355,6 +358,268 @@ export default function TrackOrderView({
   );
 }
 
+type JneEvent = {
+  timestamp: string;
+  location: string;
+  status: string;
+  description: string;
+};
+
+function JneTrackingPanel({ order }: { order: any }) {
+  const trackingNum: string | null = order?.tracking_number?.trim() || null;
+  const [events, setEvents] = useState<JneEvent[]>([]);
+  const [finalStatus, setFinalStatus] = useState<string | null>(null);
+  const [estDelivery, setEstDelivery] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [configured, setConfigured] = useState(true);
+
+  useEffect(() => {
+    if (!trackingNum) {
+      setLoading(false);
+      setConfigured(false);
+      return;
+    }
+    setLoading(true);
+    fetch(`/api/jne/track?tracking_number=${encodeURIComponent(trackingNum)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setConfigured(data.jne_configured !== false);
+        setEvents(data.events ?? []);
+        setFinalStatus(data.finalStatus ?? null);
+        setEstDelivery(data.estimatedDelivery ?? null);
+      })
+      .catch(() => setConfigured(false))
+      .finally(() => setLoading(false));
+  }, [trackingNum]);
+
+  if (!trackingNum) return null;
+
+  // JNE not configured: show tracking number + external link
+  if (!configured && !loading) {
+    return (
+      <div
+        className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur-xl animate-fade-up sm:rounded-[2rem] sm:p-6"
+        style={{ animationDelay: "350ms" }}
+      >
+        <div className="mb-4 flex items-center gap-2.5 sm:mb-5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full border border-[#d7ff53]/30 bg-[#d7ff53]/10">
+            <Truck className="h-4 w-4 text-[#d7ff53]" />
+          </div>
+          <h3 className="text-base font-black uppercase text-white">Tracking JNE</h3>
+        </div>
+        <div className="space-y-3">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Nomor Resi</p>
+            <p className="mt-1 break-all font-mono text-sm font-black text-[#d7ff53] sm:text-base">{trackingNum}</p>
+          </div>
+          <div className="flex items-center justify-between rounded-xl border border-white/10 bg-black/30 p-3">
+            <div className="text-xs">
+              <p className="font-bold text-white/60">Cek status di JNE langsung</p>
+              <p className="text-[11px] text-white/35">Klik untuk buka di situs JNE</p>
+            </div>
+            <a
+              href={`https://www.jne.co.id/id/cekresi/${trackingNum}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-full bg-[#d7ff53] px-4 py-2 text-xs font-black uppercase tracking-wider text-black transition hover:bg-white"
+            >
+              Cek Resi <ArrowRight size={12} />
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Loading state
+  if (loading) {
+    return (
+      <div
+        className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur-xl animate-fade-up sm:rounded-[2rem] sm:p-6"
+        style={{ animationDelay: "350ms" }}
+      >
+        <div className="mb-4 flex items-center gap-2.5 sm:mb-5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full border border-[#d7ff53]/30 bg-[#d7ff53]/10">
+            <Truck className="h-4 w-4 text-[#d7ff53]" />
+          </div>
+          <h3 className="text-base font-black uppercase text-white">Tracking JNE</h3>
+        </div>
+        <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/30 p-4">
+          <Loader2 className="h-5 w-5 animate-spin text-[#d7ff53]" />
+          <div>
+            <p className="text-sm font-bold text-white">Membuat data tracking...</p>
+            <p className="text-[11px] text-white/40">Nomor resi: <span className="font-mono text-[#d7ff53]">{trackingNum}</span></p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // JNE configured but no events yet
+  if (events.length === 0) {
+    return (
+      <div
+        className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur-xl animate-fade-up sm:rounded-[2rem] sm:p-6"
+        style={{ animationDelay: "350ms" }}
+      >
+        <div className="mb-4 flex items-center gap-2.5 sm:mb-5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full border border-[#d7ff53]/30 bg-[#d7ff53]/10">
+            <Truck className="h-4 w-4 text-[#d7ff53]" />
+          </div>
+          <h3 className="text-base font-black uppercase text-white">Tracking JNE</h3>
+        </div>
+        <div className="rounded-xl border border-white/10 bg-black/30 p-4">
+          <p className="text-sm font-bold text-white/70">
+            Nomor resi: <span className="font-mono text-[#d7ff53]">{trackingNum}</span>
+          </p>
+          <p className="mt-1 text-xs text-white/40">
+            Belum ada scan event dari JNE. Resi biasanya aktif setelah paket diterima pihak kurir.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const statusLabels: Record<string, string> = {
+    PICKUP: "Diterima Kurir",
+    IN_TRANSIT: "Dalam Perjalanan",
+    AT_DESTINATION: "Di Kota Tujuan",
+    DELIVERED: "Sudah Diterima",
+    FAILED_DELIVERY: "Gagal Pengiriman",
+    RETURNED: "Dikembalikan",
+  };
+
+  const statusColors: Record<string, string> = {
+    DELIVERED: "border-emerald-500/50 bg-emerald-500/15 text-emerald-300",
+    FAILED_DELIVERY: "border-red-500/50 bg-red-500/15 text-red-300",
+    RETURNED: "border-orange-500/50 bg-orange-500/15 text-orange-300",
+  };
+
+  return (
+    <div
+      className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur-xl animate-fade-up sm:rounded-[2rem] sm:p-6"
+      style={{ animationDelay: "350ms" }}
+    >
+      {/* Header */}
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full border border-[#d7ff53]/30 bg-[#d7ff53]/10">
+            <Truck className="h-4 w-4 text-[#d7ff53]" />
+          </div>
+          <div>
+            <h3 className="text-base font-black uppercase text-white">Tracking JNE</h3>
+            <p className="font-mono text-[11px] text-white/40">{trackingNum}</p>
+          </div>
+        </div>
+        {finalStatus && (
+          <span
+            className={`rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-wider ${
+              statusColors[finalStatus] || "border-white/15 bg-white/5 text-white/60"
+            }`}
+          >
+            {statusLabels[finalStatus] || finalStatus}
+          </span>
+        )}
+      </div>
+
+      {/* Estimated delivery */}
+      {estDelivery && (
+        <div className="mb-4 flex items-center gap-2 rounded-xl border border-[#d7ff53]/20 bg-[#d7ff53]/5 p-3">
+          <Calendar className="h-4 w-4 shrink-0 text-[#d7ff53]" />
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-white/40">Estimasi Tiba</p>
+            <p className="text-sm font-bold text-white">{estDelivery}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Scan timeline */}
+      <div className="relative">
+        <div className="absolute left-4 top-0 h-full w-px bg-gradient-to-b from-[#d7ff53]/40 via-white/10 to-transparent sm:left-5" />
+        <div className="space-y-0">
+          {events.map((evt, i) => {
+            const isLast = i === events.length - 1;
+            const isDelivered = evt.status === "DELIVERED";
+            const isFailed = evt.status === "FAILED_DELIVERY" || evt.status === "RETURNED";
+
+            let timeStr = "-";
+            try {
+              const d = new Date(evt.timestamp);
+              if (!isNaN(d.getTime())) {
+                timeStr = d.toLocaleString("id-ID", {
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                });
+              }
+            } catch { /* noop */ }
+
+            return (
+              <div
+                key={i}
+                className="relative flex items-start gap-3 py-2.5 pl-8 sm:gap-4 sm:pl-10"
+              >
+                {/* Dot */}
+                <div
+                  className={`absolute left-2 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border sm:left-3 sm:h-5 sm:w-5 ${
+                    isLast
+                      ? isDelivered
+                        ? "border-emerald-400 bg-emerald-400/30"
+                        : isFailed
+                        ? "border-red-400 bg-red-400/30"
+                        : "border-[#d7ff53] bg-[#d7ff53]/30 shadow-[0_0_12px_rgba(215,255,83,0.4)]"
+                      : "border-white/20 bg-black/50"
+                  }`}
+                >
+                  {isLast && !isDelivered && !isFailed && (
+                    <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#d7ff53] sm:h-2 sm:w-2" />
+                  )}
+                  {isDelivered && (
+                    <CheckCircle2 className="h-2.5 w-2.5 text-emerald-400 sm:h-3 sm:w-3" />
+                  )}
+                  {isFailed && <XCircle className="h-2.5 w-2.5 text-red-400 sm:h-3 sm:w-3" />}
+                </div>
+
+                <div className="min-w-0 flex-1 pb-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span
+                      className={`text-xs font-black sm:text-sm ${
+                        isLast ? "text-white" : "text-white/60"
+                      }`}
+                    >
+                      {statusLabels[evt.status] || evt.description}
+                    </span>
+                    {evt.location && evt.location !== "-" && (
+                      <span className="text-[10px] text-white/35 sm:text-xs">
+                        — {evt.location}
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-0.5 text-[10px] text-white/35 sm:text-[11px]">
+                    {timeStr}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* External link */}
+      <a
+        href={`https://www.jne.co.id/id/cekresi/${trackingNum}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-white/10 px-4 py-2 text-xs font-black uppercase tracking-wider text-white/60 transition hover:border-[#d7ff53]/50 hover:text-[#d7ff53]"
+      >
+        Buka di JNE.co.id <ArrowRight size={12} />
+      </a>
+    </div>
+  );
+}
+
 function OrderDetail({
   order: initialOrder,
   orderStatus: initialOrderStatus,
@@ -411,18 +676,13 @@ function OrderDetail({
 
   const breakdown = computeOrderBreakdown(order);
   const StatusIcon = getStatusIcon(orderStatus);
-  const snapToken = order?.midtrans_token || null;
-  const snapRedirectUrl = order?.midtrans_redirect_url || null;
-  const isPendingPayment =
-    normalizeStatus(orderStatus) === "waiting_payment" ||
-    normalizeStatus(orderStatus) === "pending";
 
   return (
     <div className="space-y-5 sm:space-y-6">
       {/* ORDER HEADER - CINEMATIC */}
       <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.06] via-white/[0.02] to-black/40 p-5 backdrop-blur-xl animate-fade-up sm:rounded-[2rem] sm:p-7 md:p-8">
         <div className="pointer-events-none absolute -right-32 -top-32 h-64 w-64 rounded-full bg-[#d7ff53]/10 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-20 -left-20 h-48 w-48 rounded-full bg-cyan-500/5 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 -left-20 h-48 w-48 rounded-full bg-white/5 blur-3xl" />
 
         <div className="relative flex flex-col justify-between gap-4 md:flex-row md:items-start md:gap-5">
           <div className="min-w-0">
@@ -463,7 +723,7 @@ function OrderDetail({
           className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur-xl animate-fade-up sm:rounded-[2rem] sm:p-6 md:p-7"
           style={{ animationDelay: "100ms" }}
         >
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#d7ff53]/3 to-transparent" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/3 to-transparent" />
 
           <div className="relative">
             <div className="mb-5 flex items-center gap-2.5 sm:mb-7">
@@ -537,7 +797,7 @@ function OrderDetail({
           className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur-xl animate-fade-up sm:rounded-[2rem] sm:p-6 md:p-7"
           style={{ animationDelay: "400ms" }}
         >
-          <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-cyan-500/5 blur-3xl" />
+          <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-white/5 blur-3xl" />
 
           <div className="relative">
             <div className="mb-5 flex items-center gap-2.5 sm:mb-6">
@@ -708,12 +968,17 @@ function OrderDetail({
         </div>
       </div>
 
+      {/* JNE TRACKING */}
+      {order.tracking_number && (
+        <JneTrackingPanel order={order} />
+      )}
+
       {/* ITEMS */}
       <div
         className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur-xl animate-fade-up sm:rounded-[2rem] sm:p-6 md:p-7"
         style={{ animationDelay: "600ms" }}
       >
-        <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-purple-500/5 blur-3xl" />
+        <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-white/5 blur-3xl" />
 
         <div className="relative">
           <div className="mb-5 flex items-center gap-2.5 sm:mb-6">

@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PageHeader from "@/components/PageHeader";
-import MidtransScript from "@/components/MidtransScript";
 import { rupiah } from "@/lib/format";
 import { useCartContext } from "@/components/CartProvider";
 import { useAuth } from "@/hooks/useAuth";
@@ -377,13 +376,14 @@ export default function CheckoutPage() {
     try {
       setLoading(true);
 
-      const response = await fetch("/api/checkout", {
+      const response = await fetch("/api/payment/order", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           customer: form,
+          user_id: user?.id || null,
           items: items.map((it) => ({
             productId: it.productId,
             variantId: it.variantId,
@@ -427,28 +427,8 @@ export default function CheckoutPage() {
         window.dispatchEvent(new Event("cart-updated"));
       }
 
-      // Jika API mengembalikan snap_token, buka popup Midtrans Snap.
-      // onSuccess/onPending/onClose tetap redirect ke track-order supaya
-      // user bisa lanjut memantau / coba bayar lagi.
-      if (result.snap_token && typeof window !== "undefined" && (window as any).snap) {
-        (window as any).snap.pay(result.snap_token, {
-          onSuccess: () => {
-            router.push(`/track-order?q=${encodeURIComponent(result.order_code)}`);
-          },
-          onPending: () => {
-            router.push(`/track-order?q=${encodeURIComponent(result.order_code)}`);
-          },
-          onError: () => {
-            router.push(`/track-order?q=${encodeURIComponent(result.order_code)}`);
-          },
-          onClose: () => {
-            router.push(`/track-order?q=${encodeURIComponent(result.order_code)}`);
-          },
-        });
-        return;
-      }
-
-      router.push(`/track-order?q=${encodeURIComponent(result.order_code)}`);
+      // Redirect to the two-step payment page with the order code.
+      router.push(`/payment?order=${encodeURIComponent(result.order_code)}`);
     } catch (error: any) {
       setErrorMessage(error.message || "Checkout gagal.");
     } finally {
@@ -463,7 +443,6 @@ export default function CheckoutPage() {
 
   return (
     <main className="relative min-h-screen overflow-x-hidden bg-gray-900 text-gray-100 dark:bg-[#060606] dark:text-white">
-      <MidtransScript />
       {/* Cinematic global background */}
       <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
         <div className="absolute left-1/2 top-0 h-[120vh] w-[140vw] -translate-x-1/2 bg-[radial-gradient(ellipse_at_center_top,_rgba(215,255,83,0.10),_transparent_55%)]" />

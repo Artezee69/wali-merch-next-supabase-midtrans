@@ -213,7 +213,48 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
   /* ============== Field updates ============== */
 
   const update = <K extends keyof ProductFormValues>(key: K, value: ProductFormValues[K]) => {
-    setValues((v) => ({ ...v, [key]: value }));
+    setValues((v) => {
+      let next: ProductFormValues = { ...v, [key]: value };
+
+      // Auto-sync variant rows when option values change
+      if (key === "option_1_values" || key === "option_2_values") {
+        const nextOpt1 = key === "option_1_values" ? (value as string[]) : v.option_1_values;
+        const nextOpt2 = key === "option_2_values" ? (value as string[]) : v.option_2_values;
+        const hasOptions = nextOpt1.length > 0;
+        next = {
+          ...next,
+          has_variants: hasOptions,
+          variants: hasOptions
+            ? syncVariantsFromOptions(
+                nextOpt1,
+                nextOpt2,
+                v.option_1_name,
+                v.option_2_name,
+                v.variants,
+                v.base_price,
+                v.sale_price,
+                v.sku,
+              )
+            : next.variants.filter((va) => va.toDelete),
+        };
+      }
+
+      // Auto-sync option names when option_1_name or option_2_name changes
+      if (key === "option_1_name" || key === "option_2_name") {
+        const newOpt1Name = key === "option_1_name" ? (value as string) : v.option_1_name;
+        const newOpt2Name = key === "option_2_name" ? (value as string) : v.option_2_name;
+        next = {
+          ...next,
+          variants: next.variants.map((va) => ({
+            ...va,
+            option_1_name: newOpt1Name,
+            option_2_name: va.option_2_value ? newOpt2Name : null,
+          })),
+        };
+      }
+
+      return next;
+    });
   };
 
   /* ============== Image upload ============== */
@@ -360,52 +401,88 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
 
   /* ============== Variants ============== */
 
+  // Auto-sync variant rows to match current option_1_values × option_2_values.
+  // Preserves existing price/stock/is_active/sku for matching combinations.
+  // Called reactively whenever option values change.
+  const syncVariantsFromOptions = (
+    opt1Values: string[],
+    opt2Values: string[],
+    opt1Name: string,
+    opt2Name: string,
+    currentVariants: ProductVariantRow[],
+    basePrice: number,
+    salePrice: number | null,
+    sku: string,
+  ): ProductVariantRow[] => {
+    // Build the set of expected combos
+    const combos: Array<[string, string | null, string | null]> = [];
+    if (opt2Values.length) {
+      for (const v1 of opt1Values) {
+        for (const v2 of opt2Values) {
+          combos.push([v1, opt2Name, v2]);
+        }
+      }
+    } else {
+      for (const v1 of opt1Values) {
+        combos.push([v1, null, null]);
+      }
+    }
+
+    const expectedKeys = new Set(combos.map(([v1, , v2]) => `${v1}|${v2 || ""}`));
+
+    // Map existing variants by combo key (preserve their values)
+    const existing = new Map<string, ProductVariantRow>();
+    for (const va of currentVariants) {
+      if (va.toDelete) continue; // keep toDelete rows untouched
+      const key = `${va.option_1_value}|${va.option_2_value || ""}`;
+      if (!existing.has(key)) existing.set(key, va);
+    }
+
+    // Build new variant list: existing matched + new defaults
+    const newVariants: ProductVariantRow[] = combos.map(([v1, n2, v2], i) => {
+      const key = `${v1}|${v2 || ""}`;
+      const found = existing.get(key);
+      if (found) return found;
+      return {
+        sku: `${sku || "PROD"}-${v1}${v2 ? "-" + v2 : ""}-${i + 1}`.toUpperCase().replace(/\s+/g, ""),
+        option_1_name: opt1Name || "Option 1",
+        option_1_value: v1,
+        option_2_name: n2,
+        option_2_value: v2,
+        price: basePrice,
+        sale_price: salePrice,
+        stock: 0,
+        image_url: null,
+        is_active: true,
+        weight: null,
+        isNew: true,
+      };
+    });
+
+    // Keep any toDelete rows (they will be soft-deleted by the API)
+    const toDeleteRows = currentVariants.filter((va) => va.toDelete);
+    return [...newVariants, ...toDeleteRows];
+  };
+
   const generateVariants = () => {
     if (!values.option_1_values.length) {
       setErrors((e) => ({ ...e, option_1_values: "Minimal 1 pilihan variasi 1" }));
       return;
     }
-    const combos: Array<[string, string | null, string | null]> = [];
-    if (values.option_2_values.length) {
-      for (const v1 of values.option_1_values) {
-        for (const v2 of values.option_2_values) {
-          combos.push([v1, values.option_2_name, v2]);
-        }
-      }
-    } else {
-      for (const v1 of values.option_1_values) {
-        combos.push([v1, null, null]);
-      }
-    }
-
-    setValues((v) => {
-      // Preserve existing values for matching combinations.
-      const existing = new Map<string, ProductVariantRow>();
-      for (const va of v.variants) {
-        const key = `${va.option_1_value}|${va.option_2_value || ""}`;
-        existing.set(key, va);
-      }
-      const newVariants: ProductVariantRow[] = combos.map(([v1, n2, v2], i) => {
-        const key = `${v1}|${v2 || ""}`;
-        const found = existing.get(key);
-        if (found) return found;
-        return {
-          sku: `${v.sku || "PROD"}-${v1}${v2 ? "-" + v2 : ""}-${i + 1}`.toUpperCase().replace(/\s+/g, ""),
-          option_1_name: v.option_1_name,
-          option_1_value: v1,
-          option_2_name: n2,
-          option_2_value: v2,
-          price: v.base_price,
-          sale_price: v.sale_price,
-          stock: 0,
-          image_url: null,
-          is_active: true,
-          weight: null,
-          isNew: true,
-        };
-      });
-      return { ...v, variants: newVariants };
-    });
+    setValues((v) => ({
+      ...v,
+      has_variants: true,
+      variants: syncVariantsFromOptions(
+        v.option_1_values,
+        v.option_2_values,
+        v.option_1_name,
+        v.option_2_name,
+        v.variants,
+        v.base_price,
+        v.sale_price,
+        v.sku,
+      ),
+    }));
   };
 
   const updateVariant = (idx: number, field: keyof ProductVariantRow, value: any) => {
@@ -601,6 +678,12 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
         status: action === "publish" ? "active" : values.status === "active" ? "draft" : values.status,
         _intent: action,
       };
+      // Untuk produk dengan varian, stok di-handle per-variant.
+      // Jangan kirim `stock` global ke API karena kolom itu tidak ada
+      // di tabel `products` untuk produk with_variants.
+      if (values.has_variants) {
+        delete (body as Record<string, unknown>).stock;
+      }
 
       const res = await fetch(url, {
         method,
@@ -608,7 +691,11 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
         body: JSON.stringify(body),
       });
 
-      const data = await res.json();
+      const text = await res.text();
+      console.log("[FormSubmit] status:", res.status, "text:", text.slice(0, 500));
+
+      let data;
+      try { data = JSON.parse(text); } catch { data = { error: "Invalid JSON response" }; }
 
       if (!res.ok || !data?.success) {
         if (data?.errors) setErrors(data.errors);

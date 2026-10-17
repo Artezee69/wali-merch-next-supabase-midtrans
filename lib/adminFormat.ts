@@ -64,16 +64,15 @@ export function formatPaymentStatus(status: string | null | undefined): StatusBa
 }
 
 const ORDER_STATUS_MAP: Record<string, StatusBadge> = {
-  menunggu_pembayaran: { label: "Menunggu Bayar", classes: "border-amber-500/30 bg-amber-500/10 text-amber-300" },
-  perlu_diproses: { label: "Perlu Diproses", classes: "border-sky-500/30 bg-sky-500/10 text-sky-300" },
-  sedang_dikemas: { label: "Sedang Dikemas", classes: "border-indigo-500/30 bg-indigo-500/10 text-indigo-300" },
-  dikirim: { label: "Dikirim", classes: "border-cyan-500/30 bg-cyan-500/10 text-cyan-300" },
-  selesai: { label: "Selesai", classes: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300" },
-  dibatalkan: { label: "Dibatalkan", classes: "border-red-500/30 bg-red-500/10 text-red-300" },
+  waiting_payment: { label: "Menunggu Bayar", classes: "border-amber-500/30 bg-amber-500/10 text-amber-300" },
+  processing: { label: "Diproses", classes: "border-sky-500/30 bg-sky-500/10 text-sky-300" },
+  shipped: { label: "Dikirim", classes: "border-cyan-500/30 bg-cyan-500/10 text-cyan-300" },
+  completed: { label: "Selesai", classes: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300" },
+  cancelled: { label: "Dibatalkan", classes: "border-red-500/30 bg-red-500/10 text-red-300" },
 };
 
 export function formatOrderStatus(status: string | null | undefined): StatusBadge {
-  const key = (status || "menunggu_pembayaran").toLowerCase();
+  const key = (status || "waiting_payment").toLowerCase();
   return (
     ORDER_STATUS_MAP[key] ?? {
       label: key,
@@ -82,13 +81,12 @@ export function formatOrderStatus(status: string | null | undefined): StatusBadg
   );
 }
 
-export const ORDER_FULFILLMENT_OPTIONS: { value: string; label: string }[] = [
-  { value: "menunggu_pembayaran", label: "Menunggu Pembayaran" },
-  { value: "perlu_diproses", label: "Perlu Diproses" },
-  { value: "sedang_dikemas", label: "Sedang Dikemas" },
-  { value: "dikirim", label: "Dikirim" },
-  { value: "selesai", label: "Selesai" },
-  { value: "dibatalkan", label: "Dibatalkan" },
+export const ORDER_STATUS_OPTIONS: { value: string; label: string }[] = [
+  { value: "waiting_payment", label: "Menunggu Pembayaran" },
+  { value: "processing", label: "Diproses" },
+  { value: "shipped", label: "Dikirim" },
+  { value: "completed", label: "Selesai" },
+  { value: "cancelled", label: "Dibatalkan" },
 ];
 
 export function initialsFromName(name?: string | null, email?: string | null): string {

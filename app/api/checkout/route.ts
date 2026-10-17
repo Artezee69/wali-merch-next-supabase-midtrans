@@ -122,7 +122,7 @@ export async function POST(request: Request) {
     // If the columns don't exist yet (e.g. before migration runs), the first
     // insert will fail with "Could not find the column ... in schema cache" —
     // we fall back to a minimal payload so checkout doesn't break.
-    const fullPayload = {
+    const fullPayload: Record<string, unknown> = {
       order_code: orderCode,
       customer_name: customer.customer_name,
       customer_email: customer.customer_email || null,
@@ -139,9 +139,11 @@ export async function POST(request: Request) {
       total_amount: totalAmount,
       payment_status: "pending",
       order_status: "waiting_payment",
+      midtrans_token: snapToken || null,
+      midtrans_redirect_url: redirectUrl || null,
     };
 
-    const minimalPayload = {
+    const minimalPayload: Record<string, unknown> = {
       order_code: orderCode,
       customer_name: customer.customer_name,
       customer_email: customer.customer_email || null,
@@ -155,6 +157,8 @@ export async function POST(request: Request) {
       total_amount: totalAmount,
       payment_status: "pending",
       order_status: "waiting_payment",
+      midtrans_token: snapToken || null,
+      midtrans_redirect_url: redirectUrl || null,
     };
 
     let order: any = null;
