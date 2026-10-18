@@ -421,7 +421,7 @@ function GeneralSection({
           </Field>
           <Field
             label="Nomor WhatsApp Admin"
-            hint="Format internasional (cth: +6281234567890)."
+            hint="Format internasional (cth: +6285134894580)."
           >
             <input
               className={inputClass}

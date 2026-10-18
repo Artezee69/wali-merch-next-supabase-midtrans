@@ -117,7 +117,7 @@ export default function LoginPage() {
   }
 
   function handleForgotPassword() {
-    const adminPhone = process.env.NEXT_PUBLIC_ADMIN_WHATSAPP || "6281234567890";
+    const adminPhone = process.env.NEXT_PUBLIC_ADMIN_WHATSAPP || "6285134894580";
     let msg = encodeURIComponent("Halo Admin, saya ingin meminta bantuan untuk mengatur ulang kata sandi akun saya.");
     if (email.trim()) {
       msg = encodeURIComponent(`Halo Admin, saya ingin meminta bantuan untuk mengatur ulang kata sandi akun dengan email ${email.trim()}.`);

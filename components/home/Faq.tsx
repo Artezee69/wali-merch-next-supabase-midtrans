@@ -117,7 +117,7 @@ export default function Faq() {
         {/* Bottom CTA */}
         <Reveal variant="blur-in" delay={0.4} className="mt-12 text-center">
           <a
-            href="https://wa.me/6281234567890"
+            href="https://wa.me/6285134894580"
             target="_blank"
             rel="noopener noreferrer"
             className="group inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/30 px-5 py-3 text-xs font-black uppercase tracking-[0.2em] text-white/70 transition-all duration-500 hover:border-[#d7ff53]/40 hover:bg-[#d7ff53]/5 hover:text-white"

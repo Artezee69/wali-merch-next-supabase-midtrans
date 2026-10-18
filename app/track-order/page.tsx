@@ -6,7 +6,7 @@ import MidtransScript from "@/components/MidtransScript";
 import { createClient } from "@supabase/supabase-js";
 import { supabasePublic } from "@/lib/supabasePublic";
 
-const WHATSAPP_ADMIN = "628xxxxxxxxxx";
+const WHATSAPP_ADMIN = "6285134894580";
 const WHATSAPP_HELLO = encodeURIComponent("Halo Admin, saya ingin cek status pesanan saya.");
 
 function pickStatus(...candidates: any[]) {

@@ -6,7 +6,7 @@ export default async function OrderPage({ params }: { params: Promise<{ orderCod
   const { orderCode } = await params;
   const { data: order } = await supabasePublic.from("orders").select("*, order_items(*)").eq("order_code", orderCode).single();
   if (!order) notFound();
-  const wa = process.env.NEXT_PUBLIC_WHATSAPP_ADMIN || "6281234567890";
+  const wa = process.env.NEXT_PUBLIC_WHATSAPP_ADMIN || "6285134894580";
   const msg = encodeURIComponent(`Halo admin, saya mau tanya pesanan ${order.order_code}. Status: ${order.order_status}`);
   return (
     <main className="mx-auto max-w-3xl px-4 py-12">

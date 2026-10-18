@@ -300,7 +300,7 @@ const FOOTER_DEFAULTS: FooterSettings = {
   brandDescription: "Official merchandise WALI. Dibuat untuk fans sejati.",
   address: "Jakarta, Indonesia",
   email: "cs@wali-merch.id",
-  whatsapp: "+6281234567890",
+  whatsapp: "+6285134894580",
   instagram: "",
   tiktok: "",
   youtube: "",
