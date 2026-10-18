@@ -216,17 +216,17 @@ function StatCard({
       ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-300"
       : "border-white/10 bg-white/[0.04] text-white";
   return (
-    <div className={`rounded-2xl border p-4 sm:p-5 ${toneClasses}`}>
-      <div className="mb-3 flex items-center gap-2">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5">
-          <Icon size={16} strokeWidth={2.2} className="text-[#d7ff53]" />
+    <div className={`rounded-xl sm:rounded-2xl border p-3 sm:p-5 ${toneClasses}`}>
+      <div className="mb-2 sm:mb-3 flex items-center gap-1.5 sm:gap-2">
+        <div className="flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-lg sm:rounded-xl border border-white/10 bg-white/5">
+          <Icon size={14} strokeWidth={2.2} className="text-[#d7ff53]" />
         </div>
-        <span className="text-[10px] font-black uppercase tracking-widest text-white/60">
+        <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider sm:tracking-widest text-white/60">
           {label}
         </span>
       </div>
-      <div className="text-2xl font-black tracking-tight sm:text-3xl">{value}</div>
-      {hint && <div className="mt-1 text-[11px] text-white/50">{hint}</div>}
+      <div className="text-lg sm:text-3xl font-black tracking-tight">{value}</div>
+      {hint && <div className="mt-0.5 sm:mt-1 text-[10px] sm:text-[11px] text-white/50">{hint}</div>}
     </div>
   );
 }
@@ -244,7 +244,7 @@ export default async function AdminDashboardPage() {
     >
       <div className="space-y-6">
         {/* Hero metrics */}
-        <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatCard
             icon={Package}
             label="Total Produk"
@@ -270,7 +270,7 @@ export default async function AdminDashboardPage() {
           />
         </section>
 
-        <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatCard
             icon={Clock}
             label="Menunggu Pembayaran"
@@ -321,26 +321,59 @@ export default async function AdminDashboardPage() {
                 description="Pesanan yang masuk akan tampil di sini."
               />
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[640px] text-left">
-                  <thead>
-                    <tr className="border-b border-white/5 text-[10px] font-black uppercase tracking-widest text-white/40">
-                      <th className="px-5 py-3">ID</th>
-                      <th className="px-5 py-3">Customer</th>
-                      <th className="px-5 py-3">Total</th>
-                      <th className="px-5 py-3">Pembayaran</th>
-                      <th className="px-5 py-3">Pesanan</th>
-                      <th className="px-5 py-3">Tanggal</th>
-                      <th className="px-5 py-3 text-right">Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recentOrders.map((o) => (
-                      <DashboardOrderRow key={o.id} order={o} />
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <>
+                {/* Mobile: card list */}
+                <ul className="divide-y divide-white/5 lg:hidden">
+                  {recentOrders.map((o) => (
+                    <li key={o.id} className="px-4 py-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="truncate font-mono text-[11px] font-bold text-white/50">
+                            {o.order_code || o.id.slice(0, 8)}
+                          </p>
+                          <p className="mt-0.5 truncate text-sm font-bold text-white">
+                            {o.customer_name || o.customer_phone || "—"}
+                          </p>
+                        </div>
+                        <p className="shrink-0 text-sm font-black text-[#d7ff53]">
+                          {formatRupiah(o.total_amount)}
+                        </p>
+                      </div>
+                      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                        <StatusBadge status={o.order_status} />
+                        <StatusBadge status={o.payment_status} />
+                        <Link
+                          href="/admin/orders"
+                          className="ml-auto rounded-full border border-white/10 px-2.5 py-0.5 text-[10px] font-bold text-white/50 active:bg-white/5"
+                        >
+                          Buka →
+                        </Link>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+                {/* Desktop: full table */}
+                <div className="hidden lg:block overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="border-b border-white/5 text-[10px] font-black uppercase tracking-widest text-white/40">
+                        <th className="px-5 py-3">ID</th>
+                        <th className="px-5 py-3">Customer</th>
+                        <th className="px-5 py-3">Total</th>
+                        <th className="px-5 py-3">Pembayaran</th>
+                        <th className="px-5 py-3">Pesanan</th>
+                        <th className="px-5 py-3">Tanggal</th>
+                        <th className="px-5 py-3 text-right">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recentOrders.map((o) => (
+                        <DashboardOrderRow key={o.id} order={o} />
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </div>
 
@@ -425,6 +458,28 @@ export default async function AdminDashboardPage() {
         </section>
       </div>
     </AdminShell>
+  );
+}
+
+const DASH_STATUS_STYLES: Record<string, { label: string; cls: string }> = {
+  waiting_payment: { label: "Menunggu Bayar", cls: "border-amber-500/30 bg-amber-500/10 text-amber-300" },
+  processing:      { label: "Diproses",      cls: "border-sky-500/30 bg-sky-500/10 text-sky-300" },
+  shipped:         { label: "Dikirim",        cls: "border-cyan-500/30 bg-cyan-500/10 text-cyan-300" },
+  completed:       { label: "Selesai",        cls: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300" },
+  cancelled:       { label: "Dibatalkan",     cls: "border-red-500/30 bg-red-500/10 text-red-300" },
+  pending:         { label: "Pending",        cls: "border-amber-500/30 bg-amber-500/10 text-amber-300" },
+  paid:            { label: "Lunas",          cls: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300" },
+  failed:          { label: "Gagal",          cls: "border-red-500/30 bg-red-500/10 text-red-300" },
+  expired:         { label: "Kadaluarsa",     cls: "border-white/15 bg-white/5 text-white/50" },
+  refunded:        { label: "Refund",         cls: "border-sky-500/30 bg-sky-500/10 text-sky-300" },
+};
+
+function StatusBadge({ status }: { status: string }) {
+  const s = DASH_STATUS_STYLES[status] ?? { label: status, cls: "border-white/15 bg-white/5 text-white/50" };
+  return (
+    <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase ${s.cls}`}>
+      {s.label}
+    </span>
   );
 }
 

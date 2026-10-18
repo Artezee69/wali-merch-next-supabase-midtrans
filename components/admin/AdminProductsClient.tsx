@@ -306,18 +306,18 @@ export default function AdminProductsClient({
       </div>
 
       {/* Stats */}
-      <section className="grid grid-cols-3 gap-3">
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-          <p className="text-[10px] font-black uppercase tracking-wider text-white/40">Total</p>
-          <p className="mt-1.5 text-2xl font-black">{stats.total}</p>
+      <section className="grid grid-cols-3 gap-2 sm:gap-3">
+        <div className="rounded-xl sm:rounded-2xl border border-white/10 bg-white/[0.03] p-3 sm:p-4">
+          <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-white/40">Total</p>
+          <p className="mt-1 sm:mt-1.5 text-lg sm:text-2xl font-black">{stats.total}</p>
         </div>
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-          <p className="text-[10px] font-black uppercase tracking-wider text-white/40">Aktif</p>
-          <p className="mt-1.5 text-2xl font-black text-[#d7ff53]">{stats.active}</p>
+        <div className="rounded-xl sm:rounded-2xl border border-white/10 bg-white/[0.03] p-3 sm:p-4">
+          <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-white/40">Aktif</p>
+          <p className="mt-1 sm:mt-1.5 text-lg sm:text-2xl font-black text-[#d7ff53]">{stats.active}</p>
         </div>
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-          <p className="text-[10px] font-black uppercase tracking-wider text-white/40">Stok Habis</p>
-          <p className="mt-1.5 text-2xl font-black text-red-300">{stats.outOfStock}</p>
+        <div className="rounded-xl sm:rounded-2xl border border-white/10 bg-white/[0.03] p-3 sm:p-4">
+          <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-white/40">Stok Habis</p>
+          <p className="mt-1 sm:mt-1.5 text-lg sm:text-2xl font-black text-red-300">{stats.outOfStock}</p>
         </div>
       </section>
 
@@ -492,8 +492,78 @@ export default function AdminProductsClient({
             )}
           </div>
         ) : (
-          <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
-            <div className="overflow-x-auto">
+          <div className="overflow-hidden rounded-xl sm:rounded-2xl border border-white/10 bg-white/[0.03]">
+
+            {/* Mobile: card list (table too wide) */}
+            <ul className="divide-y divide-white/5 lg:hidden">
+              {products.map((p) => {
+                const badge = getStatusBadge(p.status, p.stock);
+                return (
+                  <li key={p.id} className="p-3">
+                    <div className="flex items-start gap-2.5">
+                      <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-black/30">
+                        {p.image_url ? (
+                          <Image src={p.image_url} alt={p.name} fill sizes="40px" className="object-cover" />
+                        ) : (
+                          <div className="flex h-full items-center justify-center text-[8px] font-black text-white/35">N/A</div>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-bold text-white">{p.name}</p>
+                        <p className="text-[10px] text-white/40">{p.category || p.brand || "—"}</p>
+                        <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                          <span className={`inline-flex rounded-full border px-2 py-0.5 text-[9px] font-black uppercase ${badge.cls}`}>
+                            {badge.label}
+                          </span>
+                          <span className="text-[10px] text-white/45">
+                            Stok:{" "}
+                            <span className={p.stock === 0 ? "font-bold text-red-300" : p.stock <= 5 ? "font-bold text-yellow-300" : "font-bold text-white/70"}>
+                              {p.stock}
+                            </span>
+                          </span>
+                          <span className="ml-auto text-xs font-black text-white">
+                            {p.sale_price != null && p.base_price != null && p.sale_price < p.base_price
+                              ? rupiah(p.sale_price)
+                              : p.has_variants
+                                ? `${rupiah(p.min_price)}–${rupiah(p.max_price)}`
+                                : rupiah(p.base_price || p.min_price)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    {/* Mobile actions: 2 rows, 3 each */}
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      <Link href={`/admin/products/${p.id}`} className="flex items-center gap-1 rounded-lg border border-white/10 px-2 py-1 text-[10px] font-bold text-white/60 active:bg-white/5">
+                        <Pencil size={11} /> Edit
+                      </Link>
+                      <button type="button" onClick={() => handleToggleStatus(p.id, p.status)}
+                        className={`flex items-center gap-1 rounded-lg border px-2 py-1 text-[10px] font-bold ${
+                          p.status === "active"
+                            ? "border-white/10 text-white/60 active:bg-white/5"
+                            : "border-[#d7ff53]/30 text-[#d7ff53] active:bg-[#d7ff53]/10"
+                        }`}>
+                        <Power size={11} /> {p.status === "active" ? "Nonaktif" : "Aktif"}
+                      </button>
+                      <button type="button" onClick={() => handleDelete(p.id, p.name)}
+                        className="flex items-center gap-1 rounded-lg border border-red-500/20 px-2 py-1 text-[10px] font-bold text-red-300/80 active:bg-red-500/10">
+                        <Trash2 size={11} /> Hapus
+                      </button>
+                      <Link href={`/products/${p.slug}`} target="_blank"
+                        className="flex items-center gap-1 rounded-lg border border-white/10 px-2 py-1 text-[10px] font-bold text-white/60 active:bg-white/5">
+                        <Eye size={11} /> Lihat
+                      </Link>
+                      <button type="button" onClick={() => handleDuplicate(p.id)}
+                        className="flex items-center gap-1 rounded-lg border border-white/10 px-2 py-1 text-[10px] font-bold text-white/60 active:bg-white/5">
+                        <Copy size={11} /> Duplikat
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+
+            {/* Desktop: full table */}
+            <div className="hidden lg:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-white/10 text-left text-[10px] font-black uppercase tracking-wider text-white/40">
@@ -506,13 +576,13 @@ export default function AdminProductsClient({
                       />
                     </th>
                     <th className="px-3 py-3">Produk</th>
-                    <th className="hidden px-3 py-3 md:table-cell">SKU</th>
-                    <th className="hidden px-3 py-3 sm:table-cell">Kategori</th>
+                    <th className="hidden px-3 py-3 xl:table-cell">SKU</th>
+                    <th className="px-3 py-3">Kategori</th>
                     <th className="px-3 py-3">Harga</th>
-                    <th className="px-3 py-3 text-center">Varian</th>
+                    <th className="hidden px-3 py-3 xl:table-cell">Varian</th>
                     <th className="px-3 py-3 text-center">Stok</th>
                     <th className="px-3 py-3">Status</th>
-                    <th className="hidden px-3 py-3 md:table-cell">Diubah</th>
+                    <th className="hidden px-3 py-3 xl:table-cell">Diubah</th>
                     <th className="px-3 py-3 text-right">Aksi</th>
                   </tr>
                 </thead>
@@ -536,46 +606,24 @@ export default function AdminProductsClient({
                           <div className="flex items-center gap-3">
                             <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-black/30">
                               {p.image_url ? (
-                                <Image
-                                  src={p.image_url}
-                                  alt={p.name}
-                                  fill
-                                  sizes="40px"
-                                  className="object-cover"
-                                />
+                                <Image src={p.image_url} alt={p.name} fill sizes="40px" className="object-cover" />
                               ) : (
-                                <div className="flex h-full items-center justify-center text-[8px] font-black text-white/35">
-                                  N/A
-                                </div>
+                                <div className="flex h-full items-center justify-center text-[8px] font-black text-white/35">N/A</div>
                               )}
                             </div>
                             <div className="min-w-0">
-                              <p className="truncate font-bold text-white" title={p.name}>
-                                {p.name}
-                              </p>
-                              <p className="truncate text-[11px] text-white/45">
-                                {p.brand || p.category || "Tanpa kategori"}
-                              </p>
+                              <p className="truncate font-bold text-white" title={p.name}>{p.name}</p>
+                              <p className="truncate text-[11px] text-white/45">{p.brand || p.category || "Tanpa kategori"}</p>
                             </div>
                           </div>
                         </td>
-                        <td className="hidden px-3 py-3 text-[11px] font-mono text-white/60 md:table-cell">
-                          {p.sku || "—"}
-                        </td>
-                        <td className="hidden px-3 py-3 text-[11px] text-white/60 sm:table-cell">
-                          {p.category || "—"}
-                        </td>
+                        <td className="hidden px-3 py-3 text-[11px] font-mono text-white/60 xl:table-cell">{p.sku || "—"}</td>
+                        <td className="px-3 py-3 text-[11px] text-white/60">{p.category || "—"}</td>
                         <td className="px-3 py-3">
                           {p.sale_price !== null && p.base_price !== null && p.sale_price < p.base_price ? (
                             <div className="flex flex-col items-start gap-0.5">
-                              {/* Original/base price with strikethrough */}
-                              <span className="text-[11px] font-bold text-gray-400 line-through">
-                                {rupiah(p.base_price)}
-                              </span>
-                              {/* Discounted/sale price prominently shown */}
-                              <span className="text-xs font-black text-[#d7ff53]">
-                                {rupiah(p.sale_price)}
-                              </span>
+                              <span className="text-[11px] font-bold text-gray-400 line-through">{rupiah(p.base_price)}</span>
+                              <span className="text-xs font-black text-[#d7ff53]">{rupiah(p.sale_price)}</span>
                             </div>
                           ) : (
                             <span className="font-bold text-white">
@@ -585,77 +633,41 @@ export default function AdminProductsClient({
                             </span>
                           )}
                         </td>
-                        <td className="px-3 py-3 text-center text-white/70">{p.variant_count}</td>
+                        <td className="hidden px-3 py-3 text-center text-white/70 xl:table-cell">{p.variant_count}</td>
                         <td className="px-3 py-3 text-center">
-                          <span
-                            className={
-                              p.stock === 0
-                                ? "font-black text-red-300"
-                                : p.stock <= 5
-                                  ? "font-bold text-yellow-300"
-                                  : "font-bold text-white/85"
-                            }
-                          >
+                          <span className={p.stock === 0 ? "font-black text-red-300" : p.stock <= 5 ? "font-bold text-yellow-300" : "font-bold text-white/85"}>
                             {p.stock}
                           </span>
                         </td>
                         <td className="px-3 py-3">
-                          <span
-                            className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide ${badge.cls}`}
-                          >
+                          <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide ${badge.cls}`}>
                             {badge.label}
                           </span>
                         </td>
-                        <td className="hidden px-3 py-3 text-[11px] text-white/55 md:table-cell">
-                          {new Date(p.updated_at).toLocaleDateString("id-ID", {
-                            day: "2-digit",
-                            month: "short",
-                            year: "numeric",
-                          })}
+                        <td className="hidden px-3 py-3 text-[11px] text-white/55 xl:table-cell">
+                          {new Date(p.updated_at).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" })}
                         </td>
                         <td className="px-3 py-3">
                           <div className="flex items-center justify-end gap-1.5">
-                            <Link
-                              href={`/products/${p.slug}`}
-                              target="_blank"
-                              className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-white/60 transition hover:bg-white/5 hover:text-white"
-                              title="Lihat"
-                            >
+                            <Link href={`/products/${p.slug}`} target="_blank" className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-white/60 transition hover:bg-white/5 hover:text-white" title="Lihat">
                               <Eye size={13} />
                             </Link>
-                            <Link
-                              href={`/admin/products/${p.id}`}
-                              className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-white/60 transition hover:bg-white/5 hover:text-white"
-                              title="Edit"
-                            >
+                            <Link href={`/admin/products/${p.id}`} className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-white/60 transition hover:bg-white/5 hover:text-white" title="Edit">
                               <Pencil size={13} />
                             </Link>
-                            <button
-                              type="button"
-                              onClick={() => handleDuplicate(p.id)}
-                              className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-white/60 transition hover:bg-white/5 hover:text-white"
-                              title="Duplikasi"
-                            >
+                            <button type="button" onClick={() => handleDuplicate(p.id)} className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-white/60 transition hover:bg-white/5 hover:text-white" title="Duplikasi">
                               <Copy size={13} />
                             </button>
-                            <button
-                              type="button"
-                              onClick={() => handleToggleStatus(p.id, p.status)}
+                            <button type="button" onClick={() => handleToggleStatus(p.id, p.status)}
                               className={`flex h-8 w-8 items-center justify-center rounded-lg border transition hover:bg-white/5 ${
                                 p.status === "active"
                                   ? "border-white/10 text-white/60 hover:text-white"
                                   : "border-[#d7ff53]/20 text-[#d7ff53]/80 hover:text-[#d7ff53]"
                               }`}
-                              title={p.status === "active" ? "Nonaktifkan" : "Aktifkan"}
-                            >
+                              title={p.status === "active" ? "Nonaktifkan" : "Aktifkan"}>
                               <Power size={13} />
                             </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDelete(p.id, p.name)}
-                              className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-500/20 text-red-300/80 transition hover:bg-red-500/10 hover:text-red-300"
-                              title="Hapus"
-                            >
+                            <button type="button" onClick={() => handleDelete(p.id, p.name)} className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-500/20 text-red-300/80 transition hover:bg-red-500/10 hover:text-red-300" title="Hapus">
                               <Trash2 size={13} />
                             </button>
                           </div>

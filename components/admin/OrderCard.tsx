@@ -285,7 +285,7 @@ export default function OrderCard({
 }) {
   return (
     <details className="group rounded-2xl border border-white/10 bg-white/[0.03] open:border-[#d7ff53]/30">
-      <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-4 md:px-5">
+      <summary className="flex cursor-pointer list-none items-center gap-3 px-3 py-3 sm:px-4 sm:py-4 md:px-5">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-black text-white">{order.order_code}</span>
@@ -336,7 +336,7 @@ export default function OrderCard({
         />
       </summary>
 
-      <div className="border-t border-white/10 p-4 md:p-5">
+      <div className="border-t border-white/10 p-3 sm:p-4 md:p-5">
         <form action={onUpdate} className="grid gap-4 lg:grid-cols-3">
           <input type="hidden" name="id" value={order.id} />
 

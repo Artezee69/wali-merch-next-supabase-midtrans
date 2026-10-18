@@ -191,30 +191,70 @@ export default function AdminShell({
         )}
 
         <div className="min-h-screen flex-1">
-          {/* Topbar */}
-          <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0a0a0a]/90 backdrop-blur">
-            <div className="flex items-center justify-between gap-3 px-4 py-4 sm:px-6">
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => setDrawerOpen(true)}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 text-white/70 transition hover:border-white/30 hover:text-white lg:hidden"
-                  aria-label="Buka menu"
-                >
-                  <Menu size={18} strokeWidth={2.2} />
-                </button>
-                <div className="min-w-0">
-                  <h1 className="truncate text-lg font-black uppercase tracking-tight sm:text-xl">
+          {/* Topbar — 2-row on mobile, 1-row on desktop */}
+          <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0a0a0a] sm:bg-[#0a0a0a]/90 sm:backdrop-blur">
+            {/* Mobile: 2 rows */}
+            <div className="flex flex-col gap-2 px-4 py-3 lg:hidden">
+              {/* Row 1: hamburger + title | avatar */}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex min-w-0 items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setDrawerOpen(true)}
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 text-white/70 transition active:bg-white/10"
+                    aria-label="Buka menu"
+                  >
+                    <Menu size={18} strokeWidth={2.2} />
+                  </button>
+                  <h1 className="truncate text-base font-black uppercase tracking-tight">
                     {title}
                   </h1>
-                  {subtitle && (
-                    <p className="mt-0.5 truncate text-xs text-white/50 sm:text-sm">
-                      {subtitle}
-                    </p>
-                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#d7ff53] text-xs font-black text-black">
+                    {initials}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    disabled={loggingOut}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-white/50 transition active:bg-red-500/10 active:text-red-300 disabled:opacity-40"
+                    aria-label="Logout"
+                  >
+                    <LogOut size={15} strokeWidth={2.2} />
+                  </button>
                 </div>
               </div>
-              <div className="flex items-center gap-2 sm:gap-3">
+              {/* Row 2: subtitle + website link */}
+              <div className="flex items-center justify-between gap-2">
+                {subtitle && (
+                  <p className="truncate text-[11px] text-white/40">{subtitle}</p>
+                )}
+                <Link
+                  href="/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-full border border-white/10 px-2.5 py-1 text-[10px] font-bold text-white/50 transition active:bg-white/5"
+                >
+                  <ExternalLink size={11} strokeWidth={2.2} />
+                  Website
+                </Link>
+              </div>
+            </div>
+
+            {/* Desktop: 1 row */}
+            <div className="hidden items-center justify-between gap-3 px-6 py-4 lg:flex">
+              <div className="min-w-0">
+                <h1 className="truncate text-lg font-black uppercase tracking-tight sm:text-xl">
+                  {title}
+                </h1>
+                {subtitle && (
+                  <p className="mt-0.5 truncate text-xs text-white/50 sm:text-sm">
+                    {subtitle}
+                  </p>
+                )}
+              </div>
+              <div className="flex items-center gap-3">
                 <Link
                   href="/"
                   target="_blank"
@@ -235,24 +275,11 @@ export default function AdminShell({
                     <div className="text-[10px] text-white/50">{adminEmail}</div>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  disabled={loggingOut}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 text-white/70 transition hover:border-red-500/40 hover:text-red-300 disabled:opacity-60 lg:hidden"
-                  aria-label="Logout"
-                >
-                  {loggingOut ? (
-                    <X size={16} strokeWidth={2.2} />
-                  ) : (
-                    <LogOut size={16} strokeWidth={2.2} />
-                  )}
-                </button>
               </div>
             </div>
           </header>
 
-          <main className="px-4 py-6 sm:px-6 sm:py-8">{children}</main>
+          <main className="px-3 py-4 sm:px-6 sm:py-6 lg:py-8">{children}</main>
         </div>
       </div>
     </div>

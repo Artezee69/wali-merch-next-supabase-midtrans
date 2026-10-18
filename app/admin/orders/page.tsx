@@ -137,8 +137,9 @@ export default async function AdminOrdersPage({
       </div>
 
       {/* Filters */}
-      <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+      <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 sm:p-4">
         <form className="grid gap-2 md:grid-cols-[1fr_auto_auto_auto_auto] md:items-center">
+          {/* Search */}
           <div className="relative">
             <Search
               size={14}
@@ -151,10 +152,11 @@ export default async function AdminOrdersPage({
               className="w-full rounded-full border border-white/10 bg-black/40 py-2.5 pl-10 pr-4 text-sm text-white outline-none placeholder:text-white/35 focus:border-[#d7ff53]"
             />
           </div>
+          {/* Status filter */}
           <select
             name="order_status"
             defaultValue={orderStatusFilter}
-            className="rounded-full border border-white/10 bg-black/40 px-3 py-2.5 text-xs font-black uppercase tracking-wider text-white outline-none focus:border-[#d7ff53]"
+            className="w-full rounded-full border border-white/10 bg-black/40 px-3 py-2.5 text-xs font-black uppercase tracking-wider text-white outline-none focus:border-[#d7ff53] md:w-auto"
           >
             <option value="all">Semua Status</option>
             {ORDER_STATUS_OPTIONS.map((s) => (
@@ -163,10 +165,11 @@ export default async function AdminOrdersPage({
               </option>
             ))}
           </select>
+          {/* Payment filter */}
           <select
             name="payment_status"
             defaultValue={paymentStatusFilter}
-            className="rounded-full border border-white/10 bg-black/40 px-3 py-2.5 text-xs font-black uppercase tracking-wider text-white outline-none focus:border-[#d7ff53]"
+            className="w-full rounded-full border border-white/10 bg-black/40 px-3 py-2.5 text-xs font-black uppercase tracking-wider text-white outline-none focus:border-[#d7ff53] md:w-auto"
           >
             <option value="all">Semua Bayar</option>
             {PAYMENT_STATUS_OPTIONS.map((s) => (
@@ -175,19 +178,22 @@ export default async function AdminOrdersPage({
               </option>
             ))}
           </select>
-          <input
-            name="from"
-            type="date"
-            defaultValue={fromDate}
-            className="rounded-full border border-white/10 bg-black/40 px-3 py-2.5 text-xs font-bold text-white outline-none focus:border-[#d7ff53] [color-scheme:dark]"
-          />
-          <input
-            name="to"
-            type="date"
-            defaultValue={toDate}
-            className="rounded-full border border-white/10 bg-black/40 px-3 py-2.5 text-xs font-bold text-white outline-none focus:border-[#d7ff53] [color-scheme:dark]"
-          />
-          <button className="rounded-full bg-[#d7ff53] px-4 py-2.5 text-xs font-black uppercase tracking-wider text-black transition hover:bg-white">
+          {/* Date range */}
+          <div className="flex gap-2">
+            <input
+              name="from"
+              type="date"
+              defaultValue={fromDate}
+              className="flex-1 rounded-full border border-white/10 bg-black/40 px-3 py-2.5 text-xs font-bold text-white outline-none focus:border-[#d7ff53] [color-scheme:dark]"
+            />
+            <input
+              name="to"
+              type="date"
+              defaultValue={toDate}
+              className="flex-1 rounded-full border border-white/10 bg-black/40 px-3 py-2.5 text-xs font-bold text-white outline-none focus:border-[#d7ff53] [color-scheme:dark]"
+            />
+          </div>
+          <button className="w-full rounded-full bg-[#d7ff53] px-4 py-2.5 text-xs font-black uppercase tracking-wider text-black transition hover:bg-white md:w-auto">
             Terapkan
           </button>
         </form>
