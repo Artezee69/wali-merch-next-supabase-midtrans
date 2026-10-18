@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, ReactNode, useCallback, useRef } from "react";
-import { Menu, X, User, LogOut, ChevronDown, Home, ShoppingBag, Truck, ShoppingCart, Search, Package } from "lucide-react";
+import { Menu, X, User, LogOut, ChevronDown, Home, ShoppingBag, Truck, ShoppingCart, Search, Package, LogIn, UserPlus } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
@@ -36,9 +36,9 @@ type NavItem = {
 
 function buildCustomerNav(header: HeaderSettings): NavItem[] {
   return [
-    { href: "/", label: header.menuLabels.home, icon: <Home size={16} /> },
-    { href: "/products", label: header.menuLabels.products, icon: <ShoppingBag size={16} /> },
-    { href: "/track-order", label: header.menuLabels.trackOrder, icon: <Truck size={16} /> },
+    { href: "/", label: header.menuLabels.home, icon: <Home size={18} /> },
+    { href: "/products", label: header.menuLabels.products, icon: <ShoppingBag size={18} /> },
+    { href: "/track-order", label: header.menuLabels.trackOrder, icon: <Truck size={18} /> },
   ];
 }
 
@@ -90,6 +90,14 @@ function resolveDisplayName(
   return local || "Akun";
 }
 
+// --- Mobile bottom nav items (Shopee-style) ---
+type MobileNavItem = {
+  href: string;
+  label: string;
+  icon: ReactNode;
+  activeColor?: string;
+};
+
 export default function Navbar({
   variant = "customer",
   activeKey,
@@ -113,8 +121,9 @@ export default function Navbar({
     setOpen(false);
   }, [pathname]);
 
+  // Close mobile menu — keep for admin variant only (admin still uses hamburger)
   useEffect(() => {
-    if (open) {
+    if (open && variant === "admin") {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
@@ -122,7 +131,7 @@ export default function Navbar({
     return () => {
       document.body.style.overflow = "";
     };
-  }, [open]);
+  }, [open, variant]);
 
   // Close profile dropdown on outside click
   useEffect(() => {
@@ -145,10 +154,21 @@ export default function Navbar({
     router.push("/account");
   }, [router]);
 
-  // Theme Toggle removed — pure dark mode only (no light mode option available)
-
   const items = variant === "admin" ? adminNav : customerNav;
   const brandHref = variant === "admin" ? "/admin" : "/";
+
+  // Mobile bottom nav items (Shopee-style)
+  const mobileNavItems: MobileNavItem[] =
+    variant === "admin"
+      ? []
+      : [
+          { href: "/", label: headerSettings.menuLabels.home, icon: <Home size={22} /> },
+          { href: "/products", label: headerSettings.menuLabels.products, icon: <ShoppingBag size={22} /> },
+          { href: "/cart", label: headerSettings.menuLabels.cart, icon: <ShoppingCart size={22} /> },
+          user
+            ? { href: "/account", label: "Akun", icon: <User size={22} /> }
+            : { href: "/login", label: "Masuk", icon: <LogIn size={22} /> },
+        ];
 
   // Customer nav CTA (auth buttons)
   const { itemCount } = useCart();
@@ -258,95 +278,191 @@ export default function Navbar({
     </div>
   );
 
+  const isMobileNav = variant === "customer";
+
   return (
     <div className="sticky top-0 z-50 bg-black shadow-lg transition-all duration-300 border-b border-white/10 sm:bg-black/95 sm:backdrop-blur-xl">
-      <header className="border-b border-transparent">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-2.5 sm:gap-3 sm:py-4 md:px-8">
-        {/* Brand — top left: big bold text, subtitle below */}
-        <Link href={brandHref} className="shrink-0 flex items-center gap-2">
-          {headerSettings.logoUrl ? (
-            <img
-              src={headerSettings.logoUrl}
-              alt={headerSettings.logoText}
-              className="h-8 sm:h-9 w-auto transition-transform duration-500 group-hover:scale-105"
-            />
-          ) : (
-            <>
-              <div className="text-sm sm:text-base font-black uppercase tracking-[0.2em] sm:tracking-[0.22em] text-gray-900 dark:text-white transition-colors duration-300 group-hover:text-green-600 dark:group-hover:text-[#d7ff53] animate-pulse-light">
-                {headerSettings.logoText}
-              </div>
-              {headerSettings.showSubtitle && (
-                <div className="hidden sm:block text-[9px] font-bold uppercase tracking-[0.35em] text-white/40">
-                  {headerSettings.logoSubtitle}
-                </div>
-              )}
-            </>
-          )}
-        </Link>
 
-        {/* Center nav links */}
-        <nav className="hidden items-center gap-8 text-sm font-semibold text-gray-700 dark:text-white light:text-gray-700 md:flex">
-          {items.map((item) => {
-            const active = isItemActive(item, activeKey, pathname);
-            return (
+      {/* ============ MOBILE: Shopee-style header (md:hidden) ============ */}
+      {isMobileNav && (
+        <div className="md:hidden">
+          {/* --- Row 1: Brand + Icons --- */}
+          <div className="flex items-center justify-between px-3 py-2">
+            <Link href={brandHref} className="shrink-0 flex items-center">
+              {headerSettings.logoUrl ? (
+                <img
+                  src={headerSettings.logoUrl}
+                  alt={headerSettings.logoText}
+                  className="h-8 w-auto"
+                />
+              ) : (
+                <span className="text-sm font-black uppercase tracking-[0.2em] text-white">
+                  {headerSettings.logoText}
+                </span>
+              )}
+            </Link>
+            <div className="flex items-center gap-1">
+              {/* Cart */}
               <Link
-                key={item.href}
-                href={item.href}
-                className={`relative flex items-center gap-1.5 text-gray-700 dark:text-white light:text-gray-700 transition hover:text-green-600 dark:hover:text-[#d7ff53] ${
-                  active ? "text-green-600 dark:text-[#d7ff53] font-bold" : ""
-                }`}
+                href="/cart"
+                className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-white active:bg-white/10 transition"
+                aria-label="Cart"
               >
-                {item.icon}
-                <span>{item.label}</span>
-                {active && (
-                  <span
-                    className="absolute -bottom-[14px] left-1/2 h-[3px] w-5 -translate-x-1/2 rounded-full bg-green-600 dark:bg-[#d7ff53]"
-                    style={{ boxShadow: "0 0 8px rgba(16,185,129,0.6) dark:shadow-[0_0_8px_rgba(215,255,83,0.6)]" }}
-                  />
+                <ShoppingCart size={18} />
+                {itemCount > 0 && (
+                  <span className="absolute top-0.5 right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#d7ff53] px-1 text-[9px] font-black text-black">
+                    {itemCount}
+                  </span>
                 )}
               </Link>
-            );
-          })}
-        </nav>
+              {/* User */}
+              {user ? (
+                <Link
+                  href="/account"
+                  className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-white active:bg-white/10 transition"
+                  aria-label="Account"
+                >
+                  <User size={18} />
+                  {profile?.profile_image_url && (
+                    <span className="absolute inset-0.5 overflow-hidden rounded-full">
+                      <Image
+                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars${profile.profile_image_url}`}
+                        alt="Avatar"
+                        fill
+                        className="object-cover rounded-full"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                      />
+                    </span>
+                  )}
+                </Link>
+              ) : (
+                <Link
+                  href="/login"
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-white active:bg-white/10 transition"
+                  aria-label="Login"
+                >
+                  <LogIn size={18} />
+                </Link>
+              )}
+            </div>
+          </div>
 
-        {/* Right side CTA */}
-        <div className="hidden shrink-0 md:flex">{desktopCta || customerCta}</div>
+          {/* --- Row 2: Search bar --- */}
+          <div className="px-3 pb-2">
+            <form
+              action="/products"
+              method="GET"
+              className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3.5 py-2"
+            >
+              <Search size={16} className="shrink-0 text-white/40" />
+              <input
+                type="text"
+                name="q"
+                placeholder="Cari merchandise..."
+                aria-label="Search products"
+                className="w-full bg-transparent text-sm text-white placeholder:text-white/35 focus:outline-none"
+              />
+            </form>
+          </div>
 
-        {/* Mobile hamburger */}
-        <button
-          type="button"
-          onClick={() => setOpen((prev) => !prev)}
-          aria-label={open ? "Close menu" : "Open menu"}
-          aria-expanded={open}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white transition-all duration-200 hover:bg-white/10 hover:border-[#d7ff53]/30 active:scale-95 md:hidden sm:h-10 sm:w-10"
-        >
-          {open ? <X size={18} className="text-[#d7ff53]" /> : <Menu size={18} className="text-white" />}
-        </button>
-      </div>
+          {/* --- Row 3: Quick nav strip --- */}
+          <nav className="flex items-center gap-1 overflow-x-auto px-3 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {customerNav.map((item) => {
+              const active = isItemActive(item, activeKey, pathname);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition ${
+                    active
+                      ? "bg-[#d7ff53] text-black"
+                      : "bg-white/5 text-white/60 active:bg-white/10"
+                  }`}
+                >
+                  {item.icon && <span className="shrink-0 scale-90">{item.icon}</span>}
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+      )}
 
-      {/* Mobile menu */}
-      {open && (
+      {/* ============ DESKTOP: Standard header (hidden on mobile for customer nav) ============ */}
+      <header className={`border-b border-transparent ${isMobileNav ? "hidden md:block" : ""}`}>
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-2.5 sm:gap-3 sm:py-4 md:px-8">
+          {/* Brand */}
+          <Link href={brandHref} className="shrink-0 flex items-center gap-2">
+            {headerSettings.logoUrl ? (
+              <img
+                src={headerSettings.logoUrl}
+                alt={headerSettings.logoText}
+                className="h-8 sm:h-9 w-auto transition-transform duration-500 group-hover:scale-105"
+              />
+            ) : (
+              <>
+                <div className="text-sm sm:text-base font-black uppercase tracking-[0.2em] sm:tracking-[0.22em] text-gray-900 dark:text-white transition-colors duration-300 group-hover:text-green-600 dark:group-hover:text-[#d7ff53] animate-pulse-light">
+                  {headerSettings.logoText}
+                </div>
+                {headerSettings.showSubtitle && (
+                  <div className="hidden sm:block text-[9px] font-bold uppercase tracking-[0.35em] text-white/40">
+                    {headerSettings.logoSubtitle}
+                  </div>
+                )}
+              </>
+            )}
+          </Link>
+
+          {/* Center nav links */}
+          <nav className="hidden items-center gap-8 text-sm font-semibold text-gray-700 dark:text-white light:text-gray-700 md:flex">
+            {items.map((item) => {
+              const active = isItemActive(item, activeKey, pathname);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`relative flex items-center gap-1.5 text-gray-700 dark:text-white light:text-gray-700 transition hover:text-green-600 dark:hover:text-[#d7ff53] ${
+                    active ? "text-green-600 dark:text-[#d7ff53] font-bold" : ""
+                  }`}
+                >
+                  {item.icon}
+                  <span>{item.label}</span>
+                  {active && (
+                    <span
+                      className="absolute -bottom-[14px] left-1/2 h-[3px] w-5 -translate-x-1/2 rounded-full bg-green-600 dark:bg-[#d7ff53]"
+                      style={{ boxShadow: "0 0 8px rgba(16,185,129,0.6) dark:shadow-[0_0_8px_rgba(215,255,83,0.6)]" }}
+                    />
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Right side CTA */}
+          <div className="hidden shrink-0 md:flex">{desktopCta || customerCta}</div>
+
+          {/* Admin hamburger (mobile) */}
+          {variant === "admin" && (
+            <button
+              type="button"
+              onClick={() => setOpen((prev) => !prev)}
+              aria-label={open ? "Close menu" : "Open menu"}
+              aria-expanded={open}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white transition-all duration-200 hover:bg-white/10 hover:border-[#d7ff53]/30 active:scale-95 md:hidden"
+            >
+              {open ? <X size={18} className="text-[#d7ff53]" /> : <Menu size={18} className="text-white" />}
+            </button>
+          )}
+        </div>
+      </header>
+
+      {/* Admin mobile drawer (customer mobile uses Shopee-style header instead) */}
+      {variant === "admin" && open && (
         <div
           className="animate-slide-down-spring border-t border-white/10 bg-black md:bg-black/95 md:backdrop-blur-xl md:hidden overflow-y-auto"
           style={{ transformOrigin: "top", maxHeight: "75dvh" }}
         >
           <nav className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-4">
-            {/* Mobile search bar */}
-            <form
-              action="/products"
-              method="GET"
-              className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
-            >
-              <Search size={16} className="text-gray-500 dark:text-white/40" />
-              <input
-                type="text"
-                name="q"
-                placeholder="Cari produk..."
-                aria-label="Search products"
-                className="w-full bg-transparent text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none dark:text-white dark:placeholder:text-gray-400 focus:bg-white dark:focus:bg-gray-800/50"
-              />
-            </form>
-
             {items.map((item) => (
               <Link
                 key={item.href}
@@ -361,99 +477,16 @@ export default function Navbar({
                 {item.label}
               </Link>
             ))}
-
-            {/* Cart link in mobile menu */}
-            <Link
-              href="/cart"
-              className={`flex items-center justify-between rounded-2xl px-4 py-4 text-sm font-black uppercase tracking-wider transition-all duration-200 active:scale-98 ${
-                pathname === "/cart"
-                  ? "bg-[#d7ff53] text-black font-black"
-                  : "text-white/80 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              <span className="flex items-center gap-3">
-                <ShoppingCart size={16} />
-                {headerSettings.menuLabels.cart}
-              </span>
-              {itemCount > 0 && (
-                <span className={`flex h-6 min-w-6 px-2 items-center justify-center rounded-full text-[11px] font-bold ${
-                  pathname === "/cart" ? "bg-black text-[#d7ff53]" : "bg-black text-[#d7ff53]"
-                }`}>
-                  {itemCount}
-                </span>
-              )}
-            </Link>
-
             {mobileExtras && (
               <div className="mt-3 grid gap-2 border-t border-white/10 pt-4">
                 {mobileExtras}
               </div>
             )}
-
-            {/* Mobile auth CTA */}
-            <div className="mt-4 grid gap-2 border-t border-white/10 pt-4">
-              {user && !profileLoading ? (
-                <>
-                  <div className="flex items-center gap-3 rounded-xl bg-white/5 p-3">
-                    <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-white/10">
-                      {profile?.profile_image_url ? (
-                        <Image
-                          src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars${profile.profile_image_url}`}
-                          alt="Avatar"
-                          fill
-                          className="object-cover"
-                          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-xs font-black text-white/60">
-                          {initials}
-                        </div>
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-bold text-white">{displayName}</p>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setOpen(false);
-                          goToAccount();
-                        }}
-                        className="text-xs text-[#d7ff53]"
-                      >
-                        Kelola Profil
-                      </button>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleSignOut}
-                    className="flex items-center gap-2 rounded-xl border border-white/10 bg-red-500/10 p-3 text-sm font-bold text-red-400 transition hover:bg-red-500/20"
-                  >
-                    <LogOut size={16} />
-                    Keluar
-                  </button>
-                </>
-              ) : (
-                <>
-                  {headerSettings.showLogin && (
-                    <Link href="/login" className="rounded-xl border border-[#d7ff53]/60 bg-transparent px-4 py-3.5 text-center text-sm font-black uppercase tracking-wider text-[#d7ff53] transition-all duration-200 hover:bg-[#d7ff53]/10 active:scale-95">
-                      {headerSettings.loginLabel}
-                    </Link>
-                  )}
-                  {headerSettings.showRegister && (
-                    <Link href="/register" className="rounded-xl bg-[#d7ff53] px-4 py-3.5 text-center text-sm font-black uppercase tracking-wider text-black transition-all duration-200 hover:bg-[#c7ef33] active:scale-95">
-                      {headerSettings.registerLabel}
-                    </Link>
-                  )}
-                </>
-              )}
-            </div>
           </nav>
         </div>
       )}
-    </header>
 
-    {/* Sub-header search bar — hidden on mobile to save space, visible sm+ */}
+      {/* Sub-header search bar — desktop only */}
     <div className="hidden bg-transparent sm:block">
       <form
         action="/products"
