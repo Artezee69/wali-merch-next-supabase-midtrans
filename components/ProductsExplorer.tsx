@@ -228,7 +228,7 @@ export default function ProductsExplorer({
         ) : (
           <div
             key={`${category}-${query}`}
-            className="grid gap-3 sm:gap-6 sm:grid-cols-2 md:gap-7 lg:gap-8 lg:grid-cols-3"
+            className="grid grid-cols-2 gap-2.5 sm:gap-6 sm:grid-cols-2 md:gap-7 lg:gap-8 lg:grid-cols-3"
           >
             {filtered.map((product, i) => (
               <ProductCard key={product.id} product={product} index={i} />

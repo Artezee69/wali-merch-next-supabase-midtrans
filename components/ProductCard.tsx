@@ -136,7 +136,7 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
           aria-hidden
         />
 
-        <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-white/5 bg-[#0d0d0d] sm:bg-black/30 sm:backdrop-blur-sm transition-all duration-500 sm:group-hover:border-white/10 sm:group-hover:bg-black/50 p-2 sm:p-3 dark:border-gray-800 sm:group-hover:dark:border-[#d7ff53]/30 sm:group-hover:dark:bg-[#d7ff53]/5 flex flex-col h-full">
+        <div className="relative overflow-hidden rounded-xl sm:rounded-3xl border border-white/5 bg-[#0d0d0d] sm:bg-black/30 sm:backdrop-blur-sm transition-all duration-500 sm:group-hover:border-white/10 sm:group-hover:bg-black/50 p-1.5 sm:p-3 dark:border-gray-800 sm:group-hover:dark:border-[#d7ff53]/30 sm:group-hover:dark:bg-[#d7ff53]/5 flex flex-col h-full">
           {/* Subtle inner frame glow */}
           <div
             className="pointer-events-none absolute inset-px rounded-[1.4rem] bg-gradient-to-br from-white/5 via-transparent to-black/20 dark:from-white/5 dark:via-transparent dark:to-black/30"
@@ -144,12 +144,12 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
           />
 
           {/* Image container */}
-          <div className="group/img relative aspect-[4/5] overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-900">
+          <div className="group/img relative aspect-[4/5] overflow-hidden rounded-lg sm:rounded-2xl bg-gray-100 dark:bg-gray-900">
             <Image
               src={getImage(product)}
               alt={product.name}
               fill
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 33vw"
               loading="lazy"
               decoding="async"
               className="object-cover sm:transition-all sm:duration-700 sm:ease-out sm:group-hover:scale-105"
@@ -208,12 +208,12 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
                   "all 700ms cubic-bezier(0.16, 1, 0.3, 1) 300ms",
               }}
             >
-              <div className="rounded-lg sm:rounded-2xl border border-white/10 bg-black/80 sm:bg-black/70 sm:backdrop-blur-xl sm:p-4 p-2">
-                <p className="text-[8px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.25em] text-[#d7ff53]">
+              <div className="rounded-md sm:rounded-2xl border border-white/10 bg-black/80 sm:bg-black/70 sm:backdrop-blur-xl sm:p-4 p-1.5">
+                <p className="text-[7px] sm:text-xs font-black uppercase tracking-[0.15em] sm:tracking-[0.25em] text-[#d7ff53]">
                   Official Merchandise
                 </p>
                 <h3
-                  className={`mt-1 sm:mt-2 line-clamp-2 font-display text-sm sm:text-lg font-black uppercase leading-tight tracking-tight transition-colors duration-500 ${
+                  className={`mt-0.5 sm:mt-2 line-clamp-2 font-display text-xs sm:text-lg font-black uppercase leading-tight tracking-tight transition-colors duration-500 ${
                     hover ? "text-accent" : "text-gray-100 dark:text-gray-300"
                   }`}
                 >
@@ -226,17 +226,16 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
           {/* Body */}
           <div className="flex flex-col h-full min-h-[0]">
             {/* Fixed-height description section - ALL BOXES SAME HEIGHT */}
-            <div className="p-2 sm:p-5 bg-[#0a0a0a] sm:bg-black/20 sm:backdrop-blur-sm overflow-hidden">
-              <div className="h-[2.5rem] sm:h-[3.5rem] overflow-hidden flex flex-col justify-end"> {/* Mobile ~40px, Desktop ~56px */}
-                <p className="text-[10px] sm:text-sm leading-relaxed text-gray-300 dark:text-gray-300 line-clamp-2">
+            <div className="px-1.5 pb-1.5 sm:p-5 sm:pb-5 bg-[#0a0a0a] sm:bg-black/20 sm:backdrop-blur-sm overflow-hidden">
+              <div className="h-[2rem] sm:h-[3.5rem] overflow-hidden flex flex-col justify-end"> {/* Mobile ~32px, Desktop ~56px */}
+                <p className="text-[9px] sm:text-sm leading-relaxed text-gray-300 dark:text-gray-300 line-clamp-2">
                   {product.description || "Premium official merchandise collection."}
                 </p>
               </div>
-
             </div>
 
             {/* Price & CTA section - Remaining space */}
-            <div className="p-2 sm:p-5 pt-1 sm:pt-3 bg-[#0a0a0a] sm:bg-black/20 sm:backdrop-blur-sm flex flex-col gap-2 sm:gap-4">
+            <div className="px-1.5 py-1.5 sm:p-5 sm:pt-3 bg-[#0a0a0a] sm:bg-black/20 sm:backdrop-blur-sm flex flex-col gap-1.5 sm:gap-4">
               {/* Price display */}
               <div>
                 <p className="text-[9px] sm:text-xs font-bold uppercase tracking-widest text-gray-500 mb-0.5 sm:mb-1">Price</p>
@@ -292,7 +291,7 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
               {/* Elegant CTA button */}
               <div className="pt-1.5 sm:pt-3 border-t border-white/5">
                 <div
-                  className={`flex items-center justify-center gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl px-3 sm:px-6 py-2 sm:py-3.5 text-[10px] sm:text-sm font-black uppercase tracking-wider sm:tracking-wider transition-all duration-500 active:scale-95 ${
+                  className={`flex items-center justify-center gap-1 sm:gap-2 rounded-md sm:rounded-xl px-2 sm:px-6 py-1.5 sm:py-3.5 text-[9px] sm:text-sm font-black uppercase tracking-wider sm:tracking-wider transition-all duration-500 active:scale-95 ${
                     isComingSoon
                       ? "bg-gray-800/50 text-gray-400 cursor-not-allowed"
                       : "bg-gradient-to-r from-[#d7ff53] to-[#c7ef33] text-black hover:scale-[1.02] shadow-lg hover:shadow-[0_10px_30px_rgba(215,255,83,0.3)]"
