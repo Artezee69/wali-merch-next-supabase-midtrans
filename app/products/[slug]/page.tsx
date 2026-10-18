@@ -191,8 +191,8 @@ export default async function ProductDetailPage({ params }: PageProps) {
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#050505] text-white">
-      {/* Cinematic ambient backdrop */}
-      <div className="pointer-events-none absolute inset-0 -z-10">
+      {/* Cinematic ambient backdrop — desktop only (mobile: no blur cost) */}
+      <div className="hidden pointer-events-none absolute inset-0 -z-10 sm:block">
         <div className="absolute -left-32 top-1/4 h-96 w-96 rounded-full bg-[#d7ff53]/8 blur-[140px] animate-aurora-1" />
         <div className="absolute -right-32 top-2/3 h-96 w-96 rounded-full bg-[#5e8bff]/8 blur-[140px] animate-aurora-2" />
         <div className="absolute inset-0 bg-grid-fade [background-size:64px_64px] opacity-[0.18]" />
@@ -201,7 +201,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
 
       {/* Top action bar */}
       <section className="relative border-b border-white/10 bg-gradient-to-b from-[#10150a] via-[#0a0a0a] to-[#050505]">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-5 py-4 sm:py-5">
           <Link
             href="/products"
             className="group inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-5 py-3 text-xs font-black uppercase tracking-[0.25em] text-white/70 transition-all duration-300 hover:border-[#d7ff53] hover:text-[#d7ff53]"
@@ -223,7 +223,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
       </section>
 
       {/* Detail grid */}
-      <section className="relative mx-auto grid max-w-7xl gap-10 px-5 py-10 lg:grid-cols-[1.05fr_0.95fr] lg:py-14">
+      <section className="relative mx-auto grid max-w-7xl gap-6 sm:gap-10 px-4 sm:px-5 py-8 sm:py-10 lg:grid-cols-[1.05fr_0.95fr] lg:py-14">
         <div>
           <ProductImageGallery
             productName={product.name}
@@ -232,43 +232,43 @@ export default async function ProductDetailPage({ params }: PageProps) {
         </div>
 
         <div className="lg:sticky lg:top-6 lg:self-start">
-          <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-[#d7ff53]/30 bg-[#d7ff53]/[0.04] px-5 py-3 text-xs font-black uppercase tracking-[0.35em] text-[#d7ff53] backdrop-blur-md">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#d7ff53] animate-pulse-soft" />
+          <div className="mb-4 sm:mb-8 inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-[#d7ff53]/30 bg-[#d7ff53]/[0.04] px-3 sm:px-5 py-2 sm:py-3 text-[9px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.35em] text-[#d7ff53] sm:backdrop-blur-md">
+            <span className="h-1 w-1 sm:h-1.5 sm:w-1.5 rounded-full bg-[#d7ff53] animate-pulse-soft" />
             Product Detail
           </div>
 
-          <h1 className="bg-gradient-to-b from-white via-white to-white/60 bg-clip-text text-5xl font-black uppercase leading-[0.95] tracking-tight text-transparent md:text-6xl">
+          <h1 className="bg-gradient-to-b from-white via-white to-white/60 bg-clip-text text-3xl sm:text-5xl md:text-6xl font-black uppercase leading-[0.95] tracking-tight text-transparent">
             {product.name}
           </h1>
 
-          <div className="mt-7 flex flex-wrap items-center gap-3">
+          <div className="mt-4 sm:mt-7 flex flex-wrap items-center gap-2 sm:gap-3">
             {/* Price display with optional discount */}
             {(product.base_price !== undefined && product.base_price != null &&
                 product.sale_price !== undefined &&
                 product.sale_price != null &&
                 Number(product.sale_price) < Number(product.base_price))
               ? (
-                  <div className="flex items-baseline gap-2">
+                  <div className="flex items-baseline gap-1.5 sm:gap-2 flex-wrap">
                     {/* Original price (strikethrough) */}
-                    <span className="font-display text-base font-black text-gray-400 line-through">
+                    <span className="font-display text-sm sm:text-base font-black text-gray-400 line-through">
                       {rupiah(product.base_price)}
                     </span>
                     {/* Sale price prominent */}
-                    <span className="font-display text-lg font-black text-[#d7ff53] px-5 py-3 rounded-full shadow-[0_0_24px_-6px_rgba(215,255,83,0.5)] bg-[#d7ff53] text-black">
+                    <span className="font-display text-sm sm:text-lg font-black text-[#d7ff53] px-3 sm:px-5 py-1.5 sm:py-3 rounded-full shadow-[0_0_24px_-6px_rgba(215,255,83,0.5)] bg-[#d7ff53] text-black">
                       {rupiah(product.sale_price)}
                     </span>
                     {/* Discount percentage badge */}
-                    <span className="text-sm font-bold bg-red-500/20 text-red-400 px-2 py-0.5 rounded">
+                    <span className="text-xs sm:text-sm font-bold bg-red-500/20 text-red-400 px-1.5 sm:px-2 py-0.5 rounded">
                       {Math.round(((Number(product.base_price) - Number(product.sale_price)) / Number(product.base_price)) * 100)}%
                     </span>
                   </div>
               ) : (
-                <span className="rounded-full bg-[#d7ff53] px-5 py-3 text-xl font-black text-black shadow-[0_0_24px_-6px_rgba(215,255,83,0.5)]">
+                <span className="rounded-full bg-[#d7ff53] px-3 sm:px-5 py-1.5 sm:py-3 text-sm sm:text-xl font-black text-black shadow-[0_0_24px_-6px_rgba(215,255,83,0.5)]">
                   {rupiah(Number(product.price))}
                 </span>
               )}
 
-            <span className="rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm font-black uppercase text-white backdrop-blur-sm">
+            <span className="rounded-full border border-white/10 bg-white/5 px-3 sm:px-5 py-1.5 sm:py-3 text-xs sm:text-sm font-black uppercase text-white sm:backdrop-blur-sm">
               Stock: {totalStock} PCS
             </span>
           </div>
@@ -279,35 +279,32 @@ export default async function ProductDetailPage({ params }: PageProps) {
             </p>
           )}
 
-          <div className="mt-9 grid gap-4 sm:grid-cols-3">
-            <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-sm transition-all duration-500 hover:border-white/20 hover:bg-white/[0.05]">
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40">
+          <div className="mt-5 sm:mt-9 grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
+            <div className="group relative overflow-hidden rounded-xl sm:rounded-2xl border border-white/10 bg-white/[0.03] p-3 sm:p-5 sm:backdrop-blur-sm transition-all duration-500 sm:hover:border-white/20 sm:hover:bg-white/[0.05]">
+              <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white/40">
                 Category
               </p>
-              <p className="mt-3 text-sm font-black uppercase text-white">
+              <p className="mt-1.5 sm:mt-3 text-xs sm:text-sm font-black uppercase text-white">
                 {product.category || "Merch"}
               </p>
-              <div className="absolute inset-x-0 bottom-0 h-px scale-x-0 bg-gradient-to-r from-transparent via-[#d7ff53] to-transparent transition-transform duration-500 group-hover:scale-x-100" />
             </div>
 
-            <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-sm transition-all duration-500 hover:border-white/20 hover:bg-white/[0.05]">
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40">
+            <div className="group relative overflow-hidden rounded-xl sm:rounded-2xl border border-white/10 bg-white/[0.03] p-3 sm:p-5 sm:backdrop-blur-sm transition-all duration-500 sm:hover:border-white/20 sm:hover:bg-white/[0.05]">
+              <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white/40">
                 Fit
               </p>
-              <p className="mt-3 text-sm font-black uppercase text-white">
+              <p className="mt-1.5 sm:mt-3 text-xs sm:text-sm font-black uppercase text-white">
                 {product.fit || "Regular"}
               </p>
-              <div className="absolute inset-x-0 bottom-0 h-px scale-x-0 bg-gradient-to-r from-transparent via-[#d7ff53] to-transparent transition-transform duration-500 group-hover:scale-x-100" />
             </div>
 
-            <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-sm transition-all duration-500 hover:border-white/20 hover:bg-white/[0.05]">
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40">
+            <div className="group relative overflow-hidden rounded-xl sm:rounded-2xl border border-white/10 bg-white/[0.03] p-3 sm:p-5 sm:backdrop-blur-sm transition-all duration-500 sm:hover:border-white/20 sm:hover:bg-white/[0.05]">
+              <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white/40">
                 Status
               </p>
-              <p className="mt-3 text-sm font-black uppercase text-[#d7ff53]">
+              <p className="mt-1.5 sm:mt-3 text-xs sm:text-sm font-black uppercase text-[#d7ff53]">
                 {normalizeStatus(product.status)}
               </p>
-              <div className="absolute inset-x-0 bottom-0 h-px scale-x-0 bg-gradient-to-r from-transparent via-[#d7ff53] to-transparent transition-transform duration-500 group-hover:scale-x-100" />
             </div>
           </div>
 

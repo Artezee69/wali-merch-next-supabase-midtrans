@@ -56,6 +56,24 @@ export default function Reveal({
 
   const Component = Tag as any;
 
+  // Mobile: skip all animation effects (no filter/transform cost)
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    setIsMobile(window.innerWidth < 640);
+  }, []);
+
+  if (isMobile) {
+    return (
+      <Component
+        ref={ref as any}
+        className={className}
+        style={{ opacity: visible ? 1 : 1 }}
+      >
+        {children}
+      </Component>
+    );
+  }
+
   let baseStyle: React.CSSProperties = {
     opacity: visible ? 1 : 0,
     transition: `opacity 1100ms cubic-bezier(0.16, 1, 0.3, 1) ${delay}ms, transform 1100ms cubic-bezier(0.16, 1, 0.3, 1) ${delay}ms, filter 1100ms cubic-bezier(0.16, 1, 0.3, 1) ${delay}ms`,

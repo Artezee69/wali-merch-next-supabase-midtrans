@@ -49,7 +49,7 @@ export function PopupAds() {
     const useFullScreen = isMobile;
 
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/80 sm:backdrop-blur-md animate-fade-in">
         <div
           className={`relative overflow-hidden bg-black shadow-2xl transform scale-100 animate-in fade-in duration-300 ${
             useFullScreen
@@ -62,26 +62,28 @@ export function PopupAds() {
           }}
           onClick={handleClose}
         >
-          {/* Close button */}
+          {/* Close button — no backdrop-blur on mobile */}
           <button
             type="button"
             onClick={handleClose}
             className={`absolute top-0 right-0 z-20 flex items-center justify-center transition-all duration-200 hover:scale-110 focus:outline-none ${
               useFullScreen
-                ? "top-4 right-4 w-10 h-10 rounded-full bg-black/50 backdrop-blur-md text-white border border-white/20"
-                : "top-4 right-4 w-8 h-8 rounded-full bg-white/90 backdrop-blur-md text-gray-700 border border-white/30"
+                ? "top-4 right-4 w-10 h-10 rounded-full bg-black/70 text-white border border-white/20 sm:bg-black/50 sm:backdrop-blur-md"
+                : "top-4 right-4 w-8 h-8 rounded-full bg-white/90 text-gray-700 border border-white/30 sm:backdrop-blur-md"
             }`}
             aria-label="Tutup iklan"
           >
             <span className={`font-light ${useFullScreen ? "text-xl" : "text-lg"}`}>×</span>
           </button>
 
-          {/* Image — full bleed on mobile */}
+          {/* Image — full bleed on mobile, lazy loaded */}
           {popupAds.image_url ? (
             <div className={`${useFullScreen ? "h-[45dvh] sm:h-64 md:h-72" : "h-48 sm:h-56 md:h-64"} relative overflow-hidden`}>
               <img
                 src={popupAds.image_url}
                 alt={popupAds.title}
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover"
               />
               {/* Gradient overlay for text readability */}
@@ -92,11 +94,11 @@ export function PopupAds() {
           )}
 
           {/* Content */}
-          <div className={`${useFullScreen ? "px-6 py-8 sm:px-8" : "p-6"} space-y-3 bg-black`}>
-            {/* Badge */}
+          <div className={`${useFullScreen ? "px-6 py-6 sm:px-8 sm:py-8" : "p-6"} space-y-3 bg-black`}>
+            {/* Badge — pulse animation disabled on mobile */}
             {popupAds.subtitle && (
               <div className="inline-flex items-center gap-2 rounded-full border border-[#d7ff53]/30 bg-[#d7ff53]/10 px-3 py-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#d7ff53] animate-pulse" />
+                <span className="h-1.5 w-1.5 rounded-full bg-[#d7ff53] sm:animate-pulse" />
                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#d7ff53]">
                   {popupAds.subtitle}
                 </span>
@@ -149,14 +151,14 @@ export function PopupAds() {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 sm:bottom-4 sm:left-auto sm:right-4 sm:w-auto">
       <div
-        className={`relative overflow-hidden bg-black shadow-2xl ${
+        className={`relative overflow-hidden bg-black shadow-xl ${
           isMobile
             ? "rounded-t-2xl mx-0 sm:rounded-2xl sm:mx-0"
             : "rounded-2xl"
         }`}
         onClick={handleClose}
       >
-        {/* Mobile bottom sheet style */}
+        {/* Mobile bottom sheet handle */}
         {isMobile && (
           <div className="flex justify-center py-3 sm:hidden">
             <div className="h-1 w-12 rounded-full bg-white/20" />
@@ -173,15 +175,17 @@ export function PopupAds() {
           <span className="text-sm font-light">✕</span>
         </button>
 
-        {/* Image */}
+        {/* Image — lazy loaded */}
         {popupAds.image_url ? (
           <img
             src={popupAds.image_url}
             alt={popupAds.title}
-            className="w-full h-40 sm:h-32 object-cover"
+            loading="lazy"
+            decoding="async"
+            className="w-full h-32 sm:h-32 object-cover"
           />
         ) : (
-          <div className="h-40 sm:h-32 bg-gradient-to-br from-green-500/20 to-blue-500/20" />
+          <div className="h-32 sm:h-32 bg-gradient-to-br from-green-500/20 to-blue-500/20" />
         )}
 
         {/* Content */}

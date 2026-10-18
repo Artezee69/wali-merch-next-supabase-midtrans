@@ -86,34 +86,33 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      <article className="w-[240px] sm:w-[280px] md:w-[320px] lg:w-[340px]">
+      <article className="w-[150px] sm:w-[280px] md:w-[320px] lg:w-[340px]">
         {/* Image */}
-        <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-gray-200 dark:bg-[#111]">
+        <div className="relative aspect-[4/5] overflow-hidden rounded-lg sm:rounded-2xl bg-gray-200 dark:bg-[#111]">
           {imgSrc && (
             <Image
               src={imgSrc}
               alt={product.name}
               fill
-              className="object-cover transition-transform duration-700 ease-out group-hover/card:scale-110"
+              loading="lazy"
+              decoding="async"
+              className="object-cover sm:transition-transform sm:duration-700 sm:ease-out sm:group-hover/card:scale-110"
             />
           )}
 
-          {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent dark:from-black/70 dark:via-black/10" />
-
-          {/* Tag */}
+          {/* Tag — mobile: tiny */}
           {product.tag && (
-            <div className="absolute left-3 top-3 z-10">
-              <span className="rounded-full border border-gray-300 bg-white/80 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-gray-700 backdrop-blur dark:border-white/10 dark:bg-black/60 dark:text-white/60">
+            <div className="absolute left-1.5 top-1.5 z-10 sm:left-3 sm:top-3">
+              <span className="rounded-full border border-gray-300 bg-white/80 px-1.5 py-0.5 text-[7px] sm:px-2.5 sm:py-1 sm:text-[9px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] text-gray-700 backdrop-blur dark:border-white/10 dark:bg-black/60 dark:text-white/60">
                 {product.tag}
               </span>
             </div>
           )}
 
-          {/* Hover CTA */}
+          {/* Hover CTA — desktop only */}
           {!comingSoon && (
-            <div className="absolute inset-0 z-10 flex items-end justify-center pb-4 sm:pb-6 opacity-0 transition-opacity duration-300 group-hover/card:opacity-100">
-              <span className="rounded-full bg-[#d7ff53] px-5 py-2.5 text-[10px] font-black uppercase tracking-[0.2em] text-black shadow-lg">
+            <div className="absolute inset-0 z-10 hidden items-end justify-center pb-3 sm:pb-6 opacity-0 sm:flex sm:transition-opacity sm:duration-300 sm:group-hover/card:opacity-100">
+              <span className="rounded-full bg-[#d7ff53] px-4 py-2 sm:px-5 sm:py-2.5 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] text-black shadow-lg">
                 Quick View
               </span>
             </div>
@@ -122,25 +121,25 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
           {/* Coming Soon */}
           {comingSoon && (
             <div className="absolute inset-0 z-10 flex items-center justify-center">
-              <span className="rounded-full border border-gray-300 bg-white/80 px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-700 backdrop-blur dark:border-white/20 dark:bg-black/70 dark:text-white/60">
+              <span className="rounded-full border border-gray-300 bg-white/80 px-2 py-0.5 sm:px-4 sm:py-2 text-[7px] sm:text-[10px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] text-gray-700 backdrop-blur dark:border-white/20 dark:bg-black/70 dark:text-white/60">
                 Coming Soon
               </span>
             </div>
           )}
         </div>
 
-        {/* Info */}
-        <div className="mt-3 flex items-start justify-between gap-2 px-1">
+        {/* Info — mobile: compact */}
+        <div className="mt-1.5 sm:mt-3 flex items-start justify-between gap-1.5 sm:gap-2 px-0.5 sm:px-1">
           <div className="min-w-0 flex-1">
-            <h3 className="truncate text-[13px] sm:text-sm font-bold leading-snug text-gray-900 dark:text-white/90 transition-colors duration-300 group-hover/card:text-[#d7ff53]">
+            <h3 className="truncate text-[11px] sm:text-sm font-bold leading-snug text-gray-900 dark:text-white/90 sm:transition-colors sm:duration-300 sm:group-hover/card:text-[#d7ff53]">
               {product.name}
             </h3>
-            <p className="mt-0.5 truncate text-[11px] text-gray-500 dark:text-white/35 line-clamp-1">
+            <p className="mt-0.5 truncate text-[9px] sm:text-[11px] text-gray-500 dark:text-white/35 line-clamp-1">
               {product.description}
             </p>
           </div>
           {!comingSoon && (
-            <p className="shrink-0 pt-0.5 text-[12px] sm:text-sm font-black text-gray-700 dark:text-white/70">
+            <p className="shrink-0 pt-0.5 text-[10px] sm:text-sm font-black text-gray-700 dark:text-white/70">
               Rp{(product.price || 0).toLocaleString("id-ID")}
             </p>
           )}

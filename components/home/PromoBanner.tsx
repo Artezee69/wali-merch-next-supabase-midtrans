@@ -35,7 +35,9 @@ export default function PromoBanner({ banner, className }: Props) {
         <img
           src={banner.image_url}
           alt={banner.title}
-          className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          loading="lazy"
+          decoding="async"
+          className="absolute inset-0 h-full w-full object-cover sm:transition-transform sm:duration-500 sm:group-hover:scale-105"
           draggable={false}
         />
         {banner.title && !banner.hide_overlay && (

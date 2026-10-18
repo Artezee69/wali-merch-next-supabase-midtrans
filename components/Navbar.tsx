@@ -259,9 +259,9 @@ export default function Navbar({
   );
 
   return (
-    <div className="sticky top-0 z-50 bg-black/95 backdrop-blur-xl shadow-lg transition-all duration-300 border-b border-white/10">
+    <div className="sticky top-0 z-50 bg-black shadow-lg transition-all duration-300 border-b border-white/10 sm:bg-black/95 sm:backdrop-blur-xl">
       <header className="border-b border-transparent">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 sm:gap-3 px-4 py-3 sm:py-4 md:px-8">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-2.5 sm:gap-3 sm:py-4 md:px-8">
         {/* Brand — top left: big bold text, subtitle below */}
         <Link href={brandHref} className="shrink-0 flex items-center gap-2">
           {headerSettings.logoUrl ? (
@@ -318,17 +318,17 @@ export default function Navbar({
           onClick={() => setOpen((prev) => !prev)}
           aria-label={open ? "Close menu" : "Open menu"}
           aria-expanded={open}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 dark:bg-white/5 text-white transition-all duration-200 hover:bg-white/10 hover:border-[#d7ff53]/30 active:scale-95 md:hidden"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white transition-all duration-200 hover:bg-white/10 hover:border-[#d7ff53]/30 active:scale-95 md:hidden sm:h-10 sm:w-10"
         >
-          {open ? <X size={20} className="text-[#d7ff53]" /> : <Menu size={20} className="text-white" />}
+          {open ? <X size={18} className="text-[#d7ff53]" /> : <Menu size={18} className="text-white" />}
         </button>
       </div>
 
       {/* Mobile menu */}
       {open && (
         <div
-          className="animate-slide-down-spring border-t border-white/10 bg-black/95 backdrop-blur-xl md:hidden overflow-y-auto"
-          style={{ transformOrigin: "top", maxHeight: "85dvh" }}
+          className="animate-slide-down-spring border-t border-white/10 bg-black md:bg-black/95 md:backdrop-blur-xl md:hidden overflow-y-auto"
+          style={{ transformOrigin: "top", maxHeight: "75dvh" }}
         >
           <nav className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-4">
             {/* Mobile search bar */}
@@ -453,8 +453,8 @@ export default function Navbar({
       )}
     </header>
 
-    {/* Sub-header search bar — sits below the main navbar, sticks together on scroll */}
-    <div className="bg-transparent">
+    {/* Sub-header search bar — hidden on mobile to save space, visible sm+ */}
+    <div className="hidden bg-transparent sm:block">
       <form
         action="/products"
         method="GET"

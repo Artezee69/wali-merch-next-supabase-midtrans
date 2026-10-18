@@ -193,7 +193,7 @@ export default function AddToCartForm({
   // --- Sold Out state (all variants sold out) ---
   if (allSoldOut) {
     return (
-      <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.02] p-6 backdrop-blur-md">
+      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-white/10 bg-white/[0.02] p-4 sm:p-6 sm:backdrop-blur-md">
         <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_rgba(255,90,90,0.08),_transparent_60%)]" />
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-full border border-red-500/30 bg-red-500/10 text-red-300">
@@ -234,7 +234,7 @@ export default function AddToCartForm({
               <p className="text-xs font-bold text-white/70">{selectedOpt1}</p>
             )}
           </div>
-          <div className={isSingleDimOption1 ? "grid grid-cols-4 gap-2 sm:grid-cols-5" : "flex flex-wrap gap-2"}>
+          <div className={isSingleDimOption1 ? "grid grid-cols-4 gap-1.5 sm:gap-2 sm:grid-cols-5" : "flex flex-wrap gap-1.5 sm:gap-2"}>
             {opt1Options.map((val) => {
               const isActive = val === selectedOpt1;
               const variantMatch = isSingleDimOption1
@@ -248,13 +248,13 @@ export default function AddToCartForm({
                   type="button"
                   disabled={isOut}
                   onClick={() => chooseOpt1(val)}
-                  className={`relative overflow-hidden rounded-xl border px-3 py-3 text-sm font-black transition-all duration-300 ${
+                  className={`relative overflow-hidden rounded-lg sm:rounded-xl border px-2.5 py-2 sm:px-3 sm:py-3 text-xs sm:text-sm font-black transition-all duration-300 ${
                     isActive
                       ? "border-[#d7ff53] bg-[#d7ff53] text-black"
                       : isOut
                         ? "cursor-not-allowed border-white/5 bg-white/[0.02] text-white/25 line-through"
                         : "border-white/10 bg-white/5 text-white hover:border-white/30"
-                  } ${!isSingleDimOption1 ? "px-4 py-2 text-xs uppercase tracking-wider" : ""}`}
+                  } ${!isSingleDimOption1 ? "px-3 sm:px-4 py-1.5 sm:py-2 text-[10px] sm:text-xs uppercase tracking-wider sm:tracking-wider" : ""}`}
                 >
                   {val}
                 </button>
@@ -284,7 +284,7 @@ export default function AddToCartForm({
             </Link>
           </div>
           {opt2Options.length > 0 ? (
-            <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
+            <div className="grid grid-cols-4 gap-1.5 sm:gap-2 sm:grid-cols-5">
               {opt2Options.map((val) => {
                 const variant = filteredVariants.find((v) => v.option2 === val);
                 const stock = variant ? Number(variant.stock || 0) : 0;
@@ -296,7 +296,7 @@ export default function AddToCartForm({
                     type="button"
                     disabled={isOut}
                     onClick={() => chooseOpt2(val)}
-                    className={`relative overflow-hidden rounded-xl border px-3 py-3 text-sm font-black transition-all duration-300 ${
+                    className={`relative overflow-hidden rounded-lg sm:rounded-xl border px-2.5 py-2 sm:px-3 sm:py-3 text-xs sm:text-sm font-black transition-all duration-300 ${
                       isActive
                         ? "border-[#d7ff53] bg-[#d7ff53] text-black"
                         : isOut
@@ -320,47 +320,47 @@ export default function AddToCartForm({
       {/* Quantity selector — shown when a variant can be selected */}
       {showQuantity && (
         <div className="flex items-center justify-between" style={{ animation: "fade-in 400ms ease-out" }}>
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50">
+          <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white/50">
             Quantity
           </p>
-          <div className="flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.03] p-1 backdrop-blur-md">
+          <div className="flex items-center gap-2 sm:gap-3 rounded-full border border-white/10 bg-white/[0.03] p-0.5 sm:p-1 sm:backdrop-blur-md">
             <button
               type="button"
               onClick={() => setQuantity(Math.max(1, quantity - 1))}
               disabled={quantity <= 1}
-              className="flex h-9 w-9 items-center justify-center rounded-full text-white/70 transition hover:bg-white/10 hover:text-white disabled:opacity-30"
+              className="flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-full text-white/70 transition hover:bg-white/10 hover:text-white disabled:opacity-30"
               aria-label="Decrease quantity"
             >
-              <Minus className="h-4 w-4" />
+              <Minus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </button>
-            <span className="min-w-[1.5rem] text-center font-display text-base font-black tabular-nums">
+            <span className="min-w-[1.2rem] sm:min-w-[1.5rem] text-center font-display text-sm sm:text-base font-black tabular-nums">
               {quantity}
             </span>
             <button
               type="button"
               onClick={() => setQuantity(Math.min(maxStock, quantity + 1))}
               disabled={quantity >= maxStock}
-              className="flex h-9 w-9 items-center justify-center rounded-full text-white/70 transition hover:bg-white/10 hover:text-white disabled:opacity-30"
+              className="flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-full text-white/70 transition hover:bg-white/10 hover:text-white disabled:opacity-30"
               aria-label="Increase quantity"
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </button>
           </div>
         </div>
       )}
 
       {/* Price & CTA button */}
-      <div className="rounded-3xl border border-white/10 bg-white/[0.02] p-5 backdrop-blur-md">
+      <div className="rounded-2xl sm:rounded-3xl border border-white/10 bg-white/[0.02] p-4 sm:p-5 sm:backdrop-blur-md">
         <div className="flex items-baseline justify-between gap-3">
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50">
+          <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white/50">
             Subtotal
           </p>
-          <p className="font-display text-2xl font-black tracking-tight text-white md:text-3xl">
+          <p className="font-display text-lg sm:text-2xl md:text-3xl font-black tracking-tight text-white">
             {rupiah(Number(selectedVariant?.price ?? price) * quantity)}
           </p>
         </div>
         {selectedVariant && (
-          <p className="mt-2 text-right text-[10px] uppercase tracking-widest text-white/35">
+          <p className="mt-1.5 sm:mt-2 text-right text-[9px] sm:text-[10px] uppercase tracking-widest text-white/35">
             Stok: {maxStock} tersedia
           </p>
         )}
@@ -369,7 +369,7 @@ export default function AddToCartForm({
           type="button"
           onClick={addToCart}
           disabled={!selectedVariant || isSoldOut || submitting}
-          className={`group relative mt-5 inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-full px-6 py-4 text-sm font-black uppercase tracking-[0.2em] transition-all duration-500 ${
+          className={`group relative mt-3 sm:mt-5 inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-full px-4 sm:px-6 py-3 sm:py-4 text-[11px] sm:text-sm font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] transition-all duration-500 ${
             added
               ? "bg-white text-black"
               : (!selectedVariant || isSoldOut || submitting)

@@ -52,7 +52,6 @@ body {
   text-rendering: optimizeLegibility;
   background: var(--bg-primary);
   color: var(--text-primary);
-  transition: background 0.3s ease, color 0.3s ease;
 }
 
 * {
@@ -170,4 +169,41 @@ input[type="number"] {
 }
 [data-theme="light"] .input {
   @apply border-gray-300 bg-white text-gray-800 focus:border-gray-400 dark:border-gray-700 dark:bg-gray-900 dark:text-white;
+}
+
+/* — card-enter keyframe (used by ProductCard desktop stagger) — */
+@keyframes card-enter {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* — Mobile performance: disable heavy animations under 640px — */
+@media (max-width: 639px) {
+  /* Disable aurora animations (blur + transform = GPU heavy) */
+  .animate-aurora-1,
+  .animate-aurora-2 {
+    animation: none !important;
+  }
+
+  /* Disable pulse-soft on small badges */
+  .animate-pulse-soft {
+    animation: none !important;
+  }
+
+  /* Disable shimmer on active category chips */
+  [class*="shimmer"] {
+    animation: none !important;
+  }
+}
+
+/* — Respect prefers-reduced-motion globally — */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

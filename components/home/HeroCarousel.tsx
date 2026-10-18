@@ -68,14 +68,15 @@ export default function HeroCarousel({ banners, autoRotateMs = 6000, fillHeight 
     return () => el.removeEventListener("scroll", onScroll);
   }, [count]);
 
-  // Auto-rotate
+  // Auto-rotate — disabled on mobile (saves CPU/GPU) and reduced-motion
   useEffect(() => {
     if (count <= 1) return;
     if (hovered) return;
-    if (typeof window !== "undefined") {
-      const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-      if (reduce) return;
-    }
+    if (typeof window === "undefined") return;
+    // Skip auto-rotate on mobile (viewpoint < 768px)
+    if (window.innerWidth < 768) return;
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) return;
     const id = window.setInterval(() => {
       setActiveIndex((prev) => {
         const next = (prev + 1) % count;
@@ -179,12 +180,14 @@ function BannerSlide({ banner, fillHeight = false }: { banner: Banner; fillHeigh
       <img
         src={banner.image_url}
         alt={banner.title}
+        loading={fillHeight ? "eager" : "lazy"}
+        decoding="async"
         className={`absolute inset-0 ${fillHeight ? "h-full w-full object-cover" : "object-cover"}`}
         draggable={false}
       />
-      {/* Gradient overlay for text readability */}
+      {/* Gradient overlay for text readability — lighter on mobile */}
       {showOverlay && (
-        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent dark:from-gray-950/85 dark:via-gray-900/30" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent sm:from-black/85 sm:via-black/30 dark:from-gray-950/85 dark:via-gray-900/30" />
       )}
       {showOverlay && (
         <div className="absolute inset-x-0 bottom-0 z-10 px-4 pb-10 sm:px-8 sm:pb-14 md:px-12 md:pb-16">
