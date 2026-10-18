@@ -11,6 +11,7 @@ import Footer from "@/components/Footer";
 import Breadcrumb from "@/components/Breadcrumb";
 import {
   ArrowLeft,
+  ArrowRight,
   Camera,
   Check,
   Edit2,
@@ -18,6 +19,7 @@ import {
   LogOut,
   Mail,
   MapPin,
+  Package,
   Phone,
   Save,
   User as UserIcon,
@@ -506,6 +508,23 @@ export default function AccountPage() {
                   </div>
                 )}
               </div>
+
+              {/* Pesanan Saya */}
+              <Link
+                href="/account/orders"
+                className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:border-[#d7ff53]/30 hover:bg-white/[0.07] sm:p-5"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5">
+                    <Package size={18} className="text-[#d7ff53]" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-white">Pesanan Saya</p>
+                    <p className="text-[11px] text-white/40">Lihat riwayat dan status pesanan Anda</p>
+                  </div>
+                </div>
+                <ArrowRight size={16} className="shrink-0 text-white/40" />
+              </Link>
 
               {/* Logout */}
               <button
