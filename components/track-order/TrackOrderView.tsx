@@ -209,7 +209,7 @@ export default function TrackOrderView({
               type="submit"
               className="group/btn relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full bg-[#d7ff53] px-6 py-3.5 text-sm font-black uppercase tracking-wider text-black transition-all hover:scale-[1.02] hover:bg-white hover:shadow-[0_0_40px_-5px_rgba(215,255,83,0.6)] sm:px-8 sm:py-4"
             >
-              <span className="relative z-10">Track Order</span>
+              <span className="relative z-10">Lacak Pesanan</span>
               <ChevronRight className="relative z-10 h-4 w-4 transition-transform group-hover/btn:translate-x-1" />
             </button>
           </form>
@@ -229,21 +229,21 @@ export default function TrackOrderView({
             <div className="grid gap-3.5 sm:grid-cols-2 sm:gap-4 md:grid-cols-3">
               {[
                 {
-                  title: "Waiting Payment",
+                  title: "Menunggu Pembayaran",
                   desc: "Pesanan sudah dibuat tapi pembayaran belum berhasil.",
                   icon: Clock,
                   color: "from-yellow-500/20 to-yellow-500/0",
                   delay: "0ms",
                 },
                 {
-                  title: "Processing",
+                  title: "Sedang Diproses",
                   desc: "Pembayaran sudah masuk dan pesanan sedang disiapkan.",
                   icon: Activity,
                   color: "from-white/10 to-white/0",
                   delay: "100ms",
                 },
                 {
-                  title: "Shipped",
+                  title: "Dikirim",
                   desc: "Pesanan sudah dikirim dan nomor resi akan ditampilkan.",
                   icon: Truck,
                   color: "from-white/8 to-white/0",
@@ -689,7 +689,7 @@ function OrderDetail({
             <div className="flex items-center gap-2">
               <Zap className="h-3.5 w-3.5 text-[#d7ff53] sm:h-4 sm:w-4" />
               <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#d7ff53] sm:text-xs sm:tracking-[0.35em]">
-                Order Found
+                Pesanan Ditemukan
               </p>
             </div>
             <h2 className="mt-2 break-all text-2xl font-black uppercase sm:mt-3 sm:text-3xl md:text-4xl lg:text-5xl">
@@ -1009,7 +1009,7 @@ function OrderDetail({
                       {item.product_name}
                     </h4>
                     <p className="mt-0.5 text-xs text-white/45 sm:mt-1">
-                      Size {item.size || "-"} • Qty {item.quantity}
+                      Ukuran {item.size || "-"} • {item.quantity} pcs
                     </p>
                   </div>
                 </div>

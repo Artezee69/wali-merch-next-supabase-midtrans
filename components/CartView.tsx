@@ -29,7 +29,7 @@ export default function CartView() {
             </div>
             <div className="flex-1">
               <h3 className="font-black">{item.name}</h3>
-              <p className="text-sm text-black/60">Size {item.size}</p>
+              <p className="text-sm text-black/60">Ukuran {item.size}</p>
               <p className="font-bold">{rupiah(item.price)}</p>
               <div className="mt-2 flex items-center gap-2">
                 <input className="input max-w-24 py-2" type="number" min={1} value={item.quantity} onChange={(e) => save(items.map((x) => x.variant_id === item.variant_id ? { ...x, quantity: Number(e.target.value) } : x))} />
@@ -42,7 +42,7 @@ export default function CartView() {
       <aside className="card h-fit p-5">
         <p className="text-black/60">Total</p>
         <h2 className="text-2xl font-black">{rupiah(total)}</h2>
-        <Link className="btn mt-5 w-full" href="/checkout">Lanjut Checkout</Link>
+        <Link className="btn mt-5 w-full" href="/checkout">Ke Checkout</Link>
       </aside>
     </div>
   );

@@ -58,7 +58,7 @@ export default function LoginModal({ open, onClose, onLoginSuccess }: LoginModal
         {/* Header */}
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-black uppercase tracking-wide text-gray-900">
-            {mode === "login" ? "Login" : "Daftar Akun"}
+            {mode === "login" ? "Masuk" : "Daftar Akun"}
           </h2>
           <button
             onClick={onClose}
@@ -94,7 +94,7 @@ export default function LoginModal({ open, onClose, onLoginSuccess }: LoginModal
                 }}
                 className="font-bold text-black underline"
               >
-                Login
+                Masuk
               </button>
             </>
           )}
@@ -198,7 +198,7 @@ export default function LoginModal({ open, onClose, onLoginSuccess }: LoginModal
               disabled={loading}
               className="mt-5 w-full rounded-xl bg-[#0b0b0b] px-6 py-3 text-sm font-black uppercase tracking-wider text-[#d7ff53] transition hover:bg-[#1a1a1a] disabled:opacity-50"
             >
-              {loading ? "Memproses..." : "Login"}
+              {loading ? "Memproses..." : "Masuk"}
             </button>
           </form>
         )}
@@ -463,14 +463,14 @@ function RegisterForm({
         <label className="mb-1 block text-xs font-bold text-gray-600">Kata Sandi *</label>
         <div className="relative">
           <input type={showPassword ? "text" : "password"} required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 pr-12 text-sm font-semibold text-gray-900 placeholder-gray-400 focus:border-[#d7ff53] focus:outline-none" placeholder="Min. 8 karakter" />
-          <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 transition hover:text-gray-600">{showPassword ? "Hide" : "Show"}</button>
+          <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 transition hover:text-gray-600">{showPassword ? "Sembunyikan" : "Tampilkan"}</button>
         </div>
       </div>
       <div>
         <label className="mb-1 block text-xs font-bold text-gray-600">Konfirmasi Kata Sandi *</label>
         <div className="relative">
           <input type={showConfirm ? "text" : "password"} required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 pr-12 text-sm font-semibold text-gray-900 placeholder-gray-400 focus:border-[#d7ff53] focus:outline-none" placeholder="Ulangi kata sandi" />
-          <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 transition hover:text-gray-600">{showConfirm ? "Hide" : "Show"}</button>
+          <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 transition hover:text-gray-600">{showConfirm ? "Sembunyikan" : "Tampilkan"}</button>
         </div>
       </div>
       <label className="flex items-start gap-2 text-xs text-gray-600">

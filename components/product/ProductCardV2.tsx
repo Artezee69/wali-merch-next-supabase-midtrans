@@ -171,7 +171,7 @@ export default function ProductCardV2({
             </p>
             <p className="text-lg font-black text-white">
               {isComingSoon
-                ? "Coming Soon"
+                ? "Segera Hadir"
                 : rupiah(product.price)}
             </p>
           </div>
@@ -215,7 +215,7 @@ export default function ProductCardV2({
           }`}
         >
           {isComingSoon ? (
-            "Coming Soon"
+            "Segera Hadir"
           ) : isSoldOut ? (
             "Stok Habis"
           ) : (

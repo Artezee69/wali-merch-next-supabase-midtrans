@@ -17,7 +17,7 @@ export default function Footer({ variant = "customer" }: FooterProps) {
           />
         </div>
         <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-3 text-sm text-white/45 sm:flex-row sm:items-center">
-          <p className="font-bold">© {year} WALI Admin Panel. All rights reserved.</p>
+          <p className="font-bold">© {year} WALI Admin Panel. Hak cipta dilindungi.</p>
           <div className="flex flex-wrap gap-5 font-bold">
             <Link href="/admin/products" className="draw-underline hover:text-white transition">
               Produk
@@ -43,16 +43,16 @@ export default function Footer({ variant = "customer" }: FooterProps) {
         />
       </div>
       <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-6 text-sm text-white/45 md:flex-row md:items-center md:gap-8">
-        <p className="font-bold text-white/70">© {year} Official Merchandise WALI. All rights reserved.</p>
+        <p className="font-bold text-white/70">© {year} Merchandise Resmi WALI. Hak cipta dilindungi.</p>
         <nav className="flex flex-wrap items-center gap-4 md:gap-6">
           <Link href="/products" className="draw-underline text-white/60 hover:text-[#d7ff53] transition-all duration-200 font-semibold text-sm">
-            Products
+            Produk
           </Link>
           <Link href="/track-order" className="draw-underline text-white/60 hover:text-[#d7ff53] transition-all duration-200 font-semibold text-sm">
-            Track Order
+            Lacak Pesanan
           </Link>
           <Link href="/cart" className="draw-underline text-white/60 hover:text-[#d7ff53] transition-all duration-200 font-semibold text-sm">
-            Cart
+            Keranjang
           </Link>
         </nav>
       </div>

@@ -48,7 +48,7 @@ export default function SizeGuide({ isOpen, onClose }: SizeGuideProps) {
             </div>
             <div>
               <h2 className="text-base font-black uppercase text-white sm:text-lg">
-                Size Guide
+                Panduan Ukuran
               </h2>
               <p className="text-[10px] text-white/50 sm:text-xs">
                 Ukuran dalam sentimeter
@@ -70,7 +70,7 @@ export default function SizeGuide({ isOpen, onClose }: SizeGuideProps) {
             <table className="w-full min-w-[400px] text-left text-xs sm:text-sm">
               <thead>
                 <tr className="border-b border-white/10 text-[10px] font-black uppercase tracking-widest text-white/50 sm:text-xs">
-                  <th className="pb-3 pr-2">Size</th>
+                  <th className="pb-3 pr-2">Ukuran</th>
                   <th className="pb-3 pr-2">Lebar</th>
                   <th className="pb-3 pr-2">Panjang</th>
                   <th className="pb-3">Bahu</th>

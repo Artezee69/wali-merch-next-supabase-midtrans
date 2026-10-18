@@ -75,8 +75,15 @@ function rupiah(value: number) {
 }
 
 function normalizeStatus(status?: string | null) {
-  if (!status) return "READY";
-  return status.replaceAll("_", " ").toUpperCase();
+  const map: Record<string, string> = {
+    READY: "Siap Kirim",
+    COMING_SOON: "Segera Hadir",
+    SOLD_OUT: "Stok Habis",
+    PRE_ORDER: "Pre-order",
+  };
+  if (!status) return map.READY;
+  const key = status.toUpperCase();
+  return map[key] || status.replaceAll("_", " ").toUpperCase();
 }
 
 export default async function ProductDetailPage({ params }: PageProps) {
@@ -209,7 +216,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
             <span className="transition-transform duration-300 group-hover:-translate-x-0.5">
               ←
             </span>
-            <span>Back</span>
+            <span>Kembali</span>
           </Link>
 
           <Link
@@ -217,7 +224,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
             className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-[#d7ff53] px-5 py-3 text-xs font-black uppercase tracking-[0.25em] text-black transition-transform duration-300 hover:scale-105"
           >
             <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-            <span className="relative">Cart</span>
+            <span className="relative">Keranjang</span>
           </Link>
         </div>
       </section>
@@ -234,7 +241,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
         <div className="lg:sticky lg:top-6 lg:self-start">
           <div className="mb-4 sm:mb-8 inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-[#d7ff53]/30 bg-[#d7ff53]/[0.04] px-3 sm:px-5 py-2 sm:py-3 text-[9px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.35em] text-[#d7ff53] sm:backdrop-blur-md">
             <span className="h-1 w-1 sm:h-1.5 sm:w-1.5 rounded-full bg-[#d7ff53] animate-pulse-soft" />
-            Product Detail
+            Detail Produk
           </div>
 
           <h1 className="bg-gradient-to-b from-white via-white to-white/60 bg-clip-text text-3xl sm:text-5xl md:text-6xl font-black uppercase leading-[0.95] tracking-tight text-transparent">
@@ -269,7 +276,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
               )}
 
             <span className="rounded-full border border-white/10 bg-white/5 px-3 sm:px-5 py-1.5 sm:py-3 text-xs sm:text-sm font-black uppercase text-white sm:backdrop-blur-sm">
-              Stock: {totalStock} PCS
+              Stok: {totalStock} pcs
             </span>
           </div>
 
@@ -282,7 +289,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
           <div className="mt-5 sm:mt-9 grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
             <div className="group relative overflow-hidden rounded-xl sm:rounded-2xl border border-white/10 bg-white/[0.03] p-3 sm:p-5 sm:backdrop-blur-sm transition-all duration-500 sm:hover:border-white/20 sm:hover:bg-white/[0.05]">
               <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white/40">
-                Category
+                Kategori
               </p>
               <p className="mt-1.5 sm:mt-3 text-xs sm:text-sm font-black uppercase text-white">
                 {product.category || "Merch"}
@@ -318,8 +325,8 @@ export default async function ProductDetailPage({ params }: PageProps) {
                   slug={product.slug}
                   price={effectivePrice}
                   image={sortedGalleryImages[0]?.image_url || product.image_url || ""}
-                  option1Label={sampleVariant?.option_1_name || "Color"}
-                  option2Label={sampleVariant?.option_2_name || "Size"}
+                  option1Label={sampleVariant?.option_1_name || "Warna"}
+                  option2Label={sampleVariant?.option_2_name || "Ukuran"}
                   variants={variants.map((variant) => {
                     // Only use the actual variant values, don't fall back to color/size fields indiscriminately
                     const opt1Value = variant.option_1_value !== null ? variant.option_1_value : null;

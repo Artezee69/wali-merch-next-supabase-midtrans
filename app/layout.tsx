@@ -10,9 +10,9 @@ export async function generateMetadata(): Promise<Metadata> {
     getStoreSettings(),
   ]);
   const { seo } = settings;
-  const fallbackTitle = store.storeName || "WALI Merch — Official Merchandise Store";
+  const fallbackTitle = store.storeName || "WALI Merch — Toko Merchandise Resmi";
   const fallbackDescription =
-    "Official merchandise WALI. Koleksi Player Edition, Regular, dan Vintage Stage Series dengan vibe stage culture dan streetwear premium.";
+    "Merchandise resmi WALI. Koleksi Player Edition, Regular, dan Vintage Stage Series dengan vibe budaya panggung dan streetwear premium.";
   const title = seo.metaTitle?.trim() || fallbackTitle;
   const description = seo.metaDescription?.trim() || fallbackDescription;
   const ogTitle = seo.ogTitle?.trim() || title;
@@ -23,11 +23,11 @@ export async function generateMetadata(): Promise<Metadata> {
     description,
     keywords: [
       "WALI merch",
-      "official merchandise",
+      "merchandise resmi WALI",
       "t-shirt band",
       "streetwear Indonesia",
     ],
-    authors: [{ name: "Official Merchandise WALI" }],
+    authors: [{ name: "WALI Merch Official" }],
     openGraph: {
       title: ogTitle,
       description: ogDescription,

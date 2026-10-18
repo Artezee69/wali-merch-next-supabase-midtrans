@@ -43,8 +43,8 @@ export default function AddToCartForm({
   variants,
   addItem,
 }: AddToCartFormProps) {
-  const label1 = option1Label || "Option 1";
-  const label2 = option2Label || "Option 2";
+  const label1 = option1Label || "Opsi 1";
+  const label2 = option2Label || "Opsi 2";
 
   // Check if any variant has a non-null, non-empty option2 value (true size/dimension exists)
   const hasRealOption2 = variants.some((v) => v.option2 && v.option2 !== "");
@@ -201,7 +201,7 @@ export default function AddToCartForm({
           </div>
           <div>
             <p className="font-display text-lg font-black uppercase tracking-tight text-white">
-              Sold Out
+              Stok Habis
             </p>
             <p className="text-xs text-white/45">
               Semua ukuran stok habis. Pantau restock berikutnya.
@@ -227,7 +227,7 @@ export default function AddToCartForm({
                 href="#size-guide"
                 className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40 transition hover:text-[#d7ff53]"
               >
-                Size Guide →
+                Panduan Ukuran →
               </Link>
             )}
             {!isSingleDimOption1 && (
@@ -280,7 +280,7 @@ export default function AddToCartForm({
               href="#size-guide"
               className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40 transition hover:text-[#d7ff53]"
             >
-              Size Guide →
+              Panduan Ukuran →
             </Link>
           </div>
           {opt2Options.length > 0 ? (
@@ -321,7 +321,7 @@ export default function AddToCartForm({
       {showQuantity && (
         <div className="flex items-center justify-between" style={{ animation: "fade-in 400ms ease-out" }}>
           <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white/50">
-            Quantity
+            Jumlah
           </p>
           <div className="flex items-center gap-2 sm:gap-3 rounded-full border border-white/10 bg-white/[0.03] p-0.5 sm:p-1 sm:backdrop-blur-md">
             <button
@@ -329,7 +329,7 @@ export default function AddToCartForm({
               onClick={() => setQuantity(Math.max(1, quantity - 1))}
               disabled={quantity <= 1}
               className="flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-full text-white/70 transition hover:bg-white/10 hover:text-white disabled:opacity-30"
-              aria-label="Decrease quantity"
+              aria-label="Kurangi jumlah"
             >
               <Minus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </button>
@@ -341,7 +341,7 @@ export default function AddToCartForm({
               onClick={() => setQuantity(Math.min(maxStock, quantity + 1))}
               disabled={quantity >= maxStock}
               className="flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-full text-white/70 transition hover:bg-white/10 hover:text-white disabled:opacity-30"
-              aria-label="Increase quantity"
+              aria-label="Tambah jumlah"
             >
               <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </button>
@@ -383,13 +383,13 @@ export default function AddToCartForm({
           <span className="relative flex items-center gap-2">
             {added ? (
               <>
-                <Check className="h-4 w-4" /> Added to Cart
+                <Check className="h-4 w-4" /> Masuk Keranjang
               </>
             ) : isSoldOut ? (
-              <>Sold Out</>
+              <>Stok Habis</>
             ) : (
               <>
-                <ShoppingBag className="h-4 w-4" /> Add to Cart
+                <ShoppingBag className="h-4 w-4" /> Tambah ke Keranjang
               </>
             )}
           </span>

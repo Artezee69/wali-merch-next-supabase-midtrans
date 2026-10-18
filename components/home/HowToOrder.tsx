@@ -101,7 +101,7 @@ export default function HowToOrder() {
 
         <Reveal variant="blur-in" delay={0.4} className="mt-16 sm:mt-24 text-center">
           <div className="inline-flex items-center justify-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-white/50 hover:text-white hover:[#d7ff53] transition-colors duration-300">
-            Status: Live & accepting orders
+            Status: Aktif & Menerima Pesanan
             <ArrowRight className="h-3.5 w-3.5 text-[#d7ff53] transition-transform duration-300 group-hover:translate-x-1"></ArrowRight>
           </div>
         </Reveal>

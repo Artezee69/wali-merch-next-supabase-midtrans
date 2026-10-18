@@ -71,7 +71,7 @@ export default function QuickViewModal({ isOpen, onClose, product }: QuickViewMo
         <button
           type="button"
           onClick={onClose}
-          aria-label="Close"
+          aria-label="Tutup"
           className="absolute right-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-black/60 text-white backdrop-blur-md transition hover:border-[#d7ff53] hover:bg-[#d7ff53] hover:text-black"
         >
           <X size={18} />
@@ -142,7 +142,7 @@ export default function QuickViewModal({ isOpen, onClose, product }: QuickViewMo
             </div>
 
             <p className="rounded-full bg-[#d7ff53] px-5 py-3 text-xl font-black text-black w-fit">
-              {isComingSoon ? "Coming Soon" : rupiah(product.price)}
+              {isComingSoon ? "Segera Hadir" : rupiah(product.price)}
             </p>
 
             {product.description && (
@@ -185,7 +185,7 @@ export default function QuickViewModal({ isOpen, onClose, product }: QuickViewMo
                   }`}
                 >
                   {isComingSoon
-                    ? "Coming Soon"
+                    ? "Segera Hadir"
                     : totalStock > 0
                     ? `${totalStock} pcs`
                     : "Habis"}
@@ -206,7 +206,7 @@ export default function QuickViewModal({ isOpen, onClose, product }: QuickViewMo
                 }`}
               >
                 {isComingSoon ? (
-                  "Coming Soon"
+                  "Segera Hadir"
                 ) : isSoldOut ? (
                   "Stok Habis"
                 ) : (

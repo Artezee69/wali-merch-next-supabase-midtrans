@@ -165,17 +165,17 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
               {/* Discount badge - shows when sale_price < base_price */}
               {hasDiscount && (
                 <span className="inline-flex items-center gap-1 rounded-full border border-red-500/40 bg-red-100 dark:bg-red-900/30 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-[0.15em] text-red-700 dark:text-red-300 backdrop-blur-sm dark:border-red-400/50 sm:gap-1.5 sm:px-3 sm:py-1 sm:text-[9px] sm:tracking-[0.2em]">
-                  DISCOUNT {discountPercent}%
+                  DISKON {discountPercent}%
                 </span>
               )}
               {isSoldOut && (
                 <span className="inline-flex items-center gap-1 rounded-full border border-red-500/40 bg-red-100 dark:bg-red-900/30 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-[0.15em] text-red-700 dark:text-red-300 backdrop-blur-sm dark:border-red-400/50 sm:gap-1.5 sm:px-3 sm:py-1 sm:text-[9px] sm:tracking-[0.2em]">
-                  Sold Out
+                  Habis
                 </span>
               )}
               {isComingSoon && (
                 <span className="inline-flex items-center gap-1 rounded-full border border-gray-400/30 bg-gray-700/30 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-[0.15em] text-gray-300 backdrop-blur-md dark:border-gray-500/40 dark:bg-gray-600/40 dark:text-gray-200 sm:gap-1.5 sm:px-3 sm:py-1 sm:text-[9px] sm:tracking-[0.2em]">
-                  Coming Soon
+                  Segera Hadir
                 </span>
               )}
             </div>
@@ -210,7 +210,7 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
             >
               <div className="rounded-md sm:rounded-2xl border border-white/10 bg-black/80 sm:bg-black/70 sm:backdrop-blur-xl sm:p-4 p-1.5">
                 <p className="text-[7px] sm:text-xs font-black uppercase tracking-[0.15em] sm:tracking-[0.25em] text-[#d7ff53]">
-                  Official Merchandise
+                  Merchandise Resmi
                 </p>
                 <h3
                   className={`mt-0.5 sm:mt-2 line-clamp-2 font-display text-xs sm:text-lg font-black uppercase leading-tight tracking-tight transition-colors duration-500 ${
@@ -229,7 +229,7 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
             <div className="px-1.5 pb-1.5 sm:p-5 sm:pb-5 bg-[#0a0a0a] sm:bg-black/20 sm:backdrop-blur-sm overflow-hidden">
               <div className="h-[2rem] sm:h-[3.5rem] overflow-hidden flex flex-col justify-end"> {/* Mobile ~32px, Desktop ~56px */}
                 <p className="text-[9px] sm:text-sm leading-relaxed text-gray-300 dark:text-gray-300 line-clamp-2">
-                  {product.description || "Premium official merchandise collection."}
+                  {product.description || "Koleksi merchandise resmi berkualitas premium."}
                 </p>
               </div>
             </div>
@@ -238,11 +238,10 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
             <div className="px-1.5 py-1.5 sm:p-5 sm:pt-3 bg-[#0a0a0a] sm:bg-black/20 sm:backdrop-blur-sm flex flex-col gap-1.5 sm:gap-4">
               {/* Price display */}
               <div>
-                <p className="text-[9px] sm:text-xs font-bold uppercase tracking-widest text-gray-500 mb-0.5 sm:mb-1">Price</p>
+                <p className="text-[9px] sm:text-xs font-bold uppercase tracking-widest text-gray-500 mb-0.5 sm:mb-1">Harga</p>
                 <div className="flex flex-col sm:flex-col">
                   {isComingSoon ? (
-                    // Coming Soon
-                    <span className="font-display text-base sm:text-xl font-black text-gray-500">Coming Soon</span>
+                    <span className="font-display text-base sm:text-xl font-black text-gray-500">Segera Hadir</span>
                   ) : hasDiscount ? (
                     // Discounted product - show original price with strikethrough and sale price
                     <div className="flex items-baseline gap-1.5 sm:gap-2 flex-wrap">
@@ -296,7 +295,7 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
                       ? "bg-gray-800/50 text-gray-400 cursor-not-allowed"
                       : "bg-gradient-to-r from-[#d7ff53] to-[#c7ef33] text-black hover:scale-[1.02] shadow-lg hover:shadow-[0_10px_30px_rgba(215,255,83,0.3)]"
                   }`}>
-                  <span>{isComingSoon ? "Coming Soon" : "Detail"}</span>
+                  <span>{isComingSoon ? "Segera Hadir" : "Detail"}</span>
                   {!isComingSoon && (
                     <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 transition-transform group-hover:translate-x-1" />
                   )}

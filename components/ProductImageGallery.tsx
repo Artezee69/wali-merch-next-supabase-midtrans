@@ -74,7 +74,7 @@ export default function ProductImageGallery({
           }`}
         >
           <Maximize2 className="h-3 w-3" />
-          Hover to zoom
+          Arahkan kursor untuk memperbesar
         </div>
 
         {/* Tag badge */}

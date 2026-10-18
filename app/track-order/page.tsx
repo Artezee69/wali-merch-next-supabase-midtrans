@@ -87,9 +87,9 @@ export default async function TrackOrderPage({
       <Navbar activeKey="track-order" />
 
       <PageHeader
-        badge="Real-Time Tracking"
-        title="Track"
-        highlight="Order"
+        badge="Pelacakan Real-Time"
+        title="Lacak"
+        highlight="Pesanan"
         description="Pantau status pesanan kamu secara real-time. Masukkan kode order atau nomor WhatsApp yang dipakai saat checkout."
       />
 

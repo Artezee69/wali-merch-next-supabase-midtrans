@@ -220,7 +220,7 @@ export default function CartPage() {
                 onClick={() => openLoginModal({ mode: "login", redirectTo })}
                 className="w-full rounded-xl bg-[#d7ff53] px-6 py-3 text-sm font-black text-black transition hover:bg-[#c7ef33] sm:w-auto"
               >
-                Login
+                Masuk
               </button>
               <button
                 type="button"
@@ -321,7 +321,7 @@ export default function CartPage() {
                             />
                           ) : (
                             <div className="flex h-full w-full items-center justify-center text-xs text-gray-400 dark:text-gray-500">
-                              No Image
+                              Tidak ada gambar
                             </div>
                           )}
                         </div>
@@ -402,7 +402,7 @@ export default function CartPage() {
               <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-gray-800/30 p-6">
                 <div className="mb-4 flex justify-between text-sm text-gray-600 dark:text-gray-400">
                   <span>
-                    Subtotal ({items.reduce((s, i) => s + i.quantity, 0)} item{items.length !== 1 ? 's' : ''})
+                    Subtotal ({items.reduce((s, i) => s + i.quantity, 0)} item)
                   </span>
                   <span className="text-gray-900 dark:text-white font-bold">{formatPrice(subtotal)}</span>
                 </div>
@@ -410,7 +410,7 @@ export default function CartPage() {
                   onClick={() => router.push("/checkout")}
                   className="w-full rounded-xl bg-green-600 dark:bg-green-500 py-3 text-sm font-black text-white transition hover:bg-green-700 dark:hover:bg-green-500/90"
                 >
-                  Checkout
+                  Ke Checkout
                 </button>
               </div>
             </>

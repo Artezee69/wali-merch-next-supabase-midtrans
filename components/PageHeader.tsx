@@ -41,7 +41,7 @@ export default function PageHeader({
         </div>
         <div className="hidden items-center gap-3 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-[10px] font-mono uppercase tracking-widest text-white/45 backdrop-blur-md sm:flex">
           <span className="text-white/35">SS/26</span>
-          <span className="text-[#d7ff53]">Capsule</span>
+          <span className="text-[#d7ff53]">Kapsul</span>
         </div>
       </div>
 

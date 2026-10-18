@@ -18,7 +18,7 @@ export default function Breadcrumb({ items }: BreadcrumbProps) {
         className="flex items-center gap-1.5 transition hover:text-[#d7ff53]"
       >
         <Home size={12} strokeWidth={2.5} />
-        Home
+        Beranda
       </Link>
       {items.map((item, idx) => {
         const isLast = idx === items.length - 1;

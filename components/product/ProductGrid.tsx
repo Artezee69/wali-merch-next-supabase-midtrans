@@ -199,7 +199,7 @@ function ProductListItem({
               {isComingSoon ? "Status" : "Harga"}
             </p>
             <p className="text-xl font-black text-white">
-              {isComingSoon ? "Coming Soon" : rupiah(product.price)}
+              {isComingSoon ? "Segera Hadir" : rupiah(product.price)}
             </p>
             <p
               className={`text-[10px] font-black ${
@@ -229,7 +229,7 @@ function ProductListItem({
                   : "bg-[#d7ff53] text-black hover:bg-white"
               }`}
             >
-              {isComingSoon ? "Soon" : isSoldOut ? "Habis" : "Lihat"}
+              {isComingSoon ? "Segera" : isSoldOut ? "Habis" : "Lihat"}
             </Link>
           </div>
         </div>

@@ -114,7 +114,7 @@ export default function ProductsExplorer({
               {query && (
                 <button
                   onClick={() => setQuery("")}
-                  aria-label="Clear search"
+                  aria-label="Hapus pencarian"
                   className="absolute right-2.5 sm:right-3 top-1/2 flex h-7 w-7 sm:h-8 sm:w-8 -translate-y-1/2 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700/30 text-gray-700 dark:text-gray-300 light:bg-gray-200 light:text-gray-700 transition hover:bg-gray-300 dark:hover:bg-[#d7ff53]/30 hover:bg-gray-300 hover:text-gray-900 dark:hover:text-white"
                 >
                   <X className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
@@ -144,7 +144,7 @@ export default function ProductsExplorer({
             }`}
           >
             <span className="mr-2 hidden text-[10px] font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400 light:text-gray-400 dark:light:text-gray-500 md:block">
-              Category
+              Kategori
             </span>
             {categories.map((cat) => {
               const active = category === cat;
@@ -186,13 +186,13 @@ export default function ProductsExplorer({
           <div>
             <div className="mb-1.5 sm:mb-2 inline-flex items-center gap-2 sm:gap-2 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.3em] sm:tracking-[0.4em] text-green-600 dark:text-[#d7ff53] light:text-gray-900">
               <span className="h-px w-6 sm:w-8 bg-green-600 dark:bg-[#d7ff53] light:bg-green-600" />
-              Products
+              Produk
               <span className="h-px w-6 sm:w-8 bg-green-600 dark:bg-[#d7ff53] light:bg-green-600" />
             </div>
             <h2 className="font-display text-2xl sm:text-4xl font-black uppercase leading-[0.92] tracking-[-0.03em] md:text-6xl text-gray-900 dark:text-white light:text-gray-900">
-              Available
+              Item
               <span className="ml-2 sm:ml-3 inline-block bg-gradient-to-r from-green-600 to-white/40 dark:from-[#d7ff53] dark:via-[#d7ff53] dark:to-[#d7ff53]/40 bg-clip-text text-transparent light:bg-green-600 light:from-green-600">
-                Items
+                Tersedia
               </span>
             </h2>
           </div>
@@ -215,7 +215,7 @@ export default function ProductsExplorer({
               <span className="text-gray-500 dark:text-white/40 tabular-nums">
                 {products.length}
               </span>
-              <span className="text-gray-500 dark:text-white/35">Items</span>
+              <span className="text-gray-500 dark:text-white/35">Item</span>
             </div>
           </div>
         </div>

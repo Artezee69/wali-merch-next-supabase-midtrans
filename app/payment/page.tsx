@@ -296,7 +296,7 @@ function PaymentPageContent() {
 
   const waLink = useMemo(() => {
     if (!order) return "";
-    const buyerName = order.customer_name || profile?.full_name || "Customer";
+    const buyerName = order.customer_name || profile?.full_name || "Pembeli";
     const totalAmount = rupiah(order.total_amount);
     const msg = `Halo admin saya ${buyerName} Saya sudah Checkout dengan no pesanan ${order.order_code} Dan sudah Transfer sejumlah ${totalAmount} , dan bukti Tf nya sudah dikirim ya Admin, Tolong segera Di proses pesanan saya, Terimakasih`;
     const number = whatsappAdmin.replace(/[^0-9]/g, "");
@@ -322,9 +322,9 @@ function PaymentPageContent() {
       <Navbar activeKey="cart" />
 
       <PageHeader
-        badge="Secure Payment"
+        badge="Pembayaran Aman"
         title="Pembayaran"
-        highlight="Order"
+        highlight="Pesanan"
         description="Lakukan pembayaran dengan transfer bank dan upload bukti transfer untuk memverifikasi pesanan kamu."
       />
 
@@ -344,7 +344,7 @@ function PaymentPageContent() {
               <PaymentSteps step={3} />
 
               {/* Order Summary Card */}
-              <PaymentCard index="01" badge="Order Summary" title="Ringkasan Pesanan">
+              <PaymentCard index="01" badge="Ringkasan Pesanan" title="Ringkasan Pesanan">
                 <div className="rounded-2xl border border-[#d7ff53]/20 bg-[#d7ff53]/[0.04] p-4 sm:p-5">
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#d7ff53] text-sm font-black text-black sm:h-12 sm:w-12 sm:text-base">
@@ -352,7 +352,7 @@ function PaymentPageContent() {
                     </div>
                     <div className="min-w-0">
                       <p className="text-[10px] font-black uppercase tracking-widest text-white/45 sm:text-xs">
-                        Invoice No
+                        No. Invoice
                       </p>
                       <p className="text-sm font-black text-white sm:text-base">
                         {order.order_code}
@@ -374,7 +374,7 @@ function PaymentPageContent() {
                             {item.product_name || "Produk"}
                           </h3>
                           <p className="mt-0.5 text-[10px] font-bold uppercase tracking-widest text-white/45 sm:mt-1 sm:text-[11px]">
-                            {item.size || "Default"} &bull; Qty {item.quantity}
+                            {item.size || "Standar"} &bull; {item.quantity} pcs
                           </p>
                         </div>
                         <p className="shrink-0 text-sm font-black sm:text-base">
@@ -415,7 +415,7 @@ function PaymentPageContent() {
               </PaymentCard>
 
               {/* Payment Method Card */}
-              <PaymentCard index="02" badge="Payment Method" title="Metode Pembayaran">
+              <PaymentCard index="02" badge="Metode Pembayaran" title="Metode Pembayaran">
                 <div className="grid gap-3 sm:gap-4">
                   {/* Transfer Bank - Active */}
                   <button
@@ -463,14 +463,14 @@ function PaymentPageContent() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-black uppercase text-white/40 sm:text-base">
-                        Gateway Payment
+                        Pembayaran Gateway
                       </p>
                       <p className="mt-0.5 text-[11px] font-semibold text-white/30 sm:text-xs">
                         Midtrans / e-Wallet
                       </p>
                     </div>
                     <span className="shrink-0 rounded-full border border-white/15 bg-white/5 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-white/40 sm:text-[10px]">
-                      Maintenance
+                      Sedang Dirawat
                     </span>
                   </button>
                 </div>
@@ -478,7 +478,7 @@ function PaymentPageContent() {
 
               {/* Transfer Details Card - only when transfer is active */}
               {activeMethod === "transfer" && (
-                <PaymentCard index="03" badge="Transfer Details" title="Detail Transfer">
+                <PaymentCard index="03" badge="Detail Transfer" title="Detail Transfer">
                   <div className="space-y-4">
                     {/* Bank info box */}
                     <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:p-5">
@@ -641,7 +641,7 @@ function PaymentPageContent() {
                 <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#d7ff53]/70 to-transparent" />
                 <p className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.25em] text-[#d7ff53] sm:text-xs sm:tracking-[0.3em]">
                   <span className="h-1 w-1 rounded-full bg-[#d7ff53] shadow-[0_0_8px_rgba(215,255,83,0.8)]" />
-                  Shipping
+                  Pengiriman
                 </p>
                 <h3 className="mt-2 text-lg font-black uppercase sm:text-xl">
                   Alamat Pengiriman
@@ -713,7 +713,7 @@ function PaymentPageContent() {
         <SuccessModal
           order={order}
           waLink={waLink}
-          buyerName={order.customer_name || profile?.full_name || "Customer"}
+          buyerName={order.customer_name || profile?.full_name || "Pembeli"}
           whatsappAdmin={whatsappAdmin}
           onClose={() => setShowSuccessModal(false)}
         />
@@ -726,9 +726,9 @@ function PaymentPageContent() {
 
 function PaymentSteps({ step }: { step: number }) {
   const steps = [
-    { n: 1, label: "Cart" },
+    { n: 1, label: "Keranjang" },
     { n: 2, label: "Checkout" },
-    { n: 3, label: "Payment" },
+    { n: 3, label: "Pembayaran" },
   ];
   return (
     <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] p-3 backdrop-blur-md sm:gap-3 sm:rounded-[1.5rem] sm:p-4 animate-fade-in">

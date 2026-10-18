@@ -34,8 +34,8 @@ export default function CtaSection() {
               <div className="flex items-start gap-4 p-4 rounded-lg hover:bg-black/30 transition-all duration-300">
                 <ShoppingBag className="h-6 w-6 text-[#d7ff53] flex-shrink-0 mt-0.5" />
                 <div>
-                  <h3 className="font-bold text-white">Exclusive Marketplace</h3>
-                  <p className="text-sm text-white/65 mt-1">Official WALI merchandise direct from the source. Limited drops, authentic quality.</p>
+                  <h3 className="font-bold text-white">Marketplace Eksklusif</h3>
+                  <p className="text-sm text-white/65 mt-1">Merchandise resmi WALI langsung dari sumbernya. Drop terbatas, kualitas asli.</p>
                 </div>
               </div>
 
@@ -43,8 +43,8 @@ export default function CtaSection() {
               <div className="flex items-start gap-4 p-4 rounded-lg hover:bg-black/30 transition-all duration-300">
                 <ShieldCheck className="h-6 w-6 text-[#d7ff53] flex-shrink-0 mt-0.5" />
                 <div>
-                  <h3 className="font-bold text-white">Verified Authentic</h3>
-                  <p className="text-sm text-white/65 mt-1">Every product is officially licensed by WALI. No fakes, just real stage culture.</p>
+                  <h3 className="font-bold text-white">100% Original</h3>
+                  <p className="text-sm text-white/65 mt-1">Semua produk berlisensi resmi dari WALI. Tanpa barang palsu, hanya budaya panggung yang nyata.</p>
                 </div>
               </div>
 
@@ -52,8 +52,8 @@ export default function CtaSection() {
               <div className="flex items-start gap-4 p-4 rounded-lg hover:bg-black/30 transition-all duration-300">
                 <Package className="h-6 w-6 text-[#d7ff53] flex-shrink-0 mt-0.5" />
                 <div>
-                  <h3 className="font-bold text-white">Fast Worldwide Shipping</h3>
-                  <p className="text-sm text-white/65 mt-1">Get your merch fast. Express shipping available to major cities across Indonesia and beyond.</p>
+                  <h3 className="font-bold text-white">Pengiriman Cepat</h3>
+                  <p className="text-sm text-white/65 mt-1">Terima merchandisemu dengan cepat. Pengiriman ekspres tersedia ke kota-kota besar di Indonesia dan mancanegara.</p>
                 </div>
               </div>
             </div>
@@ -83,9 +83,9 @@ export default function CtaSection() {
 
               {/* Stats strip — minimal inline */}
               <div className="mt-5 sm:mt-6 flex flex-wrap items-center justify-between gap-3 text-[10px] sm:text-xs font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] text-white/40 border-t border-white/5 pt-4">
-                <span>2,400+ Members</span>
-                <span className="border-l border-white/10 px-3">18,000+ Orders</span>
-                <span className="border-l border-white/10 px-3">Global Reach</span>
+                <span>2,400+ Member</span>
+                <span className="border-l border-white/10 px-3">18.000+ Pesanan</span>
+                <span className="border-l border-white/10 px-3">Jangkauan Global</span>
               </div>
             </div>
           </Reveal>

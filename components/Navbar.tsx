@@ -306,7 +306,7 @@ export default function Navbar({
               <Link
                 href="/cart"
                 className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-white active:bg-white/10 transition"
-                aria-label="Cart"
+                aria-label="Keranjang"
               >
                 <ShoppingCart size={18} />
                 {itemCount > 0 && (
@@ -320,7 +320,7 @@ export default function Navbar({
                 <Link
                   href="/account"
                   className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-white active:bg-white/10 transition"
-                  aria-label="Account"
+                  aria-label="Akun"
                 >
                   <User size={18} />
                   {profile?.profile_image_url && (
@@ -339,7 +339,7 @@ export default function Navbar({
                 <Link
                   href="/login"
                   className="flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-white active:bg-white/10 transition"
-                  aria-label="Login"
+                  aria-label="Masuk"
                 >
                   <LogIn size={18} />
                 </Link>
@@ -359,7 +359,7 @@ export default function Navbar({
                 type="text"
                 name="q"
                 placeholder="Cari merchandise..."
-                aria-label="Search products"
+                aria-label="Cari produk"
                 className="w-full bg-transparent text-sm text-white placeholder:text-white/35 focus:outline-none"
               />
             </form>
@@ -446,7 +446,7 @@ export default function Navbar({
             <button
               type="button"
               onClick={() => setOpen((prev) => !prev)}
-              aria-label={open ? "Close menu" : "Open menu"}
+              aria-label={open ? "Tutup menu" : "Buka menu"}
               aria-expanded={open}
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white transition-all duration-200 hover:bg-white/10 hover:border-[#d7ff53]/30 active:scale-95 md:hidden"
             >
@@ -499,7 +499,7 @@ export default function Navbar({
             type="text"
             name="q"
             placeholder="Cari produk..."
-            aria-label="Search products"
+            aria-label="Cari produk"
             className="w-full bg-transparent text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none dark:text-white dark:placeholder:text-white/30"
           />
         </div>

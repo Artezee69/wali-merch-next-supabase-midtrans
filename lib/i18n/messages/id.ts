@@ -27,7 +27,7 @@ const id: Messages = {
     cartAria: (n) => `Keranjang, ${n} item`,
   },
   footer: {
-    tagline: "Official merchandise store. Stage culture meets streetwear premium.",
+    tagline: "Toko merchandise resmi. Budaya panggung bertemu streetwear premium.",
     navigation: "Navigasi",
     product: "Produk",
     support: "Bantuan",
@@ -45,7 +45,7 @@ const id: Messages = {
       products: "Produk",
       why: "Kenapa WALI",
       how: "Cara Order",
-      cta: "Call to Action",
+      cta: "Ajakan Belanja",
       faq: "FAQ",
       top: "Ke Atas",
       bottom: "Ke Bawah",
@@ -53,12 +53,12 @@ const id: Messages = {
   },
   home: {
     seo: {
-      title: "WALI Merch — Official Merchandise Store",
+      title: "WALI Merch — Toko Merchandise Resmi",
       description:
-        "Official merchandise WALI. Koleksi Player Edition, Regular, dan Vintage Stage Series dengan vibe stage culture dan streetwear premium.",
+        "Merchandise resmi WALI. Koleksi Player Edition, Regular, dan Vintage Stage Series dengan vibe budaya panggung dan streetwear premium.",
     },
     hero: {
-      badge: "Official Merch · Edisi Terbatas",
+      badge: "Merch Resmi · Edisi Terbatas",
       headlineLine1: "Pakai Cerita",
       headlineHighlight: "Panggung",
       headlineLine2: "Setiap Hari.",
@@ -71,12 +71,12 @@ const id: Messages = {
     },
     marquee: {
       items: [
-        "Official Merch",
+        "Merch Resmi",
         "Player Edition",
-        "Vintage Series",
-        "Limited Drop",
-        "Stage Ready",
-        "Free Shipping",
+        "Seri Vintage",
+        "Edisi Terbatas",
+        "Siap Panggung",
+        "Gratis Ongkir",
         "WALI",
       ],
     },
@@ -84,7 +84,7 @@ const id: Messages = {
       badge: "Kenapa WALI",
       title: "Streetwear dengan DNA panggung.",
       subtitle:
-        "Setiap piece dibuat dengan material premium dan desain yang terinspirasi dari momen panggung WALI.",
+        "Setiap item dibuat dengan material premium dan desain yang terinspirasi dari momen panggung WALI.",
       features: [
         {
           title: "Material Premium",
@@ -124,7 +124,7 @@ const id: Messages = {
         },
         {
           title: "Bayar Aman",
-          desc: "Midtrans payment gateway — QRIS, transfer bank, e-wallet, kartu kredit.",
+          desc: "Pembayaran via Midtrans — QRIS, transfer bank, e-wallet, kartu kredit.",
           time: "1 menit",
         },
         {
@@ -135,7 +135,7 @@ const id: Messages = {
       ],
     },
     showcase: {
-      badge: "Latest Drop",
+      badge: "Drop Terbaru",
       title: "Koleksi yang baru turun.",
       subtitle: "Pilihan item paling fresh dari workshop kami.",
       addToCart: "Tambah ke keranjang",
@@ -176,7 +176,7 @@ const id: Messages = {
         },
         {
           q: "Pembayaran via apa saja?",
-          a: "Midtrans payment gateway: QRIS, transfer bank (BCA, BRI, Mandiri, BNI), e-wallet (OVO, GoPay, DANA, ShopeePay), dan kartu kredit.",
+          a: "Pembayaran via Midtrans: QRIS, transfer bank (BCA, BRI, Mandiri, BNI), e-wallet (OVO, GoPay, DANA, ShopeePay), dan kartu kredit.",
         },
         {
           q: "Bagaimana cara cek keaslian produk?",
@@ -332,22 +332,22 @@ const id: Messages = {
     registerTitle: "Daftar",
     registerSubtitle: "Buat akun baru, gratis.",
     email: "Email",
-    password: "Password",
+    password: "Kata Sandi",
     fullName: "Nama lengkap",
     phone: "Nomor HP",
-    confirmPassword: "Konfirmasi password",
+    confirmPassword: "Konfirmasi kata sandi",
     login: "Masuk",
     register: "Daftar",
     noAccount: "Belum punya akun?",
     haveAccount: "Sudah punya akun?",
-    forgotPassword: "Lupa password?",
+    forgotPassword: "Lupa kata sandi?",
     orContinueWith: "atau lanjut dengan",
     terms: "Syarat & Ketentuan",
     and: "dan",
     privacy: "Kebijakan Privasi",
-    invalidCredentials: "Email atau password salah.",
+    invalidCredentials: "Email atau kata sandi salah.",
     emailExists: "Email sudah terdaftar.",
-    passwordMismatch: "Password tidak cocok.",
+    passwordMismatch: "Kata sandi tidak cocok.",
     success: "Berhasil",
     welcomeBack: (name) => `Selamat datang kembali, ${name}!`,
     accountCreated: "Akun berhasil dibuat.",

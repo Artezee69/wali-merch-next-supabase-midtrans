@@ -69,7 +69,7 @@ const mobileExtras = (
     href="/cart"
     className="rounded-2xl border border-gray-700 dark:border-white/10 px-4 py-4 text-center text-sm font-black uppercase tracking-wider text-gray-300 dark:text-white/80 transition hover:bg-gray-800 dark:hover:bg-white dark:hover:text-gray-900"
   >
-    Kembali ke Cart
+    Kembali ke Keranjang
   </Link>
 );
 
@@ -78,7 +78,7 @@ const desktopCta = (
     href="/cart"
     className="rounded-full bg-gray-100 dark:bg-white px-5 py-2 text-sm font-black text-gray-900 dark:text-gray-800 transition hover:scale-105 hover:bg-green-600 dark:hover:bg-[#d7ff53] dark:hover:text-white"
   >
-    Back Cart
+    Kembali ke Keranjang
   </Link>
 );
 
@@ -338,7 +338,7 @@ export default function CheckoutPage() {
     setErrorMessage("");
 
     if (items.length === 0) {
-      setErrorMessage("Cart masih kosong. Tambahkan produk dulu.");
+      setErrorMessage("Keranjang masih kosong. Tambahkan produk dulu.");
       return;
     }
 
@@ -364,7 +364,7 @@ export default function CheckoutPage() {
     setErrorMessage("");
 
     if (items.length === 0) {
-      setErrorMessage("Cart masih kosong. Tambahkan produk dulu.");
+      setErrorMessage("Keranjang masih kosong. Tambahkan produk dulu.");
       return;
     }
 
@@ -457,10 +457,10 @@ export default function CheckoutPage() {
       <Navbar activeKey="cart" desktopCta={desktopCta} mobileExtras={mobileExtras} />
 
       <PageHeader
-        badge="Secure Checkout"
+        badge="Checkout Aman"
         title="Checkout"
-        highlight="Order"
-        description="Isi data pengiriman dengan benar. Setelah checkout berhasil, kamu bisa cek status pesanan melalui halaman Track Order."
+        highlight="Pesanan"
+        description="Isi data pengiriman dengan benar. Setelah checkout berhasil, kamu bisa cek status pesanan melalui halaman Lacak Pesanan."
       />
 
       <section className="relative mx-auto max-w-7xl px-4 py-10 md:px-8 md:py-14">
@@ -485,7 +485,7 @@ export default function CheckoutPage() {
             </div>
 
             <h2 className="text-2xl font-black uppercase text-gray-800 dark:text-white sm:text-3xl md:text-5xl">
-              Cart Masih Kosong
+              Keranjang Masih Kosong
             </h2>
 
             <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-gray-600 dark:text-gray-300 sm:mt-4 sm:text-base sm:leading-8">
@@ -511,7 +511,7 @@ export default function CheckoutPage() {
               {/* CUSTOMER */}
               <CheckoutCard
                 index="01"
-                badge="Customer Detail"
+                badge="Detail Pembeli"
                 title="Data Pembeli"
                 delayMs={0}
               >
@@ -551,7 +551,7 @@ export default function CheckoutPage() {
               {/* ADDRESS */}
               <CheckoutCard
                 index="02"
-                badge="Shipping Address"
+                badge="Alamat Pengiriman"
                 title="Alamat Pengiriman"
                 delayMs={80}
               >
@@ -625,7 +625,7 @@ export default function CheckoutPage() {
               {shippingOptions && shippingOptions.options.length > 0 && (
                 <CheckoutCard
                   index="03"
-                  badge="Shipping Service"
+                  badge="Layanan Pengiriman"
                   title="Layanan Pengiriman JNE"
                   delayMs={120}
                 >
@@ -688,9 +688,9 @@ export default function CheckoutPage() {
 
 function CheckoutSteps({ step }: { step: number }) {
   const steps = [
-    { n: 1, label: "Cart" },
+    { n: 1, label: "Keranjang" },
     { n: 2, label: "Checkout" },
-    { n: 3, label: "Payment" },
+    { n: 3, label: "Pembayaran" },
   ];
   return (
     <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] p-3 backdrop-blur-md sm:gap-3 sm:rounded-[1.5rem] sm:p-4 animate-fade-in">
@@ -1064,10 +1064,10 @@ function CheckoutSummary({
           <div>
             <p className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.25em] text-[#d7ff53] sm:text-xs sm:tracking-[0.3em]">
               <span className="h-1 w-1 rounded-full bg-[#d7ff53] shadow-[0_0_8px_rgba(215,255,83,0.8)]" />
-              Order Summary
+              Ringkasan Pesanan
             </p>
             <h2 className="mt-2 text-2xl font-black uppercase sm:mt-3 sm:text-3xl">
-              Your Order
+              Pesanan Kamu
             </h2>
           </div>
           <div className="hidden h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xs font-black sm:flex">
@@ -1102,7 +1102,7 @@ function CheckoutSummary({
                   {item.name}
                 </h3>
                 <p className="mt-0.5 text-[10px] font-bold uppercase tracking-widest text-white/45 sm:mt-1 sm:text-[11px]">
-                  {item.size} • Qty {item.quantity}
+                  {item.size} • {item.quantity} pcs
                 </p>
                 <p className="mt-0.5 text-xs font-black sm:mt-1 sm:text-sm">
                   {rupiah(item.price * item.quantity)}
@@ -1184,7 +1184,7 @@ function CheckoutSummary({
             {loading ? (
               <>
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-black/30 border-t-black" />
-                Processing...
+                Memproses...
               </>
             ) : (
               <>
@@ -1200,12 +1200,12 @@ function CheckoutSummary({
           href="/cart"
           className="mt-3 flex rounded-full border border-white/10 px-6 py-3 text-center text-xs font-black uppercase tracking-wider text-white/70 transition hover:bg-white hover:text-black sm:py-3.5 sm:text-sm"
         >
-          Kembali ke Cart
+          Kembali ke Keranjang
         </Link>
 
         <div className="mt-4 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest text-white/30 sm:text-[11px]">
           <span className="h-1 w-1 rounded-full bg-[#d7ff53]/60" />
-          256-bit secure checkout
+          Checkout aman 256-bit
           <span className="h-1 w-1 rounded-full bg-[#d7ff53]/60" />
         </div>
       </div>
@@ -1320,7 +1320,7 @@ function ConfirmModal({
               )}
 
               <div className="border-t border-white/10 pt-2.5 sm:pt-3">
-                <p className="text-white/50">Items ({totalItems})</p>
+                <p className="text-white/50">Item ({totalItems})</p>
                 <ul className="mt-2 space-y-1.5">
                   {items.map((it, i) => (
                     <li
@@ -1379,7 +1379,7 @@ function ConfirmModal({
                 {loading ? (
                   <>
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-black/30 border-t-black" />
-                    Processing...
+                    Memproses...
                   </>
                 ) : (
                   <>
