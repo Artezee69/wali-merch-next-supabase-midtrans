@@ -163,24 +163,20 @@ export function validateVariants(variants: ProductVariantInput[]): ValidationRes
         seen.add(key);
       }
     }
-    if (v.price !== undefined && v.price !== null) {
-      if (typeof v.price !== "number" || v.price < 0) {
-        errors[`variants.${idx}.price`] = "Harga variasi tidak valid.";
-      }
+    // Coerce: form input type="number" bisa mengirim string; toleransi.
+    const price = v.price !== undefined && v.price !== null ? Number(v.price) : 0;
+    const salePrice = v.sale_price !== undefined && v.sale_price !== null ? Number(v.sale_price) : 0;
+    const stock = v.stock !== undefined && v.stock !== null ? Number(v.stock) : 0;
+
+    if (Number.isNaN(price) || price < 0) {
+      errors[`variants.${idx}.price`] = "Harga variasi tidak valid.";
     }
-    if (v.sale_price !== undefined && v.sale_price !== null) {
-      if (typeof v.sale_price !== "number" || v.sale_price < 0) {
-        errors[`variants.${idx}.sale_price`] = "Harga diskon variasi tidak valid.";
-      } else if (
-        v.price !== undefined &&
-        v.price !== null &&
-        v.sale_price >= v.price
-      ) {
-        errors[`variants.${idx}.sale_price`] =
-          "Harga diskon harus lebih kecil dari harga variasi.";
-      }
+    if (Number.isNaN(salePrice) || salePrice < 0) {
+      errors[`variants.${idx}.sale_price`] = "Harga diskon variasi tidak valid.";
+    } else if (salePrice > 0 && salePrice >= price) {
+      errors[`variants.${idx}.sale_price`] = "Harga diskon harus lebih kecil dari harga variasi.";
     }
-    if (typeof v.stock !== "number" || v.stock < 0) {
+    if (Number.isNaN(stock) || stock < 0) {
       errors[`variants.${idx}.stock`] = "Stok variasi tidak valid.";
     }
   });
