@@ -100,7 +100,7 @@ export default function HeroCarousel({ banners, autoRotateMs = 6000, fillHeight 
     >
       <div
         ref={containerRef}
-        className="flex h-full w-full snap-x snap-mandatory overflow-x-hidden touch-pan-x"
+        className="no-scrollbar flex h-full w-full snap-x snap-mandatory overflow-x-auto touch-pan-x"
         style={{ scrollBehavior: "smooth" }}
       >
         {validBanners.map((b, i) => (

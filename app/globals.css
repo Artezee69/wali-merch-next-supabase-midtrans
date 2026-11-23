@@ -73,6 +73,9 @@ button {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
 
 /* Custom scrollbar for desktop */
 ::-webkit-scrollbar {
