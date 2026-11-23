@@ -341,12 +341,30 @@ export async function POST(request: NextRequest) {
         .select("stock, price, sale_price")
         .eq("product_id", product.id);
       const totalStock = ((allVars ?? []) as any[]).reduce((s, v) => s + (v.stock || 0), 0);
-      const minPrice = (allVars ?? []).length
-        ? Math.min(...(allVars as any[]).map((v) => v.sale_price != null ? v.sale_price : (v.price || 0)))
+
+      // base_price = min variant NORMAL price (pre-discount)
+      const minBase = (allVars ?? []).length
+        ? Math.min(...(allVars as any[]).map((v) => Number(v.price) || 0))
         : (productInput.base_price ?? 0);
+
+      // Effective price = min of (sale_price ?? price) across variants
+      const minEffective = (allVars ?? []).length
+        ? Math.min(...(allVars as any[]).map((v) => (v.sale_price != null ? v.sale_price : (v.price || 0))))
+        : minBase;
+
+      // Detect if any variant has a discount
+      const minSale = (allVars as any[]).filter((v) => v.sale_price != null && v.sale_price > 0).length > 0
+        ? Math.min(...(allVars as any[]).filter((v: any) => v.sale_price != null && v.sale_price > 0).map((v: any) => Number(v.sale_price)))
+        : null;
+
       await supabaseAdmin
         .from("products")
-        .update({ base_price: minPrice, price: minPrice })
+        .update({
+          base_price: minBase,
+          price: minEffective,
+          sale_price: minSale,
+          stock: totalStock,
+        })
         .eq("id", product.id);
     }
 

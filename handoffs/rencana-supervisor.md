@@ -1,19 +1,25 @@
 # Rencana supervisor (review otomatis adaCODE)
-Status: BERJALAN · Sumber: review APPROVED (claude) · Diperbarui: 2026-11-23 11:24
+Status: BERJALAN · Sumber: review REVISE (claude) · Diperbarui: 2026-11-23 23:37
 <!-- adacode:rencana-supervisor — ditulis ulang tiap review; catatan Anda sendiri taruh di handoff lain -->
 
 ## Tugas terakhir
-broi ukuran banner nya berapa x berapa cantumin di pas mau tambahin banner ,jadi gw tau ukurannya berapa kali berapa
+apa si bro astaga , udah gw save diskonnya masih ga muncul, tadi pas lagi progress udah muncul setelah lu selesai jadi ilang lagi gimana sih, plis lah benerin yg bener bro
 
 ## Ringkasan review
-Perubahan sesuai permintaan: junior menambahkan blok "Ukuran gambar yang disarankan" di BannerForm.tsx (baris 211-218) yang mencantumkan ukuran konkret — Hero Slider 1920×1080 px (16:9) dengan minimum mobile 800×420 px, Promo Top/Bottom 600×400 px (3:2) dengan minimum mobile 400×260 px — sehingga pengguna kini tahu berapa×berapa saat menambah banner. Verifikasi konsistensi: klaim format file & batas 5MB cocok persis dengan app/api/admin/banners/upload/route.ts (MAX_BYTES 5MB, tipe PNG/JPG/WebP/SVG/GIF); klaim "gambar lama otomatis terhapus" cocok dengan actions.ts:222-225 (hapus oldPath hanya 
+Koreksi putaran 2 untuk temuan utama (F5/high) SUDAH BENAR dan konsisten di semua 4 titik tulis: PUT variants (variants/route.ts:238-258), POST bulk variants (368-388), POST products (route.ts:345-368), dan PATCH [id] (526-554) kini sama-sama menghitung `minBase` (harga normal termurah), `minEffective` (harga bayar termurah), dan `minSale` (diskon termurah, null bila tak ada) dari varian aktif. Typecheck `tsc --noEmit` lolos (exit 0). Namun review menemukan SATU masalah medium baru (F10): form edit admin masih mem-prefill "harga normal" dari `product.price` yang sekarang ber-semantik HARGA EFE
+
+## Temuan review yang masih terbuka — JUNIOR
+- [ ] [F10 · medium] app/admin/products/[id]/edit/page.tsx:67 — Ganti prefill di app/admin/products/[id]/edit/page.tsx:67 menjadi `base_price: product.base_price ?? product.price ?? 0` agar form mengambil harga NORMAL (pre-diskon), bukan harga efektif. Opsional: di PATCH app/api/admin/products/[id]/route.ts, tolak/abaikan `sale_price >= base_price` dari payload 
 
 ## Langkah berikutnya — JUNIOR
-- [ ] (sedang) Perbaiki teks panduan ukuran hero mobile di components/admin/BannerForm.tsx agar mencerminkan rasio render aktual yang lebih kotak di mobile (atau tambahkan catatan area aman tengah).
+- [ ] (tinggi) Perbaiki F10: ubah prefill app/admin/products/[id]/edit/page.tsx:67 menjadi `base_price: product.base_price ?? product.price ?? 0` dan tambah guard `sale_price < base_price` di PATCH [id]/route.ts.
+- [ ] (sedang) Perbaiki F6: reset `productsError = null` di awal cabang fallback app/products/page.tsx agar banner merah hanya muncul saat data benar-benar gagal dimuat.
+- [ ] (sedang) Samakan perilaku penulisan `stock` level produk (F9) di PATCH [id] vs PUT/POST variants vs POST products, dan hapus komentar 'kolom stock TIDAK ADA' yang menyesatkan.
+- [ ] (rendah) Tambahkan validasi `sale_price < price` dan dukungan set null pada bulk POST /api/admin/products/variants (F11).
+- [ ] (rendah) Setelah diskon terverifikasi tampil lewat audit UI, hapus total blok DEBUG baris 176-187 app/products/page.tsx (F7).
 
 ## Langkah berikutnya — SENIOR (verifikasi)
-- [ ] (sedang) Verifikasi visual ujung-ke-ujung halaman /admin/banners/new (desktop + mobile) dan homepage dengan banner hero+promo untuk memastikan panduan ukuran tampil rapi dan crop object-cover sesuai ekspektasi.
+- [ ] (tinggi) Uji ujung-ke-ujung skenario regresi pengguna: set diskon varian → simpan → buka edit → simpan lagi → pastikan badge & harga coret tidak hilang (jalur PUT variants dan PATCH [id]).
 
 ## Langkah berikutnya — PENGGUNA (keputusan/akses)
-- [ ] (sedang) Selesaikan konflik dev server (matikan PID 26040 atau pakai port lain) lalu minta audit tampilan ulang dari adaCODE.
-- [ ] (sedang) Daftarkan akun uji admin agar halaman admin bisa diaudit: adacode audit-ui akun --peran admin --email <email-admin>.
+- [ ] (tinggi) Hentikan server dev lama yang memblokir audit (taskkill /PID 26040 /F) lalu minta audit tampilan ulang untuk memverifikasi diskon varian tampil di /products sebagai harga coret + badge persen.

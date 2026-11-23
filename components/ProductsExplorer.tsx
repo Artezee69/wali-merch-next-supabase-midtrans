@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Search, X } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 
-type Variant = { id?: string; size: string; stock: number; price?: number | null; sale_price?: number | null };
+type Variant = { id?: string; size: string; stock: number };
 
 export type Product = {
   id: string;

@@ -234,20 +234,26 @@ export async function PUT(req: NextRequest) {
 
     const active = (allVariants ?? []).filter((x) => x.is_active !== false);
     const totalStock = active.reduce((s, v) => s + Number(v.stock || 0), 0);
-    const minPrice = active.length
-      ? Math.min(
-          ...active.map((v) =>
-            v.sale_price != null ? Number(v.sale_price) : Number(v.price),
-          ),
-        )
+
+    const minBase = active.length
+      ? Math.min(...active.map((v) => Number(v.price) || 0))
       : (product.base_price ?? 0);
+    const minEffective = active.length
+      ? Math.min(...active.map((v) => (v.sale_price != null ? Number(v.sale_price) : Number(v.price) || 0)))
+      : minBase;
+    const salesOnly = active.filter((v) => v.sale_price != null && Number(v.sale_price) > 0);
+    const minSale = salesOnly.length > 0
+      ? Math.min(...salesOnly.map((v) => Number(v.sale_price)))
+      : null;
 
     const { error: prodUpdateErr } = await supabaseAdmin
       .from("products")
       .update({
         has_variants: variants.length > 0,
         stock: totalStock,
-        base_price: minPrice,
+        base_price: minBase,
+        price: minEffective,
+        sale_price: minSale,
         updated_at: new Date().toISOString(),
       })
       .eq("id", productId);
@@ -358,18 +364,25 @@ export async function POST(req: NextRequest) {
       .eq("product_id", body.productId);
     const active = (all ?? []).filter((x) => x.is_active !== false);
     const totalStock = active.reduce((s, v) => s + Number(v.stock || 0), 0);
-    const minPrice = active.length
-      ? Math.min(
-          ...active.map((v) =>
-            v.sale_price != null ? Number(v.sale_price) : Number(v.price),
-          ),
-        )
+
+    const minBase = active.length
+      ? Math.min(...active.map((v) => Number(v.price) || 0))
       : 0;
+    const minEffective = active.length
+      ? Math.min(...active.map((v) => (v.sale_price != null ? Number(v.sale_price) : Number(v.price) || 0)))
+      : 0;
+    const salesOnly = active.filter((v) => v.sale_price != null && Number(v.sale_price) > 0);
+    const minSale = salesOnly.length > 0
+      ? Math.min(...salesOnly.map((v) => Number(v.sale_price)))
+      : null;
+
     await supabaseAdmin
       .from("products")
       .update({
         stock: totalStock,
-        base_price: minPrice,
+        base_price: minBase,
+        price: minEffective,
+        sale_price: minSale,
         updated_at: new Date().toISOString(),
       })
       .eq("id", body.productId);

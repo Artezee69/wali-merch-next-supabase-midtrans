@@ -170,13 +170,10 @@ export default async function ProductsPage({
     ),
   ];
 
-  // DEBUG: show price data for first product
-  const debugProduct = products[0];
-
   return (
     <main style={{ background: "var(--bg-primary)" }}>
       <Navbar />
-      {debugProduct && (
+      {process.env.NODE_ENV !== "production" && products.length > 0 && (
         <div style={{
           padding: "8px 24px",
           background: "#fffbeb",
@@ -185,9 +182,7 @@ export default async function ProductsPage({
           fontSize: "11px",
           fontFamily: "monospace",
         }}>
-          DEBUG: price={debugProduct.price} base_price={"base_price" in debugProduct ? debugProduct.base_price : "NO_COL"} sale_price={"sale_price" in debugProduct ? debugProduct.sale_price : "NO_COL"}
-          {" "}variants={debugProduct.product_variants?.length ?? 0}
-          {debugProduct.product_variants?.[0] && ` | var[0]: price=${debugProduct.product_variants[0].price ?? "NO_COL"} sale_price=${(debugProduct.product_variants[0] as any).sale_price ?? "NO_COL"}`}
+          DEBUG: price={products[0].price} base_price={"base_price" in products[0] ? products[0].base_price : "NO_COL"} sale_price={"sale_price" in products[0] ? products[0].sale_price : "NO_COL"}
         </div>
       )}
       {productsError && (

@@ -522,36 +522,47 @@ export async function PATCH(
         .eq("product_id", productId);
       if (!fetchErr) {
         const active = (allVariants ?? []).filter((v) => v.is_active !== false);
-        const minPrice = active.length
+
+        // base_price = min variant NORMAL price (pre-discount)
+        const minBase = active.length
+          ? Math.min(...active.map((v) => Number(v.price) || 0))
+          : (input.base_price ?? 0);
+
+        // Effective price = min of (sale_price ?? price) — what customer pays
+        const minEffective = active.length
           ? Math.min(
               ...active.map((v) =>
                 v.sale_price != null ? v.sale_price : (v.price || 0),
               ),
             )
-          : (input.base_price ?? 0);
+          : minBase;
 
-        // Coba simpan stock ke produk untuk produk non-variant.
-        // (Jika kolom stock ada di products — sebagai hasil migrasi 024.)
-        if (rawVariants.length === 0 && typeof input.stock === "number") {
-          // Kolom `stock` hanya ada jika migrasi 024 sudah diterapkan.
-          // Non-blocking: log warning jika gagal, jangan error.
-          const { error: stockErr } = await supabaseAdmin
-            .from("products")
-            .update({ stock: input.stock })
-            .eq("id", productId);
-          if (stockErr) {
-            console.warn("[PATCH] stock update failed (migrasi 024 belum diterapkan?):", stockErr.message);
-          }
-        }
+        // Products-level sale_price: lowest variant sale_price (null if no variant has discount)
+        const salesOnly = active.filter((v) => v.sale_price != null && Number(v.sale_price) > 0);
+        const minSale = salesOnly.length > 0
+          ? Math.min(...salesOnly.map((v) => Number(v.sale_price)))
+          : null;
 
         await supabaseAdmin
           .from("products")
           .update({
             has_variants: rawVariants.length > 0,
-            base_price: minPrice,
-            price: minPrice,
+            base_price: minBase,
+            price: minEffective,
+            sale_price: minSale,
           })
           .eq("id", productId);
+
+        // For non-variant products, save stock directly
+        if (rawVariants.length === 0 && typeof input.stock === "number") {
+          const { error: stockErr } = await supabaseAdmin
+            .from("products")
+            .update({ stock: input.stock })
+            .eq("id", productId);
+          if (stockErr) {
+            console.warn("[PATCH] stock update failed:", stockErr.message);
+          }
+        }
       }
     }
 
