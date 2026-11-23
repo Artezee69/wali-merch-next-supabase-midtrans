@@ -161,35 +161,35 @@ export async function PATCH(
         ? (["draft", "active", "inactive", "archived"].includes(typeof input.status === "string" ? input.status : "")
           ? (input.status as string) : undefined)
         : undefined,
-      base_price: input.base_price !== undefined
-        ? (typeof input.base_price === "number" ? input.base_price : null)
+      base_price: input.base_price !== undefined && input.base_price !== ""
+        ? (Number(input.base_price) || null)
         : undefined,
       sale_price: input.sale_price !== undefined
-        ? (typeof input.sale_price === "number" ? input.sale_price : null)
+        ? (input.sale_price === null || input.sale_price === "" ? null : (Number(input.sale_price) || null))
         : undefined,
       sku: input.sku !== undefined
         ? (typeof input.sku === "string" ? input.sku : null)
         : undefined,
       weight: input.weight !== undefined
-        ? (typeof input.weight === "number" ? input.weight : null)
+        ? (Number(input.weight) || null)
         : undefined,
       length: input.length !== undefined
-        ? (typeof input.length === "number" ? input.length : null)
+        ? (Number(input.length) || null)
         : undefined,
       width: input.width !== undefined
-        ? (typeof input.width === "number" ? input.width : null)
+        ? (Number(input.width) || null)
         : undefined,
       height: input.height !== undefined
-        ? (typeof input.height === "number" ? input.height : null)
+        ? (Number(input.height) || null)
         : undefined,
-      has_variants: input.has_variants !== undefined ? input.has_variants === true : undefined,
-      is_featured: input.is_featured !== undefined ? input.is_featured === true : undefined,
-      is_new: input.is_new !== undefined ? input.is_new === true : undefined,
-      min_purchase: input.min_purchase !== undefined
-        ? (typeof input.min_purchase === "number" && input.min_purchase >= 1 ? input.min_purchase : undefined)
+      has_variants: input.has_variants !== undefined ? (input.has_variants === true || input.has_variants === "true") : undefined,
+      is_featured: input.is_featured !== undefined ? (input.is_featured === true || input.is_featured === "true") : undefined,
+      is_new: input.is_new !== undefined ? (input.is_new === true || input.is_new === "true") : undefined,
+      min_purchase: input.min_purchase !== undefined && input.min_purchase !== ""
+        ? (Number(input.min_purchase) >= 1 ? Number(input.min_purchase) : undefined)
         : undefined,
-      max_purchase: input.max_purchase !== undefined
-        ? (typeof input.max_purchase === "number" && input.max_purchase >= 1 ? input.max_purchase : undefined)
+      max_purchase: input.max_purchase !== undefined && input.max_purchase !== ""
+        ? (Number(input.max_purchase) >= 1 ? Number(input.max_purchase) : undefined)
         : undefined,
       tags: input.tags !== undefined ? (Array.isArray(input.tags) ? input.tags : undefined) : undefined,
       seo_title: input.seo_title !== undefined
@@ -201,12 +201,12 @@ export async function PATCH(
       seo_image_url: input.seo_image_url !== undefined
         ? (typeof input.seo_image_url === "string" ? input.seo_image_url || null : null)
         : undefined,
-      is_preorder: input.is_preorder !== undefined ? input.is_preorder === true : undefined,
-      preorder_processing_days: preorderProcessingDays !== undefined
-        ? (typeof preorderProcessingDays === "number" ? preorderProcessingDays : null)
+      is_preorder: input.is_preorder !== undefined ? (input.is_preorder === true || input.is_preorder === "true") : undefined,
+      preorder_processing_days: (input.preorder_processing_days ?? input.preorder_days) !== undefined && (input.preorder_processing_days ?? input.preorder_days) !== ""
+        ? (Number(input.preorder_processing_days ?? input.preorder_days) || null)
         : undefined,
-      admin_notes: adminNotes !== undefined
-        ? (typeof adminNotes === "string" ? adminNotes || null : null)
+      admin_notes: input.admin_notes !== undefined
+        ? (typeof input.admin_notes === "string" ? input.admin_notes || null : null)
         : undefined,
       // NOTE: `stock` TIDAK diset ke tabel products karena kolom itu
       // tidak ada. Stok total dihitung dari product_variants.stock (lihat

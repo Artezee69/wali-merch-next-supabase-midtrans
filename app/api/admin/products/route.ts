@@ -160,10 +160,6 @@ export async function POST(request: NextRequest) {
     const input = body as Record<string, unknown>;
 
     // Map form field aliases to canonical DB/API field names.
-    const preorderProcessingDays =
-      input.preorder_processing_days ?? input.preorder_days;
-    const adminNotes = input.admin_notes ?? input.internal_notes;
-
     // Map display labels (Baru/Bekas) to canonical DB values (new/used/refurbished).
     const CONDITION_LABEL_MAP: Record<string, string> = {
       "Baru": "new",
@@ -193,25 +189,27 @@ export async function POST(request: NextRequest) {
       status: (["draft", "active", "inactive", "archived"] as const).includes(input.status as import("@/lib/types").ProductStatus)
         ? (input.status as import("@/lib/types").ProductStatus)
         : ("draft" as const),
-      base_price: typeof input.base_price === "number" ? input.base_price : null,
-      sale_price: typeof input.sale_price === "number" ? input.sale_price : null,
+      base_price: input.base_price !== undefined && input.base_price !== "" ? (Number(input.base_price) || null) : null,
+      sale_price: input.sale_price !== undefined ? (input.sale_price === null || input.sale_price === "" ? null : (Number(input.sale_price) || null)) : null,
       sku: typeof input.sku === "string" ? input.sku || null : null,
-      weight: typeof input.weight === "number" ? input.weight : null,
-      length: typeof input.length === "number" ? input.length : null,
-      width: typeof input.width === "number" ? input.width : null,
-      height: typeof input.height === "number" ? input.height : null,
-      has_variants: input.has_variants === true,
-      is_featured: input.is_featured === true,
-      is_new: input.is_new === true,
-      min_purchase: typeof input.min_purchase === "number" && input.min_purchase >= 1 ? input.min_purchase : 1,
-      max_purchase: typeof input.max_purchase === "number" && input.max_purchase >= 1 ? input.max_purchase : 99,
+      weight: input.weight !== undefined ? (Number(input.weight) || null) : null,
+      length: input.length !== undefined ? (Number(input.length) || null) : null,
+      width: input.width !== undefined ? (Number(input.width) || null) : null,
+      height: input.height !== undefined ? (Number(input.height) || null) : null,
+      has_variants: input.has_variants === true || input.has_variants === "true",
+      is_featured: input.is_featured === true || input.is_featured === "true",
+      is_new: input.is_new === true || input.is_new === "true",
+      min_purchase: input.min_purchase !== undefined && input.min_purchase !== "" && Number(input.min_purchase) >= 1 ? Number(input.min_purchase) : 1,
+      max_purchase: input.max_purchase !== undefined && input.max_purchase !== "" && Number(input.max_purchase) >= 1 ? Number(input.max_purchase) : 99,
       tags: Array.isArray(input.tags) ? input.tags : [],
       seo_title: typeof input.seo_title === "string" ? input.seo_title || null : null,
       seo_description: typeof input.seo_description === "string" ? input.seo_description || null : null,
       seo_image_url: typeof input.seo_image_url === "string" ? input.seo_image_url || null : null,
-      is_preorder: input.is_preorder === true,
-      preorder_processing_days: typeof preorderProcessingDays === "number" ? preorderProcessingDays : null,
-      admin_notes: typeof adminNotes === "string" ? adminNotes || null : null,
+      is_preorder: input.is_preorder === true || input.is_preorder === "true",
+      preorder_processing_days: (input.preorder_processing_days ?? input.preorder_days) !== undefined && (input.preorder_processing_days ?? input.preorder_days) !== ""
+        ? (Number(input.preorder_processing_days ?? input.preorder_days) || null)
+        : null,
+      admin_notes: typeof input.admin_notes === "string" ? input.admin_notes || null : (typeof input.internal_notes === "string" ? input.internal_notes || null : null),
     };
 
     // Validasi
