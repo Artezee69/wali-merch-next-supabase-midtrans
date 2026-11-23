@@ -16,6 +16,8 @@ type ShowProduct = {
   id: string;
   name: string;
   price: number;
+  base_price?: number | null;
+  sale_price?: number | null;
   tag?: string;
   category?: string;
   slug?: string;
@@ -72,6 +74,8 @@ async function fetchLatestDropProducts(limit: number) {
       id: String(row.id),
       name: String(row.name),
       price: Number(row.price) || 0,
+      base_price: row.base_price != null ? Number(row.base_price) : null,
+      sale_price: row.sale_price != null ? Number(row.sale_price) : null,
       tag: firstTag || undefined,
       category: String(row.category) || undefined,
       slug: String(row.slug),
@@ -110,6 +114,8 @@ async function fetchManualLatestDropProducts(ids: string[]) {
       id: String(row.id),
       name: String(row.name),
       price: Number(row.price) || 0,
+      base_price: row.base_price != null ? Number(row.base_price) : null,
+      sale_price: row.sale_price != null ? Number(row.sale_price) : null,
       tag: firstTag || undefined,
       category: String(row.category) || undefined,
       slug: String(row.slug),

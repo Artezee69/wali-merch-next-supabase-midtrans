@@ -7,6 +7,8 @@ type Product = {
   id: string;
   name: string;
   price: number;
+  base_price?: number | null;
+  sale_price?: number | null;
   tag?: string;
   category?: string;
   slug?: string;

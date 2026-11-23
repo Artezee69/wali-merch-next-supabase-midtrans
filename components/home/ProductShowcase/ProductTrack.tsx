@@ -8,6 +8,8 @@ type Product = {
   id: string;
   name: string;
   price: number;
+  base_price?: number | null;
+  sale_price?: number | null;
   tag?: string;
   category?: string;
   slug?: string;
@@ -137,11 +139,29 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
               {product.description}
             </p>
           </div>
-          {!comingSoon && (
-            <p className="shrink-0 pt-0.5 text-xs font-black text-white/90 sm:text-sm">
-              Rp{(product.price || 0).toLocaleString("id-ID")}
-            </p>
-          )}
+          {!comingSoon && (() => {
+            const hasDiscount = !!product.sale_price && product.sale_price > 0 && product.base_price != null && product.base_price > (product.sale_price || 0);
+            const displayPrice = product.sale_price || product.price || 0;
+            const originalPrice = product.base_price || 0;
+            const discountPct = hasDiscount ? Math.round((1 - (product.sale_price || 0) / originalPrice) * 100) : 0;
+            return (
+              <div className="shrink-0 text-right">
+                {hasDiscount && (
+                  <span className="mb-0.5 block text-[9px] font-black uppercase tracking-wider text-[#ff5f5f] sm:text-[10px]">
+                    {discountPct}% OFF
+                  </span>
+                )}
+                <p className="text-xs font-black text-white/90 sm:text-sm">
+                  Rp{displayPrice.toLocaleString("id-ID")}
+                </p>
+                {hasDiscount && (
+                  <p className="text-[10px] text-white/40 line-through sm:text-xs">
+                    Rp{originalPrice.toLocaleString("id-ID")}
+                  </p>
+                )}
+              </div>
+            );
+          })()}
         </div>
       </article>
     </Link>
