@@ -228,6 +228,13 @@ export async function PATCH(
       sort_order?: string | number;
     };
     const pi = productInput as ParsedProductInput;
+    const toNum2 = (v: unknown): number | null | undefined => {
+      if (v == null || v === "" || v === "null") return null;
+      const n = Number(v);
+      return Number.isFinite(n) ? n : undefined;
+    };
+    const toBool = (v: unknown): boolean | undefined =>
+      v == null ? undefined : v === true || v === "true" || v === 1;
     const coercedInput: Parameters<typeof validateProductInput>[0] = {
       name: pi.name ?? "",
       slug: pi.slug ?? "",
@@ -238,24 +245,24 @@ export async function PATCH(
       brand: pi.brand,
       condition: (pi.condition as "new" | "used" | "refurbished" | null | undefined) ?? undefined,
       status: (pi.status as "draft" | "active" | "inactive" | "archived" | null | undefined) ?? undefined,
-      base_price: productInput.base_price,
-      sale_price: productInput.sale_price,
+      base_price: toNum2(productInput.base_price),
+      sale_price: toNum2(productInput.sale_price),
       sku: productInput.sku,
-      weight: productInput.weight,
-      length: productInput.length,
-      width: productInput.width,
-      height: productInput.height,
-      has_variants: productInput.has_variants,
-      is_featured: productInput.is_featured,
-      is_new: productInput.is_new,
-      min_purchase: productInput.min_purchase,
-      max_purchase: productInput.max_purchase,
+      weight: toNum2(productInput.weight),
+      length: toNum2(productInput.length),
+      width: toNum2(productInput.width),
+      height: toNum2(productInput.height),
+      has_variants: toBool(productInput.has_variants),
+      is_featured: toBool(productInput.is_featured),
+      is_new: toBool(productInput.is_new),
+      min_purchase: toNum2(productInput.min_purchase) ?? undefined,
+      max_purchase: toNum2(productInput.max_purchase) ?? undefined,
       tags: productInput.tags,
       seo_title: productInput.seo_title,
       seo_description: productInput.seo_description,
       seo_image_url: productInput.seo_image_url,
-      is_preorder: productInput.is_preorder,
-      preorder_processing_days: productInput.preorder_processing_days,
+      is_preorder: toBool(productInput.is_preorder),
+      preorder_processing_days: toNum2(productInput.preorder_processing_days),
       admin_notes: productInput.admin_notes,
     };
 
@@ -284,6 +291,12 @@ export async function PATCH(
 
     const buildUpdate: Record<string, unknown> = {};
 
+    const toNum = (v: unknown): number | null => {
+      if (v == null || v === "" || v === "null") return null;
+      const n = Number(v);
+      return Number.isFinite(n) ? n : 0;
+    };
+
     if (productInput.name !== undefined) buildUpdate.name = productInput.name;
     if (productInput.slug !== undefined) buildUpdate.slug = productInput.slug;
     if (productInput.short_description !== undefined) buildUpdate.short_description = productInput.short_description;
@@ -293,31 +306,31 @@ export async function PATCH(
     if (productInput.brand !== undefined) buildUpdate.brand = productInput.brand;
     if (productInput.condition !== undefined) buildUpdate.condition = productInput.condition as ProductCondition;
     if (productInput.status !== undefined) buildUpdate.status = productInput.status as ProductStatus;
-    if (productInput.base_price !== undefined) buildUpdate.base_price = productInput.base_price;
-    if (productInput.sale_price !== undefined) buildUpdate.sale_price = productInput.sale_price;
+    if (productInput.base_price !== undefined) buildUpdate.base_price = toNum(productInput.base_price);
+    if (productInput.sale_price !== undefined) buildUpdate.sale_price = toNum(productInput.sale_price);
     if (productInput.sku !== undefined) buildUpdate.sku = productInput.sku;
-    if (productInput.weight !== undefined) buildUpdate.weight = productInput.weight;
-    if (productInput.length !== undefined) buildUpdate.length = productInput.length;
-    if (productInput.width !== undefined) buildUpdate.width = productInput.width;
-    if (productInput.height !== undefined) buildUpdate.height = productInput.height;
-    if (productInput.has_variants !== undefined) buildUpdate.has_variants = productInput.has_variants;
-    if (productInput.is_featured !== undefined) buildUpdate.is_featured = productInput.is_featured;
-    if (productInput.is_new !== undefined) buildUpdate.is_new = productInput.is_new;
-    if (productInput.min_purchase !== undefined) buildUpdate.min_purchase = productInput.min_purchase;
-    if (productInput.max_purchase !== undefined) buildUpdate.max_purchase = productInput.max_purchase;
+    if (productInput.weight !== undefined) buildUpdate.weight = toNum(productInput.weight);
+    if (productInput.length !== undefined) buildUpdate.length = toNum(productInput.length);
+    if (productInput.width !== undefined) buildUpdate.width = toNum(productInput.width);
+    if (productInput.height !== undefined) buildUpdate.height = toNum(productInput.height);
+    if (productInput.has_variants !== undefined) buildUpdate.has_variants = productInput.has_variants === true || (productInput.has_variants as unknown as string) === "true";
+    if (productInput.is_featured !== undefined) buildUpdate.is_featured = productInput.is_featured === true || (productInput.is_featured as unknown as string) === "true";
+    if (productInput.is_new !== undefined) buildUpdate.is_new = productInput.is_new === true || (productInput.is_new as unknown as string) === "true";
+    if (productInput.min_purchase !== undefined) buildUpdate.min_purchase = toNum(productInput.min_purchase);
+    if (productInput.max_purchase !== undefined) buildUpdate.max_purchase = toNum(productInput.max_purchase);
     if (productInput.tags !== undefined) buildUpdate.tags = productInput.tags;
     if (productInput.seo_title !== undefined) buildUpdate.seo_title = productInput.seo_title;
     if (productInput.seo_description !== undefined) buildUpdate.seo_description = productInput.seo_description;
     if (productInput.seo_image_url !== undefined) buildUpdate.seo_image_url = productInput.seo_image_url;
-    if (productInput.is_preorder !== undefined) buildUpdate.is_preorder = productInput.is_preorder;
-    if (productInput.preorder_processing_days !== undefined) buildUpdate.preorder_processing_days = productInput.preorder_processing_days;
+    if (productInput.is_preorder !== undefined) buildUpdate.is_preorder = productInput.is_preorder === true || (productInput.is_preorder as unknown as string) === "true";
+    if (productInput.preorder_processing_days !== undefined) buildUpdate.preorder_processing_days = toNum(productInput.preorder_processing_days);
     if (productInput.admin_notes !== undefined) buildUpdate.admin_notes = productInput.admin_notes;
 
     // Sinkronisasi field legacy (price)
     if (productInput.base_price !== undefined || productInput.sale_price !== undefined) {
       buildUpdate.price = pickEffectivePrice({
-        base_price: productInput.base_price ?? null,
-        sale_price: productInput.sale_price ?? null,
+        base_price: toNum(productInput.base_price) ?? null,
+        sale_price: toNum(productInput.sale_price) ?? null,
       });
     }
 
