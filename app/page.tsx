@@ -34,7 +34,6 @@ async function fetchLatestDropProducts(limit: number) {
     .from("products")
     .select("*")
     .eq("status", "active")
-    .order("updated_at", { ascending: false })
     .limit(limit);
 
   if (error || !products || products.length === 0) return [];

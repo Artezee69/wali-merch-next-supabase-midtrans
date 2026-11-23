@@ -79,19 +79,26 @@ export default async function ProductsPage({
   let productsError: string | null = null;
 
   try {
-    // Fetch products first
+    // Try with status filter first
     const { data: prods, error: pErr } = await supabaseAdmin
       .from("products")
       .select("*")
-      .eq("status", "active")
-      .order("updated_at", { ascending: false });
+      .eq("status", "active");
     productsData = prods;
     productsError = pErr ? pErr.message : null;
+
+    // If status filter returned 0 or errored, fall back to no filter
+    if (!productsData || productsData.length === 0) {
+      const fb = await supabaseAdmin
+        .from("products")
+        .select("*");
+      productsData = fb.data;
+      if (fb.error) productsError = fb.error.message;
+    }
 
     if (productsData && productsData.length > 0) {
       const productIds = productsData.map((p: any) => p.id);
 
-      // Fetch images and variants separately, then attach
       const [imgRes, varRes] = await Promise.all([
         supabaseAdmin.from("product_images")
           .select("*")
