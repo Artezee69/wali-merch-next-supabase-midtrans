@@ -5,6 +5,7 @@ import { requireAdmin } from "@/lib/adminAuth";
 import { getSupabaseAdmin, supabaseAdmin } from "@/lib/supabaseAdmin";
 import AdminShell from "@/components/admin/AdminShell";
 import BannerForm from "@/components/admin/BannerForm";
+import type { BannerFocusPoint } from "@/lib/banner-types";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,7 @@ type BannerRow = {
   status: boolean;
   start_date: string | null;
   end_date: string | null;
+  focus_point?: BannerFocusPoint;
 };
 
 export default async function EditBannerPage({
@@ -43,7 +45,7 @@ export default async function EditBannerPage({
   const { data: banner, error } = await supabaseAdmin
     .from("banners")
     .select(
-      "id, title, subtitle, image_url, storage_path, button_text, button_link, position, sort_order, status, start_date, end_date"
+      "id, title, subtitle, image_url, storage_path, button_text, button_link, position, sort_order, status, start_date, end_date, focus_point"
     )
     .eq("id", id)
     .maybeSingle();

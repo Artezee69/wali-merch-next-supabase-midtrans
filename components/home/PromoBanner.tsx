@@ -1,5 +1,6 @@
 import Link from "next/link";
-import type { Banner } from "@/lib/banners";
+import type { Banner } from "@/lib/banner-types";
+import { bannerObjectPosition } from "@/lib/banner-types";
 
 type Props = {
   banner: Banner | null;
@@ -38,6 +39,7 @@ export default function PromoBanner({ banner, className }: Props) {
           loading="lazy"
           decoding="async"
           className="absolute inset-0 h-full w-full object-cover sm:transition-transform sm:duration-500 sm:group-hover:scale-[1.04]"
+          style={{ objectPosition: bannerObjectPosition(banner.focus_point ?? "center") }}
           draggable={false}
         />
         {banner.title && !banner.hide_overlay && (

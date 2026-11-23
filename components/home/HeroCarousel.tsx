@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import type { Banner } from "@/lib/banners";
+import type { Banner } from "@/lib/banner-types";
+import { bannerObjectPosition } from "@/lib/banner-types";
 
 type Props = {
   banners: Banner[];
@@ -186,6 +187,7 @@ function BannerSlide({ banner, fillHeight = false }: { banner: Banner; fillHeigh
         loading={fillHeight ? "eager" : "lazy"}
         decoding="async"
         className="absolute inset-0 h-full w-full object-cover"
+        style={{ objectPosition: bannerObjectPosition(banner.focus_point ?? "center") }}
         draggable={false}
       />
       {/* Dark vignette — strongest behind the text block */}

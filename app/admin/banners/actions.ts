@@ -9,6 +9,19 @@ import { logAdminAction } from "@/lib/adminAudit";
 const POSITIONS = ["hero", "right_top", "right_bottom"] as const;
 type BannerPosition = (typeof POSITIONS)[number];
 
+const FOCUS_POINTS = [
+  "center","top","bottom","left","right",
+  "top-left","top-right","bottom-left","bottom-right",
+] as const;
+type BannerFocusPoint = (typeof FOCUS_POINTS)[number];
+
+function parseFocusPoint(value: unknown): BannerFocusPoint {
+  if (typeof value === "string" && (FOCUS_POINTS as readonly string[]).includes(value)) {
+    return value as BannerFocusPoint;
+  }
+  return "center";
+}
+
 const MAX_TITLE = 200;
 const MAX_SUBTITLE = 400;
 const MAX_BUTTON_TEXT = 60;
@@ -69,6 +82,7 @@ type BannerInput = {
   status: boolean;
   startDate: string | null;
   endDate: string | null;
+  focusPoint: BannerFocusPoint;
 };
 
 function buildBannerInput(form: FormData): {
@@ -106,6 +120,8 @@ function buildBannerInput(form: FormData): {
     return { ok: false, error: "Link CTA wajib diisi jika teks CTA diisi." };
   }
 
+  const focusPoint = parseFocusPoint(form.get("focus_point"));
+
   return {
     ok: true,
     value: {
@@ -120,6 +136,7 @@ function buildBannerInput(form: FormData): {
       status,
       startDate,
       endDate,
+      focusPoint,
     },
   };
 }
@@ -147,6 +164,7 @@ export async function createBanner(
       status: v.status,
       start_date: v.startDate,
       end_date: v.endDate,
+      focus_point: v.focusPoint,
     })
     .select("id")
     .single();
@@ -209,6 +227,7 @@ export async function updateBanner(
       status: v.status,
       start_date: v.startDate,
       end_date: v.endDate,
+      focus_point: v.focusPoint,
     })
     .eq("id", id);
 

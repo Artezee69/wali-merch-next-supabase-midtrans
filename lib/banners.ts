@@ -1,25 +1,9 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import type { Banner, BannerPosition } from "@/lib/banner-types";
 
-export type BannerPosition = "hero" | "right_top" | "right_bottom";
-
-export type Banner = {
-  id: number;
-  title: string;
-  subtitle: string | null;
-  image_url: string;
-  storage_path: string;
-  button_text: string | null;
-  button_link: string | null;
-  position: BannerPosition;
-  sort_order: number;
-  status: boolean;
-  start_date: string | null;
-  end_date: string | null;
-  hide_overlay: boolean;
-  created_at: string;
-  updated_at: string;
-};
+export type { Banner, BannerPosition, BannerFocusPoint } from "@/lib/banner-types";
+export { bannerObjectPosition } from "@/lib/banner-types";
 
 /** Active banners visible to the public (RLS already filters, but we double-check window). */
 function isCurrentlyActive(b: Banner): boolean {
@@ -36,7 +20,7 @@ export async function getActiveBannersByPosition(
   const { data, error } = await supabaseAdmin
     .from("banners")
     .select(
-      "id, title, subtitle, image_url, storage_path, button_text, button_link, position, sort_order, status, start_date, end_date, hide_overlay, created_at, updated_at"
+      "id, title, subtitle, image_url, storage_path, button_text, button_link, position, sort_order, status, start_date, end_date, hide_overlay, focus_point, created_at, updated_at"
     )
     .eq("position", position)
     .eq("status", true)

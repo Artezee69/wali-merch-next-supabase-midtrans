@@ -27,6 +27,17 @@ import {
   Section,
 } from "@/components/admin/ui";
 
+type BannerFocusPoint =
+  | "center"
+  | "top"
+  | "bottom"
+  | "left"
+  | "right"
+  | "top-left"
+  | "top-right"
+  | "bottom-left"
+  | "bottom-right";
+
 type BannerInitial = {
   id?: number;
   title: string;
@@ -40,7 +51,20 @@ type BannerInitial = {
   status: boolean;
   start_date: string | null;
   end_date: string | null;
+  focus_point?: BannerFocusPoint;
 };
+
+const FOCUS_OPTIONS: { value: BannerFocusPoint; label: string }[] = [
+  { value: "center", label: "Tengah" },
+  { value: "top", label: "Atas" },
+  { value: "bottom", label: "Bawah" },
+  { value: "left", label: "Kiri" },
+  { value: "right", label: "Kanan" },
+  { value: "top-left", label: "Atas-Kiri" },
+  { value: "top-right", label: "Atas-Kanan" },
+  { value: "bottom-left", label: "Bawah-Kiri" },
+  { value: "bottom-right", label: "Bawah-Kanan" },
+];
 
 type Props = {
   mode: "create" | "edit";
@@ -166,12 +190,12 @@ export default function BannerForm({ mode, initial }: Props) {
         <div className="grid gap-4 sm:grid-cols-[1fr_300px]">
           <div className="overflow-hidden rounded-xl border border-[var(--ad-border)] bg-[var(--ad-surface-2)]">
             {imageUrl ? (
-              <div className="relative">
+              <div className="relative overflow-hidden rounded-xl bg-black/90">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={imageUrl}
                   alt="Preview"
-                  className="block h-auto w-full max-h-[400px] object-contain"
+                  className="block h-auto w-full max-h-[400px] object-cover"
                 />
                 <button
                   type="button"
@@ -314,6 +338,19 @@ export default function BannerForm({ mode, initial }: Props) {
                 Tampilkan di homepage
               </span>
             </label>
+          </Field>
+          <Field label="Fokus Gambar" hint="Ke mana gambar difokuskan saat crop">
+            <select
+              name="focus_point"
+              defaultValue={initial?.focus_point ?? "center"}
+              className={inp}
+            >
+              {FOCUS_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
           </Field>
           <div />
           <Field label="Tanggal Mulai" hint="Opsional">

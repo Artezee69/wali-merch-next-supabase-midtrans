@@ -75,25 +75,41 @@ export default async function ProductsPage({
   const initialQuery = params?.q || "";
   const initialCategory = params?.category || "All";
 
-  let productsData;
-  let productsError;
+  let productsData: any[] | null = null;
+  let productsError: string | null = null;
+
   try {
     const { data, error } = await supabaseAdmin
       .from("products")
-      .select("*, product_images(order=sort_order.asc), product_variants(order=created_at.asc)")
-      .eq("is_active", true)
+      .select("*, product_images, product_variants")
+      .eq("status", "active")
       .order("created_at", { ascending: false });
-    productsData = data;
-    productsError = error;
-  } catch {
-    // Fallback: if created_at column doesn't exist yet (migration 029 not applied)
-    const { data, error } = await supabaseAdmin
-      .from("products")
-      .select("*, product_images(order=sort_order.asc), product_variants(*)")
-      .eq("is_active", true)
-      .order("created_at", { ascending: false });
-    productsData = data;
-    productsError = error;
+    if (error) {
+      productsError = error.message;
+      // Fallback 1: use is_active if status column not available
+      const fb1 = await supabaseAdmin
+        .from("products")
+        .select("*, product_images, product_variants")
+        .eq("is_active", true);
+      productsData = fb1.data;
+      if (fb1.error) productsError = fb1.error.message;
+      // Fallback 2: no filter at all (last resort)
+      if (!productsData) {
+        const fb2 = await supabaseAdmin
+          .from("products")
+          .select("*, product_images, product_variants");
+        productsData = fb2.data;
+        if (fb2.error) productsError = fb2.error.message;
+      }
+    } else {
+      productsData = data;
+    }
+  } catch (err) {
+    productsError = err instanceof Error ? err.message : String(err);
+  }
+
+  if (productsError) {
+    console.error("[products page] query error:", productsError);
   }
 
   // Fetch order_items to calculate sold quantities
@@ -135,6 +151,18 @@ export default async function ProductsPage({
   return (
     <main style={{ background: "var(--bg-primary)" }}>
       <Navbar />
+      {productsError && (
+        <div style={{
+          padding: "12px 24px",
+          background: "#fef2f2",
+          borderBottom: "1px solid #fecaca",
+          color: "#991b1b",
+          fontSize: "13px",
+          fontFamily: "monospace",
+        }}>
+          DB Error: {productsError}
+        </div>
+      )}
       <ProductsExplorer
         products={products}
         categories={categories}
