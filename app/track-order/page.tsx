@@ -82,7 +82,10 @@ export default async function TrackOrderPage({
   );
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-black text-white">
+    <main
+      className="min-h-screen overflow-x-hidden"
+      style={{ background: "var(--bg-primary)", color: "var(--text-primary)" }}
+    >
       <MidtransScript />
       <Navbar activeKey="track-order" />
 

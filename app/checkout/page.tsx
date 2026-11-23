@@ -6,7 +6,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import PageHeader from "@/components/PageHeader";
 import { rupiah } from "@/lib/format";
 import { useCartContext } from "@/components/CartProvider";
 import { useAuth } from "@/hooks/useAuth";
@@ -47,9 +46,6 @@ type ShippingResponse = {
   currency: string;
 };
 
-/**
- * Convert CartProvider item (DB row) to the format the checkout form expects.
- */
 function cartToCheckout(cartItem: ReturnType<typeof useCartContext>["items"][number]): CheckoutCartItem {
   return {
     cartItemId: cartItem.id ?? "",
@@ -64,28 +60,28 @@ function cartToCheckout(cartItem: ReturnType<typeof useCartContext>["items"][num
   };
 }
 
-const mobileExtras = (
-  <Link
-    href="/cart"
-    className="rounded-2xl border border-gray-700 dark:border-white/10 px-4 py-4 text-center text-sm font-black uppercase tracking-wider text-gray-300 dark:text-white/80 transition hover:bg-gray-800 dark:hover:bg-white dark:hover:text-gray-900"
-  >
-    Kembali ke Keranjang
-  </Link>
-);
-
-const desktopCta = (
-  <Link
-    href="/cart"
-    className="rounded-full bg-gray-100 dark:bg-white px-5 py-2 text-sm font-black text-gray-900 dark:text-gray-800 transition hover:scale-105 hover:bg-green-600 dark:hover:bg-[#d7ff53] dark:hover:text-white"
-  >
-    Kembali ke Keranjang
-  </Link>
-);
-
 const formatWeight = (grams: number) => {
   if (grams >= 1000) return `${(grams / 1000).toFixed(1).replace(/\.0$/, "")} kg`;
   return `${grams} g`;
 };
+
+/* ────────────────────────────────────────────── */
+/*  Shared style tokens (CSS-variable driven)     */
+/* ────────────────────────────────────────────── */
+
+/* 12px uppercase form labels */
+const labelCls =
+  "mb-2 block text-[12px] font-semibold uppercase tracking-wider text-white/40";
+
+/* Inputs: subtle glass fill, accent focus ring */
+const inputCls =
+  "w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-3 text-sm text-white/90 placeholder:text-white/25 outline-none transition-colors duration-200 focus:border-[#d7ff53]/50 focus:bg-white/[0.06] focus:ring-2 focus:ring-[#d7ff53]/15";
+
+const requiredMark = <span className="ml-1 text-[#d7ff53]">*</span>;
+
+/* ────────────────────────────────────────────── */
+/*  Main Page                                     */
+/* ────────────────────────────────────────────── */
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -109,7 +105,6 @@ export default function CheckoutPage() {
     notes: "",
   });
 
-  // Shipping state
   const [shippingOptions, setShippingOptions] = useState<ShippingResponse | null>(null);
   const [shippingLoading, setShippingLoading] = useState(false);
   const [shippingError, setShippingError] = useState("");
@@ -117,7 +112,7 @@ export default function CheckoutPage() {
   const [originCityName, setOriginCityName] = useState<string>("Tangerang Selatan");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Auto-fill shipping form from registered profile (name, phone, email, address)
+  /* Auto-fill from profile */
   useEffect(() => {
     if (profileLoading || !profile || !user) return;
     setForm((prev) => ({
@@ -129,9 +124,7 @@ export default function CheckoutPage() {
     }));
   }, [profile, profileLoading, user?.id]);
 
-  // Pull the latest cart from CartProvider (DB-backed) and enrich with
-  // product + variant metadata. We do enrichment lazily because the
-  // CartProvider only stores `product_id`/`variant_id`/`quantity`/`price_at_add`.
+  /* Enrich cart items with product + variant metadata */
   useEffect(() => {
     if (!authReady) return;
     if (cartItems.length === 0) {
@@ -148,7 +141,7 @@ export default function CheckoutPage() {
         const [{ data: prods }, { data: vars }] = await Promise.all([
           supabasePublic
             .from("products")
-            .select("id, name, slug, product_images(image_url)")
+            .select("id, name, slug, product_images(image_url, sort_order)")
             .in("id", productIds),
           supabasePublic
             .from("product_variants")
@@ -160,22 +153,25 @@ export default function CheckoutPage() {
 
         const prodMap = new Map<string, { name: string; slug: string; image_url: string | null }>();
         (prods ?? []).forEach((p: any) => {
+          const sortedImages = [...(p.product_images || [])].sort(
+            (a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
+          );
           prodMap.set(p.id, {
             name: p.name,
             slug: p.slug,
-            image_url: p.product_images?.[0]?.image_url ?? null,
+            image_url: sortedImages[0]?.image_url ?? null,
           });
         });
 
         const varMap = new Map<string, {
-  size: string | null;
-  color: string | null;
-  stock: number | null;
-  option1Name: string | null;
-  option1Value: string | null;
-  option2Name: string | null;
-  option2Value: string | null;
-}>();
+          size: string | null;
+          color: string | null;
+          stock: number | null;
+          option1Name: string | null;
+          option1Value: string | null;
+          option2Name: string | null;
+          option2Value: string | null;
+        }>();
         (vars ?? []).forEach((v: any) => {
           varMap.set(v.id, {
             size: v.size ?? null,
@@ -193,7 +189,6 @@ export default function CheckoutPage() {
           const v = varMap.get(ci.variant_id);
           const base = cartToCheckout(ci);
 
-          // Build complete variant display string from option fields OR fallback to size/color
           const variantParts: string[] = [];
           if (v?.option1Name && v?.option1Value) {
             variantParts.push(`${v.option1Name}:${v.option1Value}`);
@@ -201,8 +196,6 @@ export default function CheckoutPage() {
           if (v?.option2Name && v?.option2Value) {
             variantParts.push(`${v.option2Name}:${v.option2Value}`);
           }
-
-          // If option fields are empty (legacy data), fall back to old size/color fields
           if (variantParts.length === 0) {
             const parts: string[] = [];
             if (v?.color) parts.push(`Color:${v.color}`);
@@ -234,7 +227,7 @@ export default function CheckoutPage() {
     };
   }, [authReady, cartItems]);
 
-  // Default origin city from config
+  /* Default origin city */
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -242,7 +235,7 @@ export default function CheckoutPage() {
         const res = await fetch("/api/shipping/origin");
         const data = await res.json();
         if (mounted && data?.origin?.city) {
-          if (data.origin.city) setOriginCityName(data.origin.city);
+          setOriginCityName(data.origin.city);
         }
       } catch {
         // silent
@@ -253,31 +246,25 @@ export default function CheckoutPage() {
     };
   }, []);
 
-  const subtotal = useMemo(() => {
-    return items.reduce(
-      (total, item) => total + Number(item.price) * Number(item.quantity),
-      0
-    );
-  }, [items]);
-
-  const totalItems = useMemo(() => {
-    return items.reduce((total, item) => total + Number(item.quantity), 0);
-  }, [items]);
-
-  // Weight: 1000g default per item unless product has weight info, simple estimate
-  const totalWeight = useMemo(() => {
-    return Math.max(1000, totalItems * 500);
-  }, [totalItems]);
+  /* Derived totals */
+  const subtotal = useMemo(
+    () => items.reduce((t, i) => t + Number(i.price) * Number(i.quantity), 0),
+    [items]
+  );
+  const totalItems = useMemo(
+    () => items.reduce((t, i) => t + Number(i.quantity), 0),
+    [items]
+  );
+  const totalWeight = useMemo(() => Math.max(1000, totalItems * 500), [totalItems]);
 
   const selectedShippingCost = useMemo(() => {
     if (!shippingOptions || !selectedService) return 0;
-    const svc = shippingOptions.options.find((s) => s.service === selectedService);
-    return svc?.cost ?? 0;
+    return shippingOptions.options.find((s) => s.service === selectedService)?.cost ?? 0;
   }, [shippingOptions, selectedService]);
 
   const total = subtotal + selectedShippingCost;
 
-  // Trigger shipping cost calc with debounce on city/postal change
+  /* Shipping cost check (debounced) */
   function checkShipping(cityOverride?: string, postalOverride?: string) {
     const cityName = (cityOverride ?? form.city).trim();
     const postal = (postalOverride ?? form.postal_code).trim();
@@ -290,18 +277,13 @@ export default function CheckoutPage() {
         const res = await fetch("/api/shipping/cost", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            city: cityName,
-            postal_code: postal,
-            item_count: totalItems,
-          }),
+          body: JSON.stringify({ city: cityName, postal_code: postal, item_count: totalItems }),
         });
         const data: ShippingResponse = await res.json();
         if (!res.ok || !data?.success) {
           throw new Error((data as any)?.error || "Gagal cek ongkir");
         }
         setShippingOptions(data);
-        // Auto-select recommended service (default to JNE REG)
         if (data.options && data.options.length > 0) {
           const recommended = data.options.find((s) => s.isRecommended);
           setSelectedService(
@@ -325,7 +307,6 @@ export default function CheckoutPage() {
   ) {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
-
     if (name === "city" || name === "postal_code") {
       checkShipping(
         name === "city" ? value : undefined,
@@ -336,51 +317,40 @@ export default function CheckoutPage() {
 
   function openConfirmModal() {
     setErrorMessage("");
-
     if (items.length === 0) {
       setErrorMessage("Keranjang masih kosong. Tambahkan produk dulu.");
       return;
     }
-
     if (!form.customer_name || !form.customer_phone || !form.address) {
       setErrorMessage("Nama, nomor WhatsApp, dan alamat wajib diisi.");
       return;
     }
-
     if (!form.city) {
       setErrorMessage("Kota tujuan wajib diisi untuk cek ongkir.");
       return;
     }
-
     if (shippingOptions && !selectedService) {
       setErrorMessage("Pilih layanan pengiriman JNE terlebih dahulu.");
       return;
     }
-
     setShowConfirmModal(true);
   }
 
   async function submitCheckout() {
     setErrorMessage("");
-
     if (items.length === 0) {
       setErrorMessage("Keranjang masih kosong. Tambahkan produk dulu.");
       return;
     }
-
     if (!form.customer_name || !form.customer_phone || !form.address) {
       setErrorMessage("Nama, nomor WhatsApp, dan alamat wajib diisi.");
       return;
     }
-
     try {
       setLoading(true);
-
       const response = await fetch("/api/payment/order", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           customer: form,
           user_id: user?.id || null,
@@ -410,13 +380,10 @@ export default function CheckoutPage() {
       });
 
       const result = await response.json();
-
       if (!response.ok) {
         throw new Error(result.error || "Checkout gagal.");
       }
 
-      // Clear the DB cart (and localStorage fallback if present) once
-      // the server has accepted the order.
       try {
         await clearCart();
       } catch (e) {
@@ -427,7 +394,6 @@ export default function CheckoutPage() {
         window.dispatchEvent(new Event("cart-updated"));
       }
 
-      // Redirect to the two-step payment page with the order code.
       router.push(`/payment?order=${encodeURIComponent(result.order_code)}`);
     } catch (error: any) {
       setErrorMessage(error.message || "Checkout gagal.");
@@ -441,156 +407,143 @@ export default function CheckoutPage() {
     await submitCheckout();
   }
 
+  /* ────────────────────────────────────────── */
+  /*  Render                                     */
+  /* ────────────────────────────────────────── */
+
   return (
-    <main className="relative min-h-screen overflow-x-hidden bg-gray-900 text-gray-100 dark:bg-[#060606] dark:text-white">
-      {/* Cinematic global background */}
-      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute left-1/2 top-0 h-[120vh] w-[140vw] -translate-x-1/2 bg-[radial-gradient(ellipse_at_center_top,_rgba(215,255,83,0.10),_transparent_55%)]" />
-        <div className="absolute -left-40 top-1/3 h-[36rem] w-[36rem] rounded-full bg-[#1a1a1a]/20 blur-[140px] animate-aurora-2" />
-        <div className="absolute -right-40 bottom-1/4 h-[36rem] w-[36rem] rounded-full bg-[#1a1a1a]/10 blur-[140px] animate-aurora-1" />
-        <div className="absolute left-1/2 top-2/3 h-[28rem] w-[28rem] -translate-x-1/2 rounded-full bg-[#d7ff53]/10 blur-[160px] animate-aurora-3" />
-        <div className="absolute inset-0 bg-grid-fade [background-size:56px_56px] opacity-[0.22]" />
-        <div className="absolute inset-0 bg-noise opacity-[0.06] mix-blend-overlay" />
-        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-[linear-gradient(to_top,#060606_5%,transparent_70%)]" />
+    <main className="min-h-screen bg-black text-white">
+      <Navbar activeKey="cart" />
+
+      {/* ── Page header: bold title + trust badge ── */}
+      <div className="border-b border-white/[0.06] bg-gradient-to-b from-[#d7ff53]/[0.04] to-transparent">
+        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+          <div className="flex items-center gap-3">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-[#d7ff53]/25 bg-[#d7ff53]/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#d7ff53]">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="shrink-0">
+                <rect x="3" y="11" width="18" height="11" rx="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+              Checkout Aman
+            </span>
+          </div>
+          <div>
+            <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
+              Selesaikan <span className="text-[#d7ff53]">Pesananmu</span>
+            </h1>
+            <p className="mt-2 max-w-xl text-sm leading-relaxed text-white/40">
+              Isi data pengiriman dengan benar. Setelah checkout, pantau status
+              pesananmu lewat halaman Lacak Pesanan.
+            </p>
+          </div>
+        </div>
       </div>
 
-      <Navbar activeKey="cart" desktopCta={desktopCta} mobileExtras={mobileExtras} />
-
-      <PageHeader
-        badge="Checkout Aman"
-        title="Checkout"
-        highlight="Pesanan"
-        description="Isi data pengiriman dengan benar. Setelah checkout berhasil, kamu bisa cek status pesanan melalui halaman Lacak Pesanan."
-      />
-
-      <section className="relative mx-auto max-w-7xl px-4 py-10 md:px-8 md:py-14">
+      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
         {!authReady || cartLoading ? (
-          <div className="group relative overflow-hidden rounded-[2rem] border border-gray-700 dark:border-white/10 bg-gray-200 dark:bg-white/[0.04] p-6 text-center backdrop-blur-md sm:p-8 md:rounded-[2.5rem] md:p-14 animate-blur-in">
-            <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_50%_0%,rgba(215,255,83,0.18),transparent_60%)] opacity-60" />
-            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full border border-gray-700 dark:border-white/10 bg-gradient-to-br from-gray-300 dark/from-white/10 to-gray-100 dark:to-white/0 text-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] sm:mb-6 sm:h-20 sm:w-20 sm:text-3xl animate-float-y">
-              ⏳
-            </div>
-            <h2 className="text-2xl font-black uppercase text-gray-800 dark:text-white sm:text-3xl md:text-5xl">
-              Memuat Keranjang
-            </h2>
-            <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-gray-600 dark:text-gray-300 sm:mt-4 sm:text-base sm:leading-8">
-              Sedang mengambil data keranjang kamu...
-            </p>
-          </div>
+          <StatePanel
+            icon="⏳"
+            title="Memuat Keranjang"
+            subtitle="Sedang mengambil data keranjang kamu..."
+          />
         ) : items.length === 0 ? (
-          <div className="group relative overflow-hidden rounded-[2rem] border border-gray-700 dark:border-white/10 bg-gray-200 dark:bg-white/[0.04] p-6 text-center backdrop-blur-md sm:p-8 md:rounded-[2.5rem] md:p-14 animate-blur-in">
-            <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_50%_0%,rgba(215,255,83,0.18),transparent_60%)] opacity-60" />
-            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full border border-gray-700 dark:border-white/10 bg-gradient-to-br from-gray-300 dark/from-white/10 to-gray-100 dark:to-white/0 text-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] sm:mb-6 sm:h-20 sm:w-20 sm:text-3xl animate-float-y">
-              🛒
-            </div>
-
-            <h2 className="text-2xl font-black uppercase text-gray-800 dark:text-white sm:text-3xl md:text-5xl">
-              Keranjang Masih Kosong
-            </h2>
-
-            <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-gray-600 dark:text-gray-300 sm:mt-4 sm:text-base sm:leading-8">
-              Checkout belum bisa dilanjutkan karena belum ada produk di
-              keranjang.
-            </p>
-
-            <Link
-              href="/products"
-              className="group/btn relative mt-6 inline-flex items-center gap-2 overflow-hidden rounded-full bg-green-600 dark:bg-[#d7ff53] px-6 py-3.5 text-sm font-black uppercase tracking-wider text-white dark:text-black transition hover:scale-105 hover:bg-green-700 dark:hover:bg-white sm:mt-8 sm:px-8 sm:py-4"
-            >
-              <span className="relative z-10">Belanja Sekarang</span>
-              <span className="absolute inset-0 -z-0 holographic opacity-0 transition group-hover/btn:opacity-100" />
-            </Link>
-          </div>
-        ) : (
-          <div className="grid gap-6 lg:grid-cols-[1fr_420px] lg:gap-8">
-            {/* LEFT: FORM */}
-            <div className="space-y-4 sm:space-y-6">
-              {/* Step indicator */}
-              <CheckoutSteps step={2} />
-
-              {/* CUSTOMER */}
-              <CheckoutCard
-                index="01"
-                badge="Detail Pembeli"
-                title="Data Pembeli"
-                delayMs={0}
+          <StatePanel
+            icon=""
+            title="Keranjang Masih Kosong"
+            subtitle="Checkout belum bisa dilanjutkan karena belum ada produk di keranjang."
+            cta={
+              <Link
+                href="/products"
+                className="inline-flex items-center gap-2 rounded-full bg-[#d7ff53] px-6 py-3 text-sm font-bold text-black transition hover:bg-white/90"
               >
-                <div className="grid gap-3.5 sm:gap-4 md:grid-cols-2">
-                  <FieldText
+                Belanja Sekarang
+                <span aria-hidden>→</span>
+              </Link>
+            }
+          />
+        ) : (
+          <div className="grid gap-8 lg:grid-cols-[1fr_400px] lg:gap-12">
+            {/* ── LEFT: Form ──────────────────── */}
+            <div className="space-y-6">
+              {/* Step indicator */}
+              <StepIndicator currentStep={2} />
+
+              {/* Buyer info */}
+              <FormCard
+                step="01"
+                title="Data Pembeli"
+                delay={0}
+              >
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <TextField
                     label="Nama Lengkap"
                     required
                     name="customer_name"
                     value={form.customer_name}
                     onChange={updateField}
                     placeholder="Nama kamu"
-                    icon="user"
                   />
-                  <FieldText
+                  <TextField
                     label="Nomor WhatsApp"
                     required
                     name="customer_phone"
                     value={form.customer_phone}
                     onChange={updateField}
                     placeholder="628xxxxxxxxxx"
-                    icon="phone"
+                    inputMode="tel"
                   />
-                  <div className="md:col-span-2">
-                    <FieldText
-                      label="Email"
-                      name="customer_email"
-                      value={form.customer_email}
-                      onChange={updateField}
-                      type="email"
-                      placeholder="email@email.com"
-                      icon="mail"
-                    />
-                  </div>
+                  <TextField
+                    label="Email"
+                    name="customer_email"
+                    value={form.customer_email}
+                    onChange={updateField}
+                    type="email"
+                    placeholder="email@email.com"
+                    className="sm:col-span-2"
+                  />
                 </div>
-              </CheckoutCard>
+              </FormCard>
 
-              {/* ADDRESS */}
-              <CheckoutCard
-                index="02"
-                badge="Alamat Pengiriman"
+              {/* Shipping address */}
+              <FormCard
+                step="02"
                 title="Alamat Pengiriman"
-                delayMs={80}
+                delay={60}
               >
-                <div className="grid gap-3.5 sm:gap-4 md:grid-cols-2">
-                  <div className="md:col-span-2">
-                    <FieldTextarea
-                      label="Alamat Lengkap"
-                      required
-                      name="address"
-                      value={form.address}
-                      onChange={updateField}
-                      rows={3}
-                      placeholder="Nama jalan, nomor rumah, RT/RW, patokan..."
-                    />
-                  </div>
-                  <FieldText
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <TextareaField
+                    label="Alamat Lengkap"
+                    required
+                    name="address"
+                    value={form.address}
+                    onChange={updateField}
+                    rows={3}
+                    placeholder="Nama jalan, nomor rumah, RT/RW, patokan..."
+                    className="sm:col-span-2"
+                  />
+                  <TextField
                     label="Provinsi"
                     name="province"
                     value={form.province}
                     onChange={updateField}
                     placeholder="Banten"
                   />
-                  <FieldText
+                  <TextField
                     label="Kota / Kabupaten"
                     required
                     name="city"
                     value={form.city}
                     onChange={updateField}
                     placeholder="Tangerang Selatan"
-                    icon="city"
                   />
-                  <FieldText
+                  <TextField
                     label="Kecamatan"
                     name="district"
                     value={form.district}
                     onChange={updateField}
                     placeholder="Setu"
                   />
-                  <FieldText
+                  <TextField
                     label="Kode Pos"
                     name="postal_code"
                     value={form.postal_code}
@@ -598,19 +551,18 @@ export default function CheckoutPage() {
                     placeholder="15314"
                     inputMode="numeric"
                   />
-                  <div className="md:col-span-2">
-                    <FieldTextarea
-                      label="Catatan Order"
-                      name="notes"
-                      value={form.notes}
-                      onChange={updateField}
-                      rows={2}
-                      placeholder="Contoh: jangan dilipat terlalu kecil, kirim sore..."
-                    />
-                  </div>
+                  <TextareaField
+                    label="Catatan Order"
+                    name="notes"
+                    value={form.notes}
+                    onChange={updateField}
+                    rows={2}
+                    placeholder="Contoh: jangan dilipat terlalu kecil, kirim sore..."
+                    className="sm:col-span-2"
+                  />
                 </div>
 
-                {/* Shipping info card appears once city is filled */}
+                {/* Shipping status */}
                 {form.city && (
                   <ShippingStatus
                     loading={shippingLoading}
@@ -619,34 +571,30 @@ export default function CheckoutPage() {
                     originName={originCityName}
                   />
                 )}
-              </CheckoutCard>
+              </FormCard>
 
-              {/* SHIPPING SERVICE PICKER */}
+              {/* JNE service picker */}
               {shippingOptions && shippingOptions.options.length > 0 && (
-                <CheckoutCard
-                  index="03"
-                  badge="Layanan Pengiriman"
-                  title="Layanan Pengiriman JNE"
-                  delayMs={120}
-                >
+                <FormCard step="03" title="Layanan Pengiriman JNE" delay={120}>
                   <ShippingServicePicker
                     services={shippingOptions.options}
                     selected={selectedService}
                     onSelect={setSelectedService}
                   />
-                </CheckoutCard>
+                </FormCard>
               )}
 
+              {/* Error message */}
               {errorMessage && (
-                <div className="animate-slide-up rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm font-bold text-red-300 backdrop-blur-md sm:rounded-[1.5rem] sm:p-5">
+                <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm font-medium text-red-300">
                   {errorMessage}
                 </div>
               )}
             </div>
 
-            {/* RIGHT: SUMMARY */}
-            <aside className="h-fit lg:sticky lg:top-28">
-              <CheckoutSummary
+            {/* ── RIGHT: Summary ──────────────── */}
+            <aside className="h-fit lg:sticky lg:top-24">
+              <OrderSummary
                 items={items}
                 totalItems={totalItems}
                 subtotal={subtotal}
@@ -684,48 +632,49 @@ export default function CheckoutPage() {
   );
 }
 
-/* ---------- Sub Components ---------- */
+/* ════════════════════════════════════════════ */
+/*  Sub Components                               */
+/* ════════════════════════════════════════════ */
 
-function CheckoutSteps({ step }: { step: number }) {
+/* ── Step Indicator ── */
+function StepIndicator({ currentStep }: { currentStep: number }) {
   const steps = [
     { n: 1, label: "Keranjang" },
     { n: 2, label: "Checkout" },
     { n: 3, label: "Pembayaran" },
   ];
+
   return (
-    <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] p-3 backdrop-blur-md sm:gap-3 sm:rounded-[1.5rem] sm:p-4 animate-fade-in">
+    <div className="flex items-center rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 backdrop-blur-sm sm:p-5">
       {steps.map((s, i) => {
-        const active = s.n === step;
-        const done = s.n < step;
+        const active = s.n === currentStep;
+        const done = s.n < currentStep;
         return (
-          <div key={s.n} className="flex flex-1 items-center gap-2 sm:gap-3">
-            <div
-              className={`relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-xs font-black sm:h-9 sm:w-9 sm:text-sm transition-all duration-500 ${
-                active
-                  ? "border-[#d7ff53] bg-[#d7ff53] text-black shadow-[0_0_20px_-2px_rgba(215,255,83,0.6)]"
-                  : done
-                  ? "border-white/30 bg-white/10 text-white"
-                  : "border-white/10 bg-white/[0.03] text-white/40"
-              }`}
-            >
-              {done ? "✓" : s.n}
-              {active && (
-                <span className="absolute inset-0 rounded-full ring-1 ring-[#d7ff53]/60 animate-pulse-soft" />
-              )}
-            </div>
-            <div className="min-w-0">
-              <p
-                className={`text-[10px] font-black uppercase tracking-widest sm:text-xs ${
-                  active ? "text-white" : "text-white/40"
+          <div key={s.n} className="flex flex-1 items-center gap-3">
+            <div className="flex items-center gap-2.5">
+              <div
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-black transition-colors ${
+                  active
+                    ? "bg-[#d7ff53] text-black shadow-[0_0_16px_rgba(215,255,83,0.4)]"
+                    : done
+                    ? "bg-white/10 text-white/80"
+                    : "bg-white/[0.04] text-white/25"
+                }`}
+              >
+                {done ? "✓" : s.n}
+              </div>
+              <span
+                className={`hidden text-xs font-bold sm:block ${
+                  active ? "text-white" : done ? "text-white/50" : "text-white/25"
                 }`}
               >
                 {s.label}
-              </p>
+              </span>
             </div>
             {i < steps.length - 1 && (
-              <div className="relative h-px flex-1 overflow-hidden bg-white/10">
+              <div className="relative h-px flex-1 overflow-hidden bg-white/[0.08]">
                 <div
-                  className={`absolute inset-y-0 left-0 bg-gradient-to-r from-[#d7ff53] to-[#d7ff53]/40 transition-all duration-700 ${
+                  className={`absolute inset-y-0 left-0 bg-gradient-to-r from-[#d7ff53] to-[#d7ff53]/50 transition-all duration-500 ${
                     done ? "w-full" : "w-0"
                   }`}
                 />
@@ -738,49 +687,74 @@ function CheckoutSteps({ step }: { step: number }) {
   );
 }
 
-function CheckoutCard({
-  index,
-  badge,
+/* ── Empty / Loading State Panel ── */
+function StatePanel({
+  icon,
   title,
-  children,
-  delayMs = 0,
+  subtitle,
+  cta,
 }: {
-  index: string;
-  badge: string;
+  icon: string;
   title: string;
-  children: React.ReactNode;
-  delayMs?: number;
+  subtitle: string;
+  cta?: React.ReactNode;
 }) {
   return (
-    <div
-      style={{ animationDelay: `${delayMs}ms` }}
-      className="group relative animate-slide-up overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-4 backdrop-blur-md sm:rounded-[2rem] sm:p-5 md:p-7"
-    >
-      {/* corner index */}
-      <div className="pointer-events-none absolute -right-3 -top-3 font-display text-[5rem] font-black leading-none text-white/[0.04] sm:-right-4 sm:-top-4 sm:text-[7rem]">
-        {index}
-      </div>
-      {/* top accent line */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#d7ff53]/60 to-transparent opacity-60" />
-      {/* hover gradient */}
-      <div className="pointer-events-none absolute inset-0 -z-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100 bg-[radial-gradient(circle_at_0%_0%,rgba(215,255,83,0.06),transparent_40%)]" />
-
-      <div className="relative z-10">
-        <p className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.25em] text-[#d7ff53] sm:text-xs sm:tracking-[0.3em]">
-          <span className="h-1 w-1 rounded-full bg-[#d7ff53] shadow-[0_0_8px_rgba(215,255,83,0.8)]" />
-          {badge}
-        </p>
-
-        <h2 className="mt-2 text-2xl font-black uppercase sm:mt-3 sm:text-3xl">
-          {title}
-        </h2>
-
-        <div className="mt-5 sm:mt-6">{children}</div>
-      </div>
+    <div className="flex flex-col items-center justify-center rounded-3xl border border-white/[0.06] bg-white/[0.02] px-6 py-20 text-center backdrop-blur-sm sm:py-28">
+      {icon ? (
+        <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-white/[0.06] text-2xl">
+          {icon}
+        </div>
+      ) : (
+        <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-[#d7ff53]/[0.08] ring-1 ring-[#d7ff53]/20">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d7ff53" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#d7ff53]">
+            <circle cx="9" cy="20" r="1.5" />
+            <circle cx="17" cy="20" r="1.5" />
+            <path d="M3 4h2l2.5 12.5a1 1 0 0 0 1 .8h9.2a1 1 0 0 0 1-.8L21 9H6" />
+          </svg>
+        </div>
+      )}
+      <h2 className="text-2xl font-black tracking-tight text-white sm:text-3xl">{title}</h2>
+      <p className="mt-3 max-w-md text-sm leading-relaxed text-white/40">{subtitle}</p>
+      {cta && <div className="mt-7">{cta}</div>}
     </div>
   );
 }
 
+/* ── Form Card ── */
+function FormCard({
+  step,
+  title,
+  children,
+  delay = 0,
+}: {
+  step: string;
+  title: string;
+  children: React.ReactNode;
+  delay?: number;
+}) {
+  return (
+    <section
+      style={{ animationDelay: `${delay}ms` }}
+      className="relative rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 backdrop-blur-sm sm:p-7"
+    >
+      {/* Subtle top accent */}
+      <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-[#d7ff53]/30 to-transparent" />
+
+      <header className="mb-5 flex items-baseline gap-3 sm:mb-6">
+        <span className="font-mono text-[11px] font-black tracking-widest text-[#d7ff53]/60">
+          {step}
+        </span>
+        <h2 className="text-xl font-black tracking-tight text-white sm:text-2xl">
+          {title}
+        </h2>
+      </header>
+      {children}
+    </section>
+  );
+}
+
+/* ── Text Input ── */
 type FieldProps = {
   label: string;
   name: string;
@@ -789,43 +763,11 @@ type FieldProps = {
   placeholder?: string;
   type?: string;
   required?: boolean;
-  rows?: number;
   inputMode?: "text" | "numeric" | "tel" | "email";
-  icon?: "user" | "phone" | "mail" | "city";
+  className?: string;
 };
 
-function FieldIcon({ name }: { name: NonNullable<FieldProps["icon"]> }) {
-  const cls = "h-4 w-4";
-  switch (name) {
-    case "user":
-      return (
-        <svg viewBox="0 0 24 24" fill="none" className={cls}>
-          <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4 21a8 8 0 0 1 16 0" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-        </svg>
-      );
-    case "phone":
-      return (
-        <svg viewBox="0 0 24 24" fill="none" className={cls}>
-          <path d="M5 4h3l2 5-2.5 1.5a11 11 0 0 0 6 6L15 14l5 2v3a2 2 0 0 1-2 2A15 15 0 0 1 3 6a2 2 0 0 1 2-2Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
-        </svg>
-      );
-    case "mail":
-      return (
-        <svg viewBox="0 0 24 24" fill="none" className={cls}>
-          <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="1.6" />
-          <path d="m3 7 9 6 9-6" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
-        </svg>
-      );
-    case "city":
-      return (
-        <svg viewBox="0 0 24 24" fill="none" className={cls}>
-          <path d="M3 21h18M5 21V8l5-3 5 3v13M9 21v-6h4v6M15 21V11l4 2v8" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
-        </svg>
-      );
-  }
-}
-
-function FieldText({
+function TextField({
   label,
   name,
   value,
@@ -834,38 +776,31 @@ function FieldText({
   type = "text",
   required,
   inputMode,
-  icon,
+  className,
 }: FieldProps) {
   return (
-    <div>
-      <label className="mb-1.5 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-white/45 sm:mb-2 sm:text-xs">
+    <div className={className}>
+      <label htmlFor={name} className={labelCls}>
         {label}
-        {required && <span className="text-[#d7ff53]">*</span>}
+        {required && requiredMark}
       </label>
-      <div className="group/field relative">
-        {icon && (
-          <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-white/35 transition-colors group-focus-within/field:text-[#d7ff53] sm:left-4">
-            <FieldIcon name={icon} />
-          </span>
-        )}
-        <input
-          name={name}
-          value={value}
-          onChange={onChange}
-          type={type}
-          required={required}
-          placeholder={placeholder}
-          inputMode={inputMode}
-          className={`w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3.5 text-sm font-semibold text-white outline-none placeholder:text-white/25 transition-all duration-300 focus:border-[#d7ff53]/70 focus:bg-black/60 focus:shadow-[0_0_0_4px_rgba(215,255,83,0.10)] sm:px-5 sm:py-4 ${
-            icon ? "pl-10 sm:pl-12" : ""
-          }`}
-        />
-      </div>
+      <input
+        id={name}
+        name={name}
+        value={value}
+        onChange={onChange}
+        type={type}
+        required={required}
+        placeholder={placeholder}
+        inputMode={inputMode}
+        className={inputCls}
+      />
     </div>
   );
 }
 
-function FieldTextarea({
+/* ── Textarea ── */
+function TextareaField({
   label,
   name,
   value,
@@ -873,28 +808,29 @@ function FieldTextarea({
   placeholder,
   rows = 3,
   required,
-}: FieldProps) {
+  className,
+}: FieldProps & { rows?: number }) {
   return (
-    <div>
-      <label className="mb-1.5 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-white/45 sm:mb-2 sm:text-xs">
+    <div className={className}>
+      <label htmlFor={name} className={labelCls}>
         {label}
-        {required && <span className="text-[#d7ff53]">*</span>}
+        {required && requiredMark}
       </label>
-      <div className="group/field relative">
-        <textarea
-          name={name}
-          value={value}
-          onChange={onChange}
-          rows={rows}
-          required={required}
-          placeholder={placeholder}
-          className="w-full resize-none rounded-2xl border border-white/10 bg-black/40 px-4 py-3.5 text-sm font-semibold text-white outline-none placeholder:text-white/25 transition-all duration-300 focus:border-[#d7ff53]/70 focus:bg-black/60 focus:shadow-[0_0_0_4px_rgba(215,255,83,0.10)] sm:px-5 sm:py-4"
-        />
-      </div>
+      <textarea
+        id={name}
+        name={name}
+        value={value}
+        onChange={onChange}
+        rows={rows}
+        required={required}
+        placeholder={placeholder}
+        className={`${inputCls} resize-none`}
+      />
     </div>
   );
 }
 
+/* ── Shipping Status Banner ── */
 function ShippingStatus({
   loading,
   error,
@@ -908,46 +844,49 @@ function ShippingStatus({
 }) {
   if (loading) {
     return (
-      <div className="mt-5 flex items-center gap-3 rounded-2xl border border-[#d7ff53]/30 bg-[#d7ff53]/5 p-4 animate-fade-in">
-        <span className="relative flex h-3 w-3">
+      <div className="mt-4 flex items-center gap-3 rounded-xl border border-[#d7ff53]/20 bg-[#d7ff53]/5 p-3.5">
+        <span className="relative flex h-2.5 w-2.5">
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#d7ff53] opacity-75" />
-          <span className="relative inline-flex h-3 w-3 rounded-full bg-[#d7ff53]" />
+          <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#d7ff53]" />
         </span>
-        <p className="text-xs font-black uppercase tracking-widest text-[#d7ff53] sm:text-sm">
+        <p className="text-xs font-semibold text-[#d7ff53]">
           Mengecek ongkir JNE dari {originName}...
         </p>
-        <span className="ml-auto h-3 w-3 animate-spin rounded-full border-2 border-[#d7ff53] border-t-transparent" />
       </div>
     );
   }
+
   if (error) {
     return (
-      <div className="mt-5 flex items-center gap-3 rounded-2xl border border-red-500/30 bg-red-500/5 p-4 text-xs font-bold text-red-300 sm:text-sm animate-fade-in">
-        ⚠ {error}
+      <div className="mt-4 flex items-center gap-2.5 rounded-xl border border-red-500/20 bg-red-500/5 p-3.5 text-xs font-medium text-red-300">
+        {error}
       </div>
     );
   }
+
   if (!options) return null;
+
   if (options.options.length === 0) {
     return (
-      <div className="mt-5 flex items-center gap-3 rounded-2xl border border-amber-400/30 bg-amber-400/5 p-4 text-xs font-bold text-amber-200 sm:text-sm animate-fade-in">
-        ⚠ Kota tujuan belum dapat layanan JNE. Coba cek lagi nama kota/kabupaten.
+      <div className="mt-4 flex items-center gap-2.5 rounded-xl border border-amber-400/20 bg-amber-400/5 p-3.5 text-xs font-medium text-amber-300">
+        Kota tujuan belum dapat layanan JNE. Coba cek lagi nama kota/kabupaten.
       </div>
     );
   }
+
   return (
-    <div className="mt-5 flex flex-wrap items-center gap-3 rounded-2xl border border-[#d7ff53]/30 bg-[#d7ff53]/5 p-4 animate-fade-in">
-      <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#d7ff53] sm:text-xs">
-        <span className="h-1.5 w-1.5 rounded-full bg-[#d7ff53] shadow-[0_0_8px_rgba(215,255,83,0.8)]" />
-        JNE tersedia
-      </div>
-      <div className="text-xs text-white/65 sm:text-sm">
-        {options.options.length} layanan • Berat {formatWeight(options.weight_kg * 1000)} • Tujuan {options.destination.city || "kota ini"}
-      </div>
+    <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-[#d7ff53]/20 bg-[#d7ff53]/5 p-3.5">
+      <span className="text-xs font-semibold text-[#d7ff53]">
+        {options.options.length} layanan tersedia
+      </span>
+      <span className="text-xs text-white/50">
+        Berat {formatWeight(options.weight_kg * 1000)} · Tujuan {options.destination.city || "kota ini"}
+      </span>
     </div>
   );
 }
 
+/* ── JNE Service Picker ── */
 function ShippingServicePicker({
   services,
   selected,
@@ -958,67 +897,58 @@ function ShippingServicePicker({
   onSelect: (service: string) => void;
 }) {
   return (
-    <div className="grid gap-2.5 sm:gap-3">
-      {services.map((svc, i) => {
+    <div className="space-y-2.5" role="radiogroup" aria-label="Layanan JNE">
+      {services.map((svc) => {
         const isSelected = selected === svc.service;
         return (
           <button
-            key={`${svc.service}-${i}`}
+            key={svc.service}
             type="button"
+            role="radio"
+            aria-checked={isSelected}
             onClick={() => onSelect(svc.service)}
-            className={`group relative flex items-center justify-between gap-3 overflow-hidden rounded-2xl border p-4 text-left transition-all duration-300 sm:p-5 animate-slide-in ${
+            className={`group flex w-full items-center gap-3 rounded-xl border p-4 text-left transition-all duration-200 ${
               isSelected
-                ? "border-[#d7ff53] bg-[#d7ff53]/10 shadow-[0_0_30px_-10px_rgba(215,255,83,0.4)]"
-                : "border-white/10 bg-white/[0.03] hover:border-white/30 hover:bg-white/[0.06]"
+                ? "border-[#d7ff53]/60 bg-[#d7ff53]/[0.06] shadow-[0_0_20px_rgba(215,255,83,0.08)]"
+                : "border-white/[0.06] bg-white/[0.02] hover:border-white/[0.14] hover:bg-white/[0.04]"
             }`}
-            style={{ animationDelay: `${i * 60}ms` }}
           >
-            {/* selection ring */}
-            {isSelected && (
-              <>
-                <span className="absolute inset-0 -z-10 holographic opacity-30" />
-                <span className="pointer-events-none absolute -inset-px rounded-2xl ring-1 ring-[#d7ff53]/40" />
-              </>
-            )}
+            {/* Radio dot */}
+            <span
+              className={`relative flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-full border-2 ${
+                isSelected ? "border-[#d7ff53]" : "border-white/20"
+              }`}
+              style={{ height: "1.125rem", width: "1.125rem" }}
+            >
+              {isSelected && (
+                <span className="h-2 w-2 rounded-full bg-[#d7ff53]" />
+              )}
+            </span>
 
-            <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-              <div
-                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xs font-black sm:h-12 sm:w-12 ${
-                  isSelected
-                    ? "bg-[#d7ff53] text-black"
-                    : "bg-white/5 text-white/55"
-                }`}
-              >
-                {isSelected ? "✓" : svc.service}
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-black uppercase sm:text-base">
-                  {svc.name}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <p className={`text-sm font-bold ${isSelected ? "text-white" : "text-white/80"}`}>
+                  {svc.service}
                 </p>
-                <p className="truncate text-[11px] font-semibold text-white/55 sm:text-xs">
-                  {svc.description}
-                </p>
-                {svc.etd && (
-                  <p className="mt-0.5 text-[10px] font-bold uppercase tracking-widest text-[#d7ff53]/80 sm:text-[11px]">
-                    Estimasi {svc.etd}
-                  </p>
-                )}
                 {svc.isRecommended && (
-                  <span className="mt-1 inline-block rounded-full border border-[#d7ff53]/40 bg-[#d7ff53]/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-[#d7ff53] sm:text-[10px]">
-                    Rekomendasi
+                  <span className="rounded-full border border-[#d7ff53]/30 bg-[#d7ff53]/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-[#d7ff53]">
+                    Pilihan
                   </span>
                 )}
               </div>
-            </div>
-            <div className="text-right">
-              <p
-                className={`text-sm font-black sm:text-base ${
-                  isSelected ? "text-[#d7ff53]" : "text-white"
-                }`}
-              >
-                {rupiah(svc.cost)}
+              <p className="mt-0.5 text-xs leading-relaxed text-white/35">
+                {svc.name}
+                {svc.etd ? ` · Estimasi ${svc.etd}` : ""}
               </p>
             </div>
+
+            <p
+              className={`shrink-0 text-sm font-black tracking-tight ${
+                isSelected ? "text-[#d7ff53]" : "text-white/50 group-hover:text-white/70"
+              }`}
+            >
+              {rupiah(svc.cost)}
+            </p>
           </button>
         );
       })}
@@ -1026,7 +956,8 @@ function ShippingServicePicker({
   );
 }
 
-function CheckoutSummary({
+/* ── Order Summary ── */
+function OrderSummary({
   items,
   totalItems,
   subtotal,
@@ -1049,170 +980,146 @@ function CheckoutSummary({
   loading: boolean;
   onCheckout: () => void;
 }) {
-  const selectedSvc = shippingOptions?.options.find((s) => s.service === selectedService);
+  const selectedSvc = shippingOptions?.options.find(
+    (s) => s.service === selectedService
+  );
 
   return (
-    <div className="relative animate-slide-up overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-md sm:rounded-[2rem]">
-      {/* top accent */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#d7ff53]/70 to-transparent" />
-      {/* corner glow */}
-      <div className="pointer-events-none absolute -right-12 -top-12 h-48 w-48 rounded-full bg-[#d7ff53]/10 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-12 -left-12 h-48 w-48 rounded-full bg-[#1a1a1a]/30 blur-3xl" />
+    <div className="relative overflow-hidden rounded-3xl border border-white/[0.08] bg-white/[0.03] p-5 backdrop-blur-xl sm:p-6">
+      {/* Glass glow */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-[#d7ff53]/[0.06] to-transparent" />
 
-      <div className="relative p-4 sm:p-6 md:p-7">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.25em] text-[#d7ff53] sm:text-xs sm:tracking-[0.3em]">
-              <span className="h-1 w-1 rounded-full bg-[#d7ff53] shadow-[0_0_8px_rgba(215,255,83,0.8)]" />
-              Ringkasan Pesanan
-            </p>
-            <h2 className="mt-2 text-2xl font-black uppercase sm:mt-3 sm:text-3xl">
-              Pesanan Kamu
-            </h2>
-          </div>
-          <div className="hidden h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xs font-black sm:flex">
-            {totalItems}
-          </div>
+      {/* Header */}
+      <div className="relative flex items-center justify-between border-b border-white/[0.08] pb-4">
+        <div>
+          <p className="text-[11px] font-black uppercase tracking-[0.15em] text-white/35">
+            Ringkasan
+          </p>
+          <h2 className="mt-1 text-2xl font-black tracking-tight text-white">
+            Pesanan Kamu
+          </h2>
         </div>
-
-        {/* items */}
-        <div className="mt-5 max-h-72 space-y-2.5 overflow-y-auto pr-1 sm:mt-6 sm:space-y-3">
-          {items.map((item, index) => (
-            <div
-              key={`${item.productId}-${item.variantId}-${index}`}
-              className="flex gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-3 transition hover:border-white/20 hover:bg-white/[0.05] sm:gap-4 sm:p-3.5"
-            >
-              <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-white/5 sm:h-16 sm:w-16">
-                {item.image ? (
-                  <Image
-                    src={item.image}
-                    alt={item.name}
-                    fill
-                    sizes="(max-width: 640px) 56px, 64px"
-                    className="object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-[10px] font-black text-white/40">
-                    IMG
-                  </div>
-                )}
-              </div>
-              <div className="min-w-0 flex-1">
-                <h3 className="line-clamp-2 text-xs font-black uppercase sm:text-sm">
-                  {item.name}
-                </h3>
-                <p className="mt-0.5 text-[10px] font-bold uppercase tracking-widest text-white/45 sm:mt-1 sm:text-[11px]">
-                  {item.size} • {item.quantity} pcs
-                </p>
-                <p className="mt-0.5 text-xs font-black sm:mt-1 sm:text-sm">
-                  {rupiah(item.price * item.quantity)}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* totals */}
-        <div className="mt-5 space-y-2.5 border-t border-white/10 pt-4 sm:mt-6 sm:space-y-3 sm:pt-5">
-          <SummaryRow label="Total Item" value={`${totalItems} pcs`} />
-          <SummaryRow label="Subtotal" value={rupiah(subtotal)} />
-          <SummaryRow
-            label="Berat Total"
-            value={formatWeight(totalWeight)}
-            muted
-          />
-          <div className="flex items-start justify-between gap-4 rounded-xl border border-white/5 bg-white/[0.02] p-3 sm:p-3.5">
-            <div className="min-w-0">
-              <p className="text-xs font-bold uppercase tracking-widest text-white/55 sm:text-sm">
-                Ongkir JNE
-              </p>
-              {selectedSvc ? (
-                <p className="mt-0.5 text-[10px] font-bold text-white/45 sm:text-[11px]">
-                  {selectedSvc.service} • {selectedSvc.etd || "estimasi"}
-                </p>
-              ) : shippingOptions ? (
-                <p className="mt-0.5 text-[10px] font-bold text-amber-300/80 sm:text-[11px]">
-                  Pilih layanan di step 3
-                </p>
-              ) : (
-                <p className="mt-0.5 text-[10px] font-bold text-white/40 sm:text-[11px]">
-                  Otomatis setelah isi kota
-                </p>
-              )}
-            </div>
-            <p
-              className={`text-right text-sm font-black sm:text-base ${
-                selectedShippingCost > 0 ? "text-[#d7ff53]" : "text-white/40"
-              }`}
-            >
-              {selectedShippingCost > 0
-                ? rupiah(selectedShippingCost)
-                : shippingOptions
-                ? "—"
-                : "..."}
-            </p>
-          </div>
-
-          <div className="relative overflow-hidden rounded-2xl border border-[#d7ff53]/30 bg-[#d7ff53]/5 p-4 sm:p-5">
-            <div className="pointer-events-none absolute inset-0 -z-0 holographic opacity-30" />
-            <div className="relative flex items-center justify-between gap-4">
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-[#d7ff53]/80 sm:text-xs">
-                  Total Bayar
-                </p>
-                <p className="text-[10px] font-bold text-white/50 sm:text-[11px]">
-                  Subtotal + ongkir
-                </p>
-              </div>
-              <p
-                key={total}
-                className="bg-gradient-to-r from-white via-[#d7ff53] to-white bg-clip-text text-xl font-black text-transparent sm:text-2xl md:text-3xl animate-number-flip"
-              >
-                {rupiah(total)}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          disabled={loading}
-          onClick={onCheckout}
-          className="group/cta relative mt-5 w-full overflow-hidden rounded-full bg-white px-6 py-3.5 text-center text-sm font-black uppercase tracking-wider text-black transition hover:scale-[1.02] hover:bg-[#d7ff53] disabled:cursor-not-allowed disabled:opacity-50 sm:mt-7 sm:px-7 sm:py-4"
-        >
-          <span className="relative z-10 inline-flex items-center gap-2">
-            {loading ? (
-              <>
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-black/30 border-t-black" />
-                Memproses...
-              </>
-            ) : (
-              <>
-                Buat Pesanan
-                <span className="transition-transform group-hover/cta:translate-x-1">→</span>
-              </>
-            )}
-          </span>
-          <span className="pointer-events-none absolute inset-0 -z-0 bg-gradient-to-r from-transparent via-white/60 to-transparent opacity-0 transition group-hover/cta:opacity-100" />
-        </button>
-
-        <Link
-          href="/cart"
-          className="mt-3 flex rounded-full border border-white/10 px-6 py-3 text-center text-xs font-black uppercase tracking-wider text-white/70 transition hover:bg-white hover:text-black sm:py-3.5 sm:text-sm"
-        >
-          Kembali ke Keranjang
-        </Link>
-
-        <div className="mt-4 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest text-white/30 sm:text-[11px]">
-          <span className="h-1 w-1 rounded-full bg-[#d7ff53]/60" />
-          Checkout aman 256-bit
-          <span className="h-1 w-1 rounded-full bg-[#d7ff53]/60" />
+        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#d7ff53]/[0.08] border border-[#d7ff53]/20 text-sm font-black text-[#d7ff53]">
+          {totalItems}
         </div>
       </div>
+
+      {/* Items list */}
+      <div className="relative max-h-64 space-y-1.5 overflow-y-auto py-4 sm:py-5">
+        {items.map((item, idx) => (
+          <div
+            key={`${item.productId}-${item.variantId}-${idx}`}
+            className="flex items-center gap-3 rounded-xl p-2 transition-colors hover:bg-white/[0.04]"
+          >
+            <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-white/[0.05] ring-1 ring-white/[0.06]">
+              {item.image ? (
+                <Image
+                  src={item.image}
+                  alt={item.name}
+                  fill
+                  sizes="48px"
+                  className="object-cover"
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center text-[10px] font-bold text-white/25">
+                  IMG
+                </div>
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="truncate text-xs font-bold text-white sm:text-sm">
+                {item.name}
+              </h3>
+              <p className="text-[11px] font-medium text-white/35">
+                {item.size} · {item.quantity} pcs
+              </p>
+            </div>
+            <p className="text-xs font-black text-white/80 sm:text-sm">
+              {rupiah(item.price * item.quantity)}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      {/* Totals */}
+      <div className="relative space-y-3 border-t border-white/[0.08] pt-4">
+        <SummaryRow label="Subtotal" value={rupiah(subtotal)} />
+        <SummaryRow label="Berat Total" value={formatWeight(totalWeight)} muted />
+
+        {/* Shipping row */}
+        <div className="flex items-center justify-between rounded-xl bg-white/[0.03] px-3.5 py-3 ring-1 ring-white/[0.05]">
+          <div>
+            <p className="text-xs font-bold text-white/55">Ongkir JNE</p>
+            <p className="mt-0.5 text-[11px] font-medium text-white/30">
+              {selectedSvc
+                ? `${selectedSvc.service}${selectedSvc.etd ? ` · ${selectedSvc.etd}` : ""}`
+                : shippingOptions
+                ? "Pilih layanan di atas"
+                : "Isi kota untuk cek ongkir"}
+            </p>
+          </div>
+          <p
+            className={`text-sm font-black tracking-tight ${
+              selectedShippingCost > 0 ? "text-[#d7ff53]" : "text-white/25"
+            }`}
+          >
+            {selectedShippingCost > 0
+              ? rupiah(selectedShippingCost)
+              : shippingOptions
+              ? "—"
+              : "..."}
+          </p>
+        </div>
+
+        {/* Grand total */}
+        <div className="flex items-end justify-between border-t border-dashed border-white/[0.1] pt-4">
+          <div>
+            <p className="text-[11px] font-black uppercase tracking-[0.15em] text-white/35">
+              Total Bayar
+            </p>
+          </div>
+          <span className="text-2xl font-black tracking-tight text-[#d7ff53] sm:text-3xl">
+            {rupiah(total)}
+          </span>
+        </div>
+      </div>
+
+      {/* CTA */}
+      <button
+        type="button"
+        disabled={loading}
+        onClick={onCheckout}
+        className="mt-6 w-full rounded-xl bg-[#d7ff53] py-4 text-sm font-black tracking-wide text-black shadow-[0_8px_30px_rgba(215,255,83,0.2)] transition-all duration-200 hover:scale-[1.02] hover:bg-white hover:shadow-[0_8px_30px_rgba(255,255,255,0.15)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100 sm:py-4"
+      >
+        {loading ? (
+          <span className="inline-flex items-center justify-center gap-2">
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-black/20 border-t-black" />
+            Memproses...
+          </span>
+        ) : (
+          "Buat Pesanan →"
+        )}
+      </button>
+
+      <Link
+        href="/cart"
+        className="mt-3 block w-full rounded-xl border border-white/[0.08] py-3.5 text-center text-xs font-bold text-white/45 transition-colors hover:bg-white/[0.04] hover:text-white"
+      >
+        Kembali ke Keranjang
+      </Link>
+
+      <p className="mt-4 flex items-center justify-center gap-1.5 text-center text-[11px] font-medium text-white/25">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" />
+          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </svg>
+        Checkout aman &amp; terenkripsi
+      </p>
     </div>
   );
 }
 
+/* ── Summary Row ── */
 function SummaryRow({
   label,
   value,
@@ -1223,17 +1130,18 @@ function SummaryRow({
   muted?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 text-xs sm:text-sm">
-      <span className={`font-bold ${muted ? "text-white/40" : "text-white/55"}`}>
+    <div className="flex items-center justify-between">
+      <span className={`text-xs font-semibold ${muted ? "text-white/30" : "text-white/50"}`}>
         {label}
       </span>
-      <span className={`font-black ${muted ? "text-white/60" : "text-white"}`}>
+      <span className={`text-sm font-black tracking-tight ${muted ? "text-white/35" : "text-white"}`}>
         {value}
       </span>
     </div>
   );
 }
 
+/* ── Confirm Modal ── */
 function ConfirmModal({
   form,
   items,
@@ -1259,50 +1167,56 @@ function ConfirmModal({
   onCancel: () => void;
   onConfirm: () => void;
 }) {
-  const selectedSvc = shippingOptions?.options.find((s) => s.service === selectedService);
+  const selectedSvc = shippingOptions?.options.find(
+    (s) => s.service === selectedService
+  );
+
   return (
-    <div className="fixed inset-0 z-[999] flex items-end justify-center bg-black/80 px-3 py-4 backdrop-blur-md sm:items-center sm:px-4 sm:py-6 animate-fade-in">
-      <div className="w-full max-w-xl overflow-hidden rounded-t-3xl border border-black/10 dark:border-white/10 bg-gray-900 dark:bg-black shadow-2xl sm:rounded-[2rem] animate-blur-in">
-        <div className="relative border-b border-white/10 bg-white/[0.04] p-5 sm:p-6">
-          <div className="pointer-events-none absolute inset-0 -z-0 bg-[radial-gradient(circle_at_top,_rgba(215,255,83,0.10),transparent_50%)]" />
-          <p className="relative inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.25em] text-[#d7ff53] sm:text-xs sm:tracking-[0.3em]">
-            <span className="h-1 w-1 rounded-full bg-[#d7ff53] shadow-[0_0_8px_rgba(215,255,83,0.8)]" />
-            Konfirmasi Data Checkout
-          </p>
-          <h2 className="relative mt-2 text-2xl font-black uppercase leading-tight text-white sm:mt-3 sm:text-3xl md:text-4xl">
-            Pastikan Data Sudah Benar
-          </h2>
+    <div className="fixed inset-0 z-[999] flex items-end justify-center bg-black/80 px-3 py-4 backdrop-blur-sm sm:items-center sm:px-4">
+      <div className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-white/[0.08] bg-[#0d0d0d] shadow-2xl ring-1 ring-white/[0.04] sm:max-w-xl">
+        {/* Header */}
+        <div className="relative border-b border-white/[0.06] p-5 sm:p-6">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#d7ff53]/[0.05] to-transparent" />
+          <div className="relative">
+            <p className="text-[11px] font-black uppercase tracking-[0.15em] text-[#d7ff53]">
+              Konfirmasi Data
+            </p>
+            <h2 className="mt-1.5 text-2xl font-black tracking-tight text-white">
+              Pastikan Data Sudah Benar
+            </h2>
+          </div>
         </div>
 
-        <div className="max-h-[70vh] overflow-y-auto p-5 sm:p-6">
-          <div className="relative overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] p-4 sm:rounded-[1.5rem] sm:p-5">
-            <p className="relative text-sm leading-7 sm:text-base sm:leading-8 text-white/90">
-              Mohon cek kembali nama pembeli, nomor WhatsApp, alamat lengkap,
-              kota, kecamatan, kode pos, dan layanan pengiriman sebelum
-              membuat order.
+        {/* Body */}
+        <div className="p-5 sm:p-6">
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+            <p className="text-sm leading-relaxed text-white/60">
+              Cek kembali nama, WhatsApp, alamat, dan layanan pengiriman
+              sebelum membuat order.
             </p>
-            <p className="relative mt-3 text-xs sm:mt-4 sm:text-sm text-white/70">
-              Kesalahan penulisan alamat, nomor WhatsApp, atau detail
-              pengiriman menjadi tanggung jawab customer. Tim Official
-              Merchandise WALI tidak bertanggung jawab atas keterlambatan,
-              salah kirim, atau kendala pengiriman akibat data checkout yang
-              tidak sesuai.
+            <p className="mt-2.5 text-[11px] leading-relaxed text-white/30">
+              Kesalahan penulisan alamat, nomor WhatsApp, atau detail pengiriman
+              menjadi tanggung jawab customer.
             </p>
           </div>
 
-          <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.04] p-4 sm:mt-6 sm:rounded-[1.5rem] sm:p-5">
-            <h3 className="text-xs font-black uppercase tracking-widest text-white/45 sm:text-sm">
+          {/* Data recap */}
+          <div className="mt-4 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+            <h3 className="text-[11px] font-black uppercase tracking-[0.15em] text-white/35">
               Data Checkout
             </h3>
 
-            <div className="mt-3 space-y-2.5 text-sm sm:mt-4 sm:space-y-3">
+            <div className="mt-3 space-y-2.5 text-sm">
               <ConfirmRow label="Nama" value={form.customer_name} />
               <ConfirmRow label="WhatsApp" value={form.customer_phone} />
-              <ConfirmRow label="Email" value={form.customer_email} />
+              {form.customer_email && (
+                <ConfirmRow label="Email" value={form.customer_email} />
+              )}
               <ConfirmRow label="Kota" value={form.city} />
-              <div className="border-t border-white/10 pt-2.5 sm:pt-3">
-                <p className="text-white/50">Alamat</p>
-                <p className="mt-1.5 text-sm leading-6 text-white sm:mt-2 sm:leading-7">
+
+              <div className="border-t border-white/[0.06] pt-2.5">
+                <p className="text-[11px] font-black uppercase tracking-wider text-white/30">Alamat</p>
+                <p className="mt-1.5 text-sm leading-relaxed text-white/75">
                   {form.address || "-"}
                   {form.district ? `, ${form.district}` : ""}
                   {form.city ? `, ${form.city}` : ""}
@@ -1310,27 +1224,28 @@ function ConfirmModal({
                   {form.postal_code ? ` ${form.postal_code}` : ""}
                 </p>
               </div>
+
               {form.notes && (
-                <div className="border-t border-white/10 pt-2.5 sm:pt-3">
-                  <p className="text-white/50">Catatan</p>
-                  <p className="mt-1.5 text-sm leading-6 text-white sm:mt-2 sm:leading-7">
-                    {form.notes}
-                  </p>
+                <div className="border-t border-white/[0.06] pt-2.5">
+                  <p className="text-[11px] font-black uppercase tracking-wider text-white/30">Catatan</p>
+                  <p className="mt-1.5 text-sm leading-relaxed text-white/75">{form.notes}</p>
                 </div>
               )}
 
-              <div className="border-t border-white/10 pt-2.5 sm:pt-3">
-                <p className="text-white/50">Item ({totalItems})</p>
+              <div className="border-t border-white/[0.06] pt-2.5">
+                <p className="text-[11px] font-black uppercase tracking-wider text-white/30">
+                  Item ({totalItems})
+                </p>
                 <ul className="mt-2 space-y-1.5">
                   {items.map((it, i) => (
                     <li
                       key={`${it.productId}-${it.variantId}-${i}`}
                       className="flex justify-between gap-3 text-xs sm:text-sm"
                     >
-                      <span className="line-clamp-1 font-bold text-white/80">
-                        {it.name} • {it.size} ×{it.quantity}
+                      <span className="line-clamp-1 font-semibold text-white/60">
+                        {it.name} · {it.size} ×{it.quantity}
                       </span>
-                      <span className="font-black text-white">
+                      <span className="font-black text-white/80">
                         {rupiah(it.price * it.quantity)}
                       </span>
                     </li>
@@ -1338,20 +1253,19 @@ function ConfirmModal({
                 </ul>
               </div>
 
-              <div className="space-y-2 border-t border-white/10 pt-2.5 sm:pt-3">
-                <ConfirmRow label="Subtotal" value={rupiah(subtotal)} highlight />
+              <div className="space-y-2 border-t border-white/[0.06] pt-2.5">
+                <ConfirmRow label="Subtotal" value={rupiah(subtotal)} />
                 {selectedSvc && (
                   <ConfirmRow
                     label={`Ongkir ${selectedSvc.service}`}
-                    value={selectedSvc.etd ? `${rupiah(selectedShippingCost)} • ${selectedSvc.etd}` : rupiah(selectedShippingCost)}
-                    highlight
+                    value={selectedSvc.etd
+                      ? `${rupiah(selectedShippingCost)} · ${selectedSvc.etd}`
+                      : rupiah(selectedShippingCost)}
                   />
                 )}
-                <div className="flex items-center justify-between gap-4 border-t border-white/10 pt-2.5 sm:pt-3">
-                  <span className="text-xs font-black uppercase tracking-widest text-white sm:text-sm">
-                    Total
-                  </span>
-                  <span className="bg-gradient-to-r from-white via-[#d7ff53] to-white bg-clip-text text-base font-black text-transparent sm:text-lg">
+                <div className="flex items-end justify-between border-t border-dashed border-white/[0.1] pt-2.5">
+                  <span className="text-[11px] font-black uppercase tracking-[0.15em] text-white/35">Total</span>
+                  <span className="text-2xl font-black tracking-tight text-[#d7ff53]">
                     {rupiah(total)}
                   </span>
                 </div>
@@ -1359,35 +1273,30 @@ function ConfirmModal({
             </div>
           </div>
 
-          <div className="mt-5 grid grid-cols-1 gap-2.5 sm:mt-6 sm:grid-cols-2 sm:gap-3">
+          {/* Buttons */}
+          <div className="mt-5 grid grid-cols-2 gap-3">
             <button
               type="button"
               disabled={loading}
               onClick={onCancel}
-              className="rounded-full border border-white/10 px-5 py-3.5 text-sm font-black uppercase tracking-wider text-white transition hover:bg-white hover:text-black disabled:opacity-50 sm:px-7 sm:py-4"
+              className="rounded-xl border border-white/[0.1] bg-white/[0.02] py-3.5 text-sm font-black text-white/70 transition-colors hover:bg-white/[0.06] hover:text-white disabled:opacity-40"
             >
               Cek Kembali
             </button>
-
             <button
               type="button"
               disabled={loading}
               onClick={onConfirm}
-              className="group/confirm relative overflow-hidden rounded-full border border-white/20 bg-white/[0.05] px-5 py-3.5 text-sm font-black uppercase tracking-wider text-white transition hover:scale-[1.02] hover:bg-white/[0.10] disabled:cursor-not-allowed disabled:opacity-50 sm:px-7 sm:py-4"
+              className="rounded-xl bg-[#d7ff53] py-3.5 text-sm font-black text-black shadow-[0_4px_20px_rgba(215,255,83,0.15)] transition-all duration-200 hover:scale-[1.02] hover:bg-white active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100"
             >
-              <span className="relative z-10 inline-flex items-center gap-2">
-                {loading ? (
-                  <>
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-black/30 border-t-black" />
-                    Memproses...
-                  </>
-                ) : (
-                  <>
-                    Sudah Sesuai
-                    <span className="transition-transform group-hover/confirm:translate-x-1">→</span>
-                  </>
-                )}
-              </span>
+              {loading ? (
+                <span className="inline-flex items-center justify-center gap-2">
+                  <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-black/20 border-t-black" />
+                  Memproses
+                </span>
+              ) : (
+                "Sudah Sesuai →"
+              )}
             </button>
           </div>
         </div>
@@ -1396,23 +1305,18 @@ function ConfirmModal({
   );
 }
 
+/* ── Confirm Row ── */
 function ConfirmRow({
   label,
   value,
-  highlight,
 }: {
   label: string;
   value: string;
-  highlight?: boolean;
 }) {
   return (
     <div className="flex items-center justify-between gap-4">
-      <span className="text-white/50">{label}</span>
-      <span
-        className={`max-w-[260px] text-right font-black sm:max-w-[300px] ${
-          highlight ? "text-[#d7ff53]" : "text-white"
-        }`}
-      >
+      <span className="text-xs font-semibold text-white/35">{label}</span>
+      <span className="max-w-[240px] text-right text-sm font-bold text-white sm:max-w-[280px]">
         {value || "-"}
       </span>
     </div>

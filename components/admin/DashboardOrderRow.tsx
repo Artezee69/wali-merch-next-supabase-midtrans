@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Eye } from "lucide-react";
+import { Eye, ChevronRight } from "lucide-react";
+import { Pill, type PillTone } from "@/components/admin/ui";
 
 type Order = {
   id: string;
@@ -14,21 +15,21 @@ type Order = {
   customer_phone: string | null;
 };
 
-const PAYMENT_MAP: Record<string, { label: string; cls: string }> = {
-  pending:   { label: "Pending",  cls: "border-amber-500/30 bg-amber-500/10 text-amber-300" },
-  paid:      { label: "Lunas",    cls: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300" },
-  failed:    { label: "Gagal",    cls: "border-red-500/30 bg-red-500/10 text-red-300" },
-  expired:   { label: "Kadaluarsa", cls: "border-white/15 bg-white/5 text-white/60" },
-  refunded:  { label: "Refund",   cls: "border-sky-500/30 bg-sky-500/10 text-sky-300" },
-  cancelled: { label: "Dibatalkan", cls: "border-red-500/30 bg-red-500/10 text-red-300" },
+const PAYMENT_MAP: Record<string, { label: string; tone: PillTone }> = {
+  pending: { label: "Pending", tone: "amber" },
+  paid: { label: "Lunas", tone: "green" },
+  failed: { label: "Gagal", tone: "red" },
+  expired: { label: "Kadaluarsa", tone: "neutral" },
+  refunded: { label: "Refund", tone: "blue" },
+  cancelled: { label: "Dibatalkan", tone: "red" },
 };
 
-const ORDER_MAP: Record<string, { label: string; cls: string }> = {
-  waiting_payment: { label: "Menunggu Bayar", cls: "border-amber-500/30 bg-amber-500/10 text-amber-300" },
-  processing:      { label: "Diproses",      cls: "border-sky-500/30 bg-sky-500/10 text-sky-300" },
-  shipped:         { label: "Dikirim",       cls: "border-cyan-500/30 bg-cyan-500/10 text-cyan-300" },
-  completed:       { label: "Selesai",       cls: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300" },
-  cancelled:       { label: "Dibatalkan",    cls: "border-red-500/30 bg-red-500/10 text-red-300" },
+const ORDER_MAP: Record<string, { label: string; tone: PillTone }> = {
+  waiting_payment: { label: "Menunggu Bayar", tone: "amber" },
+  processing: { label: "Diproses", tone: "blue" },
+  shipped: { label: "Dikirim", tone: "blue" },
+  completed: { label: "Selesai", tone: "green" },
+  cancelled: { label: "Dibatalkan", tone: "red" },
 };
 
 function rupiah(value: number | null | undefined): string {
@@ -58,45 +59,55 @@ function shortDate(value: string | null | undefined): string {
   }
 }
 
+const ROW_ACCENT: Record<string, string> = {
+  waiting_payment: "#d97706",
+  processing: "#2563eb",
+  shipped: "#0891b2",
+  completed: "#16a34a",
+  cancelled: "#dc2626",
+};
+
 export default function DashboardOrderRow({ order }: { order: Order }) {
-  const payment = PAYMENT_MAP[order.payment_status] ?? { label: order.payment_status, cls: "border-white/15 bg-white/5 text-white/60" };
-  const status  = ORDER_MAP[order.order_status]   ?? { label: order.order_status,   cls: "border-white/15 bg-white/5 text-white/60" };
+  const payment = PAYMENT_MAP[order.payment_status] ?? { label: order.payment_status, tone: "neutral" as PillTone };
+  const status = ORDER_MAP[order.order_status] ?? { label: order.order_status, tone: "neutral" as PillTone };
   const customer = order.customer_name || order.customer_phone || "—";
+  const accent = ROW_ACCENT[order.order_status] ?? "#d1d5db";
 
   return (
-    <tr className="border-b border-white/5 last:border-b-0 hover:bg-white/[0.02]">
-      <td className="px-5 py-3 font-mono text-xs text-white/70">
+    <tr
+      className="border-b border-[var(--ad-border-soft)] transition last:border-b-0 hover:bg-[#fafbfd]"
+      style={{ boxShadow: `inset 2px 0 0 0 transparent`, transitionProperty: "background-color, box-shadow" }}
+      onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.boxShadow = `inset 2px 0 0 0 ${accent}`)}
+      onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.boxShadow = `inset 2px 0 0 0 transparent`)}
+    >
+      <td className="px-4 py-3 font-mono text-[12px] text-[var(--ad-text-2)] sm:px-5">
         {order.order_code || order.id.slice(0, 8)}
       </td>
-      <td className="px-5 py-3">
-        <div className="text-sm font-bold text-white">{customer}</div>
+      <td className="px-4 py-3 sm:px-5">
+        <div className="text-[14px] font-bold text-[var(--ad-text)]">{customer}</div>
         {order.customer_name && order.customer_phone && (
-          <div className="text-[11px] text-white/40">{order.customer_phone}</div>
+          <div className="text-[11px] text-[var(--ad-text-3)]">{order.customer_phone}</div>
         )}
       </td>
-      <td className="px-5 py-3 text-sm font-bold text-white">
+      <td className="px-4 py-3 text-[13.5px] font-semibold text-[var(--ad-text)] sm:px-5">
         {rupiah(order.total_amount)}
       </td>
-      <td className="px-5 py-3">
-        <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase ${payment.cls}`}>
-          {payment.label}
-        </span>
+      <td className="px-4 py-3 sm:px-5">
+        <Pill tone={payment.tone}>{payment.label}</Pill>
       </td>
-      <td className="px-5 py-3">
-        <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase ${status.cls}`}>
-          {status.label}
-        </span>
+      <td className="px-4 py-3 sm:px-5">
+        <Pill tone={status.tone}>{status.label}</Pill>
       </td>
-      <td className="px-5 py-3 text-[11px] text-white/50">
+      <td className="px-4 py-3 text-[11.5px] text-[var(--ad-text-3)] sm:px-5">
         {shortDate(order.created_at)}
       </td>
-      <td className="px-5 py-3 text-right">
+      <td className="px-4 py-3 text-right sm:px-5">
         <Link
           href="/admin/orders"
-          className="inline-flex items-center gap-1 rounded-full border border-white/10 px-3 py-1 text-[11px] font-bold text-white/70 transition hover:border-[#d7ff53] hover:text-[#d7ff53]"
+          className="ad-btn ad-btn-secondary ad-btn-sm"
         >
-          <Eye size={12} strokeWidth={2.4} />
-          Kelola
+          <Eye size={11} /> Kelola
+          <ChevronRight size={11} className="opacity-70" />
         </Link>
       </td>
     </tr>

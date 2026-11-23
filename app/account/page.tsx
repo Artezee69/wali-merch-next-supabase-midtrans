@@ -10,8 +10,6 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Breadcrumb from "@/components/Breadcrumb";
 import {
-  ArrowLeft,
-  ArrowRight,
   Camera,
   Check,
   Edit2,
@@ -25,6 +23,7 @@ import {
   User as UserIcon,
   Calendar,
   X,
+  ChevronRight,
 } from "lucide-react";
 
 interface UserProfile {
@@ -38,6 +37,7 @@ interface UserProfile {
   profile_image_url: string | null;
   email_confirmed_at: string | null;
   updated_at: string | null;
+  created_at: string | null;
 }
 
 function resolveDisplayName(
@@ -103,7 +103,6 @@ export default function AccountPage() {
   const [editForm, setEditForm] = useState<Partial<UserProfile>>({});
   const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
 
-  // Auth gate: wait for AuthProvider to settle, then redirect if no session.
   useEffect(() => {
     if (authLoading) return;
     if (!session) {
@@ -135,9 +134,6 @@ export default function AccountPage() {
       let row: UserProfile | null = (data as UserProfile | null) ?? null;
 
       if (!row) {
-        // On-the-fly backfill for accounts created before the trigger / backfill
-        // migration. Phone is NOT NULL UNIQUE — fall back to a per-user
-        // placeholder so the upsert never collides.
         const meta = (session.user.user_metadata ?? {}) as Record<string, unknown>;
         const full_name = (meta.full_name as string) || session.user.email?.split("@")[0] || "Pengguna";
         const phone = (((meta.phone as string) || "").trim()) || `pending:${session.user.id}`;
@@ -271,14 +267,13 @@ export default function AccountPage() {
     return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars${url}`;
   }
 
-  // Show full-screen loader while we don't yet know if user is signed in.
   if (authLoading) {
     return (
       <>
         <Navbar />
-        <main className="min-h-screen bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
-          <div className="mx-auto flex max-w-3xl items-center justify-center px-4 py-32">
-            <p className="flex items-center gap-3 text-white/60">
+        <main className="min-h-screen" style={{ background: "var(--bg-primary)", color: "var(--text-primary)" }}>
+          <div className="mx-auto flex max-w-5xl items-center justify-center px-4 py-32">
+            <p className="flex items-center gap-3 text-white/50">
               <Loader2 className="h-5 w-5 animate-spin" /> Memuat...
             </p>
           </div>
@@ -288,7 +283,6 @@ export default function AccountPage() {
     );
   }
 
-  // No session → auth gate redirects, render nothing in the meantime.
   if (!session) {
     return null;
   }
@@ -302,238 +296,340 @@ export default function AccountPage() {
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
-        <section className="border-b border-black/10 dark:border-white/10 bg-gradient-to-b from-black/[0.04] dark:from-white/[0.04] to-transparent">
-          <div className="mx-auto max-w-4xl px-4 py-10 md:px-8 md:py-14">
+      <main className="min-h-screen" style={{ background: "var(--bg-primary)", color: "var(--text-primary)" }}>
+        {/* ── Page header ── */}
+        <section className="border-b border-white/10 bg-gradient-to-b from-white/[0.05] to-transparent">
+          <div className="mx-auto max-w-5xl px-4 py-10 md:px-8 md:py-14">
             <Breadcrumb items={[{ label: "Akun Saya" }]} />
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <h1 className="text-3xl font-black tracking-wide text-gray-900 dark:text-white md:text-4xl">
-                  Akun Saya
-                </h1>
-                <p className="mt-2 max-w-xl text-sm text-gray-600 dark:text-gray-400">
-                  Kelola informasi profil, foto, dan data pribadi Anda. Semua perubahan tersimpan aman di akun Anda.
-                </p>
-              </div>
-              <Link
-                href="/"
-                className="inline-flex items-center gap-2 self-start rounded-xl border border-black/20 dark:border-white/20 bg-white/5 dark:bg-white/5/10 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 transition hover:border-green-500/50 dark:hover:border-[#d7ff53]/50 hover:text-[#d7ff53] dark:hover:text-[#d7ff53]"
+            <div className="mt-6">
+              <p
+                className="mb-2 text-[11px] font-black uppercase tracking-[0.25em]"
+                style={{ color: "var(--accent-color)" }}
               >
-                <ArrowLeft size={14} className="text-gray-600 dark:text-gray-400" />
-                Kembali ke Beranda
-              </Link>
+                Panel Akun
+              </p>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <h1
+                    className="text-3xl font-black uppercase tracking-tight md:text-4xl"
+                    style={{ color: "var(--text-primary)" }}
+                  >
+                    Akun Saya
+                  </h1>
+                  <p className="mt-2 max-w-xl text-sm" style={{ color: "var(--text-secondary)" }}>
+                    Kelola informasi profil, foto, dan data pribadi Anda.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
-        <section className="mx-auto max-w-4xl px-4 py-10 md:px-8 md:py-14">
+        {/* ── Main content ── */}
+        <section className="mx-auto max-w-5xl px-4 py-8 md:px-8 md:py-12">
           {toast && (
             <div
-              className={`mb-6 rounded-xl border px-4 py-3 text-sm ${
+              className={`mb-6 flex items-center justify-between rounded-xl border px-4 py-3 text-sm font-bold ${
                 toast.type === "success"
                   ? "border-green-500/30 bg-green-500/10 text-green-400"
                   : "border-red-500/30 bg-red-500/10 text-red-400"
               }`}
             >
               {toast.msg}
+              <button
+                type="button"
+                onClick={() => setToast(null)}
+                className="ml-4 shrink-0 text-[10px] font-black uppercase tracking-wider opacity-70 hover:opacity-100"
+              >
+                Tutup
+              </button>
             </div>
           )}
 
           {loading ? (
-            <div className="flex items-center justify-center rounded-2xl border border-white/10 bg-white/5 p-12">
-              <p className="flex items-center gap-3 text-white/60">
+            <div className="flex items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03] p-20">
+              <p className="flex items-center gap-3 text-white/50">
                 <Loader2 className="h-5 w-5 animate-spin" /> Memuat profil...
               </p>
             </div>
           ) : (
-            <div className="grid gap-6">
-              {/* Profile card */}
-              <div className="rounded-3xl border border-white/10 bg-white/5 p-6 md:p-8">
-                <div className="flex flex-col items-start gap-6 sm:flex-row sm:items-center">
-                  <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800 ring-2 border border-black/20 dark:border-white/20">
-                    {avatarSrc ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={avatarSrc}
-                        alt={displayName}
-                        className="h-full w-full object-cover"
-                        onError={(e) => {
-                          (e.currentTarget as HTMLImageElement).style.display = "none";
-                        }}
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-2xl font-black text-gray-500 dark:text-gray-400">
-                        {initials}
+            <div className="grid gap-6 lg:grid-cols-5">
+              {/* Left column (3/5): Profile + Personal Data */}
+              <div className="space-y-6 lg:col-span-3">
+                {/* ── Profile hero card ── */}
+                <div
+                  className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]"
+                >
+                  <div className="flex flex-col gap-6 p-6 sm:flex-row sm:items-center md:p-8">
+                    {/* Avatar */}
+                    <div className="shrink-0">
+                      <div
+                        className="relative h-24 w-24 overflow-hidden rounded-2xl md:h-28 md:w-28"
+                        style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-color)" }}
+                      >
+                        {avatarSrc ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={avatarSrc}
+                            alt={displayName}
+                            className="h-full w-full object-cover"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).style.display = "none";
+                            }}
+                          />
+                        ) : (
+                          <div
+                            className="flex h-full w-full items-center justify-center text-3xl font-black"
+                            style={{ color: "var(--accent-color)" }}
+                          >
+                            {initials}
+                          </div>
+                        )}
+                        {profile?.email_confirmed_at ? (
+                          <span className="absolute bottom-1.5 right-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-green-500 text-white shadow-lg">
+                            <Check size={13} />
+                          </span>
+                        ) : null}
                       </div>
-                    )}
-                  </div>
+                      <div className="mt-3 flex gap-2">
+                        <label
+                          className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-white/60 transition hover:border-[#d7ff53]/40 hover:text-[#d7ff53]"
+                        >
+                          <Camera size={12} />
+                          {uploading ? "Unggah..." : "Foto"}
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/jpg,image/png,image/webp"
+                            onChange={handleAvatarUpload}
+                            className="hidden"
+                            disabled={uploading}
+                          />
+                        </label>
+                        {profile?.profile_image_url && (
+                          <button
+                            type="button"
+                            onClick={removeAvatar}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-red-400 transition hover:bg-red-500/20"
+                          >
+                            <X size={12} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
 
-                  <div className="min-w-0 flex-1">
-                    <h2 className="truncate text-xl font-black text-gray-900 dark:text-white">{displayName}</h2>
-                    <p className="mt-1 flex items-center gap-1.5 truncate text-sm text-gray-600 dark:text-gray-400">
-                      <Mail size={14} className="shrink-0 text-gray-600 dark:text-gray-400" /> {user?.email || profile?.email || "Belum diisi"}
-                    </p>
-                    {profile?.email_confirmed_at ? (
-                      <span className="mt-2 inline-flex items-center gap-1 rounded-full border border-green-500/30 bg-green-500/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-green-400">
-                        <Check size={12} /> Email Terverifikasi
-                      </span>
-                    ) : (
-                      <span className="mt-2 inline-flex items-center gap-1 rounded-full border border-yellow-500/30 bg-yellow-500/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-yellow-400">
-                        Email Belum Diverifikasi
-                      </span>
-                    )}
+                    {/* Identity */}
+                    <div className="min-w-0 flex-1">
+                      <h2 className="truncate text-2xl font-black tracking-tight" style={{ color: "var(--text-primary)" }}>
+                        {displayName}
+                      </h2>
+                      <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-xs">
+                        <span className="inline-flex items-center gap-1.5 text-white/50">
+                          <Mail size={13} className="shrink-0" />
+                          {user?.email || profile?.email || "Belum diisi"}
+                        </span>
+                        {profile?.phone && (
+                          <span className="inline-flex items-center gap-1.5 text-white/50">
+                            <Phone size={13} className="shrink-0" />
+                            {profile.phone}
+                          </span>
+                        )}
+                      </div>
+                      <div className="mt-4">
+                        {profile?.email_confirmed_at ? (
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-green-400">
+                            <Check size={11} /> Email Terverifikasi
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-yellow-500/30 bg-yellow-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-yellow-400">
+                            Email Belum Diverifikasi
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
+                </div>
 
-                  <div className="flex items-center gap-2">
-                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold uppercase tracking-wider text-white/70 transition hover:border-[#d7ff53]/50 hover:text-[#d7ff53]">
-                      <Camera size={14} />
-                      {uploading ? "Mengunggah..." : "Ganti Foto"}
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/jpg,image/png,image/webp"
-                        onChange={handleAvatarUpload}
-                        className="hidden"
-                        disabled={uploading}
-                      />
-                    </label>
-                    {profile?.profile_image_url && (
+                {/* ── Personal data card ── */}
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 md:p-8">
+                  <div className="mb-6 flex items-center justify-between">
+                    <h3
+                      className="text-[11px] font-black uppercase tracking-[0.25em]"
+                      style={{ color: "var(--text-secondary)" }}
+                    >
+                      Data Pribadi
+                    </h3>
+                    {!editing && (
                       <button
                         type="button"
-                        onClick={removeAvatar}
-                        className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold uppercase tracking-wider text-red-400 transition hover:border-red-500/50"
-                        title="Hapus foto profil"
+                        onClick={startEdit}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-white/60 transition hover:border-[#d7ff53]/40 hover:text-[#d7ff53]"
                       >
-                        <X size={14} /> Hapus
+                        <Edit2 size={12} /> Edit
                       </button>
                     )}
                   </div>
-                </div>
-              </div>
 
-              {/* Info / Edit card */}
-              <div className="rounded-3xl border border-white/10 bg-white/5 p-6 md:p-8">
-                <div className="mb-6 flex items-center justify-between">
-                  <h3 className="text-sm font-black uppercase tracking-[0.2em] text-white/55">
-                    Data Pribadi
-                  </h3>
-                  {!editing && (
-                    <button
-                      type="button"
-                      onClick={startEdit}
-                      className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold uppercase tracking-wider text-white/80 transition hover:border-[#d7ff53]/50 hover:text-[#d7ff53]"
-                    >
-                      <Edit2 size={14} /> Edit
-                    </button>
+                  {!editing ? (
+                    <div className="grid gap-x-8 gap-y-0 sm:grid-cols-2">
+                      <InfoRow icon={UserIcon} label="Nama Lengkap" value={orPlaceholder(profile?.full_name)} />
+                      <InfoRow icon={Mail} label="Email" value={orPlaceholder(user?.email || profile?.email)} />
+                      <InfoRow icon={Phone} label="No. HP" value={orPlaceholder(profile?.phone)} />
+                      <InfoRow icon={MapPin} label="Alamat" value={orPlaceholder(profile?.address)} />
+                      <InfoRow
+                        icon={Calendar}
+                        label="Tanggal Lahir"
+                        value={formatDateID(profile?.birth_date)}
+                        meta={age !== null ? `${age} tahun` : undefined}
+                      />
+                      <InfoRow label="Jenis Kelamin" value={formatGender(profile?.gender)} />
+                    </div>
+                  ) : (
+                    <div className="space-y-5">
+                      <Field
+                        label="Nama Lengkap"
+                        value={editForm.full_name || ""}
+                        onChange={(v) => setEditForm({ ...editForm, full_name: v })}
+                      />
+                      <Field
+                        label="No. HP"
+                        type="tel"
+                        value={editForm.phone || ""}
+                        onChange={(v) => setEditForm({ ...editForm, phone: v })}
+                      />
+                      <Field
+                        label="Alamat"
+                        multiline
+                        value={editForm.address || ""}
+                        onChange={(v) => setEditForm({ ...editForm, address: v })}
+                      />
+                      <div className="grid gap-5 sm:grid-cols-2">
+                        <Field
+                          label="Tanggal Lahir"
+                          type="date"
+                          value={editForm.birth_date || ""}
+                          onChange={(v) => setEditForm({ ...editForm, birth_date: v })}
+                        />
+                        <div>
+                          <label
+                            className="mb-1.5 block text-[12px] font-bold uppercase tracking-wider"
+                            style={{ color: "var(--text-secondary)" }}
+                          >
+                            Jenis Kelamin
+                          </label>
+                          <select
+                            value={editForm.gender || ""}
+                            onChange={(e) => setEditForm({ ...editForm, gender: e.target.value })}
+                            className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm outline-none transition focus:border-[#d7ff53]/40"
+                            style={{ color: "var(--text-primary)" }}
+                          >
+                            <option value="">Pilih</option>
+                            <option value="male">Laki-laki</option>
+                            <option value="female">Perempuan</option>
+                            <option value="other">Lainnya</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap gap-3 pt-2">
+                        <button
+                          type="button"
+                          onClick={saveProfile}
+                          disabled={saving}
+                          className="inline-flex items-center gap-2 rounded-lg bg-[#d7ff53] px-5 py-3 text-sm font-black uppercase tracking-wider text-black transition hover:bg-white disabled:opacity-50"
+                        >
+                          <Save size={14} /> {saving ? "Menyimpan..." : "Simpan"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditing(false)}
+                          disabled={saving}
+                          className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-5 py-3 text-sm font-bold text-white/60 transition hover:bg-white/10 disabled:opacity-50"
+                        >
+                          Batal
+                        </button>
+                      </div>
+                    </div>
                   )}
                 </div>
 
-                {!editing ? (
-                  <ul className="divide-y divide-white/5">
-                    <InfoRow icon={UserIcon} label="Nama Lengkap" value={orPlaceholder(profile?.full_name)} />
-                    <InfoRow icon={Mail} label="Email" value={orPlaceholder(user?.email || profile?.email)} />
-                    <InfoRow icon={Phone} label="No. HP" value={orPlaceholder(profile?.phone)} />
-                    <InfoRow icon={MapPin} label="Alamat" value={orPlaceholder(profile?.address)} />
-                    <InfoRow
-                      icon={Calendar}
-                      label="Tanggal Lahir"
-                      value={formatDateID(profile?.birth_date)}
-                      meta={age !== null ? `${age} tahun` : undefined}
-                    />
-                    <InfoRow
-                      label="Jenis Kelamin"
-                      value={formatGender(profile?.gender)}
-                    />
-                  </ul>
-                ) : (
-                  <div className="space-y-4">
-                    <Field
-                      label="Nama Lengkap"
-                      value={editForm.full_name || ""}
-                      onChange={(v) => setEditForm({ ...editForm, full_name: v })}
-                    />
-                    <Field
-                      label="No. HP"
-                      type="tel"
-                      value={editForm.phone || ""}
-                      onChange={(v) => setEditForm({ ...editForm, phone: v })}
-                    />
-                    <Field
-                      label="Alamat"
-                      multiline
-                      value={editForm.address || ""}
-                      onChange={(v) => setEditForm({ ...editForm, address: v })}
-                    />
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <Field
-                        label="Tanggal Lahir"
-                        type="date"
-                        value={editForm.birth_date || ""}
-                        onChange={(v) => setEditForm({ ...editForm, birth_date: v })}
-                      />
-                      <div>
-                        <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-white/50">
-                          Jenis Kelamin
-                        </label>
-                        <select
-                          value={editForm.gender || ""}
-                          onChange={(e) => setEditForm({ ...editForm, gender: e.target.value })}
-                          className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none transition focus:border-[#d7ff53] focus:ring-1 focus:ring-[#d7ff53]/30"
-                        >
-                          <option value="" className="bg-white dark:bg-gray-800">Pilih</option>
-                          <option value="male" className="bg-white dark:bg-gray-800">Laki-laki</option>
-                          <option value="female" className="bg-white dark:bg-gray-800">Perempuan</option>
-                          <option value="other" className="bg-white dark:bg-gray-800">Lainnya</option>
-                        </select>
-                      </div>
+                {/* ── Orders link card ── */}
+                <Link
+                  href="/account/orders"
+                  className="group flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] p-5 transition hover:border-[#d7ff53]/30 hover:bg-white/[0.06] md:p-6"
+                >
+                  <div className="flex items-center gap-4">
+                    <div
+                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-[#d7ff53]"
+                    >
+                      <Package size={20} />
                     </div>
-
-                    <div className="flex flex-wrap gap-3 pt-2">
-                      <button
-                        type="button"
-                        onClick={saveProfile}
-                        disabled={saving}
-                        className="inline-flex items-center gap-2 rounded-xl bg-[#d7ff53] px-5 py-3 text-sm font-black text-black transition hover:bg-[#c7ef33] disabled:opacity-50"
-                      >
-                        <Save size={14} /> {saving ? "Menyimpan..." : "Simpan"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setEditing(false)}
-                        disabled={saving}
-                        className="rounded-xl border border-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/5 disabled:opacity-50"
-                      >
-                        Batal
-                      </button>
+                    <div>
+                      <p className="text-sm font-black uppercase tracking-wide" style={{ color: "var(--text-primary)" }}>
+                        Pesanan Saya
+                      </p>
+                      <p className="mt-0.5 text-xs text-white/45">
+                        Lihat riwayat dan status semua pesanan
+                      </p>
                     </div>
                   </div>
-                )}
+                  <ChevronRight
+                    size={18}
+                    className="shrink-0 text-white/30 transition group-hover:translate-x-0.5 group-hover:text-[#d7ff53]"
+                  />
+                </Link>
               </div>
 
-              {/* Pesanan Saya */}
-              <Link
-                href="/account/orders"
-                className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:border-[#d7ff53]/30 hover:bg-white/[0.07] sm:p-5"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5">
-                    <Package size={18} className="text-[#d7ff53]" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-white">Pesanan Saya</p>
-                    <p className="text-[11px] text-white/40">Lihat riwayat dan status pesanan Anda</p>
+              {/* Right column (2/5): Account meta + Logout */}
+              <div className="space-y-6 lg:col-span-2">
+                {/* ── Account info card ── */}
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+                  <h3
+                    className="mb-5 text-[11px] font-black uppercase tracking-[0.25em]"
+                    style={{ color: "var(--text-secondary)" }}
+                  >
+                    Akun
+                  </h3>
+                  <div className="space-y-4">
+                    <MetaRow icon={Mail} metaLabel="Email" value={user?.email || "—"} />
+                    <MetaRow
+                      icon={Calendar}
+                      metaLabel="Bergabung"
+                      value={
+                        profile?.created_at
+                          ? new Date(profile.created_at).toLocaleDateString("id-ID", {
+                              month: "short",
+                              year: "numeric",
+                            })
+                          : "—"
+                      }
+                    />
+                    <MetaRow
+                      icon={Phone}
+                      metaLabel="No. HP"
+                      value={orPlaceholder(profile?.phone)}
+                    />
+                    <MetaRow
+                      icon={MapPin}
+                      metaLabel="Alamat"
+                      value={orPlaceholder(profile?.address)}
+                    />
                   </div>
                 </div>
-                <ArrowRight size={16} className="shrink-0 text-white/40" />
-              </Link>
 
-              {/* Logout */}
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="inline-flex items-center justify-center gap-2 self-start rounded-xl border border-red-500/20 bg-red-500/5 px-5 py-3 text-sm font-bold text-red-400 transition hover:bg-red-500/10"
-              >
-                <LogOut size={16} /> Keluar dari Akun
-              </button>
+                {/* ── Danger zone ── */}
+                <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-6">
+                  <h3 className="mb-4 text-[11px] font-black uppercase tracking-[0.25em] text-red-400/80">
+                    Pengaturan
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-5 py-3.5 text-sm font-black uppercase tracking-wider text-red-400 transition hover:bg-red-500/20"
+                  >
+                    <LogOut size={16} /> Keluar dari Akun
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </section>
@@ -544,9 +640,33 @@ export default function AccountPage() {
   );
 }
 
+/* ── Sub-components ── */
+
+function MetaRow({
+  icon: Icon,
+  metaLabel,
+  value,
+}: {
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  metaLabel: string;
+  value: string;
+}) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5">
+        <Icon size={15} className="text-[#d7ff53]" />
+      </div>
+      <div className="min-w-0">
+        <p className="text-[10px] font-black uppercase tracking-[0.15em] text-white/40">{metaLabel}</p>
+        <p className="mt-0.5 truncate text-sm font-bold text-white/80">{value}</p>
+      </div>
+    </div>
+  );
+}
+
 function InfoRow({
   icon: Icon,
-  label,
+  label: rowLabel,
   value,
   meta,
 }: {
@@ -555,28 +675,29 @@ function InfoRow({
   value: string;
   meta?: string;
 }) {
+  const isPlaceholder = value === "Belum diisi";
   return (
-    <li className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
+    <div className="flex items-start gap-3 border-b border-white/5 py-3 first:pt-0 last:border-0 last:pb-0">
       {Icon ? (
-        <Icon size={16} className="mt-0.5 shrink-0 text-white/35" />
+        <Icon size={15} className="mt-0.5 shrink-0 text-white/35" />
       ) : (
-        <span className="mt-0.5 inline-block h-4 w-4 shrink-0 rounded-full bg-white/10" />
+        <span className="mt-1 h-4 w-4 shrink-0 rounded-full bg-white/10" />
       )}
       <div className="min-w-0 flex-1">
-        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/40">
-          {label}
-        </p>
-        <p className={`mt-1 text-sm ${value === "Belum diisi" ? "text-white/40" : "text-white"}`}>
+        <p className="text-[10px] font-black uppercase tracking-[0.15em] text-white/40">{rowLabel}</p>
+        <p
+          className={`mt-0.5 text-sm ${isPlaceholder ? "italic text-white/35" : "font-bold text-white/85"}`}
+        >
           {value}
-          {meta && <span className="ml-2 text-xs text-white/40">({meta})</span>}
+          {meta && <span className="ml-2 text-xs font-normal text-white/40">({meta})</span>}
         </p>
       </div>
-    </li>
+    </div>
   );
 }
 
 function Field({
-  label,
+  label: fieldLabel,
   value,
   onChange,
   type = "text",
@@ -590,22 +711,24 @@ function Field({
 }) {
   return (
     <div>
-      <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-white/50">
-        {label}
+      <label
+        className="mb-1.5 block text-[12px] font-bold uppercase tracking-wider text-white/50"
+      >
+        {fieldLabel}
       </label>
       {multiline ? (
         <textarea
           rows={3}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/30 outline-none transition focus:border-[#d7ff53] focus:ring-1 focus:ring-[#d7ff53]/30"
+          className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none transition focus:border-[#d7ff53]/40"
         />
       ) : (
         <input
           type={type}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/30 outline-none transition focus:border-[#d7ff53] focus:ring-1 focus:ring-[#d7ff53]/30"
+          className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none transition focus:border-[#d7ff53]/40"
         />
       )}
     </div>

@@ -2,7 +2,12 @@
 
 import Link from "next/link";
 import { rupiah } from "@/lib/format";
-import { ChevronRight, Printer } from "lucide-react";
+import { ChevronDown, Printer, ExternalLink } from "lucide-react";
+import {
+  AdminButton,
+  Pill,
+  type PillTone,
+} from "@/components/admin/ui";
 
 export type OrderItemRow = {
   id: string;
@@ -47,12 +52,12 @@ const orderStatusLabel: Record<string, string> = {
   cancelled: "Dibatalkan",
 };
 
-const orderStatusStyle: Record<string, string> = {
-  waiting_payment: "bg-yellow-400/15 text-yellow-300 border-yellow-400/30",
-  processing: "bg-blue-400/15 text-blue-300 border-blue-400/30",
-  shipped: "bg-purple-400/15 text-purple-300 border-purple-400/30",
-  completed: "bg-[#d7ff53]/15 text-[#d7ff53] border-[#d7ff53]/30",
-  cancelled: "bg-red-500/15 text-red-300 border-red-500/30",
+const orderStatusTone: Record<string, PillTone> = {
+  waiting_payment: "amber",
+  processing: "blue",
+  shipped: "blue",
+  completed: "green",
+  cancelled: "red",
 };
 
 const paymentStatusLabel: Record<string, string> = {
@@ -63,12 +68,12 @@ const paymentStatusLabel: Record<string, string> = {
   refunded: "Refund",
 };
 
-const paymentStatusStyle: Record<string, string> = {
-  pending: "bg-yellow-400/15 text-yellow-300 border-yellow-400/30",
-  paid: "bg-[#d7ff53]/15 text-[#d7ff53] border-[#d7ff53]/30",
-  failed: "bg-red-500/15 text-red-300 border-red-500/30",
-  expired: "bg-red-500/15 text-red-300 border-red-500/30",
-  refunded: "bg-purple-400/15 text-purple-300 border-purple-400/30",
+const paymentStatusTone: Record<string, PillTone> = {
+  pending: "amber",
+  paid: "green",
+  failed: "red",
+  expired: "neutral",
+  refunded: "blue",
 };
 
 const paymentMethodLabel: Record<string, string> = {
@@ -276,6 +281,16 @@ function printReceipt(order: OrderRow) {
   }
 }
 
+const selectCls = "ad-input";
+
+const ORDER_ACCENT: Record<string, string> = {
+  waiting_payment: "#d97706",
+  processing: "#2563eb",
+  shipped: "#0891b2",
+  completed: "#16a34a",
+  cancelled: "#dc2626",
+};
+
 export default function OrderCard({
   order,
   onUpdate,
@@ -283,34 +298,30 @@ export default function OrderCard({
   order: OrderRow;
   onUpdate: (formData: FormData) => Promise<void>;
 }) {
+  const accent = ORDER_ACCENT[order.order_status] ?? "#d1d5db";
   return (
-    <details className="group rounded-2xl border border-white/10 bg-white/[0.03] open:border-[#d7ff53]/30">
-      <summary className="flex cursor-pointer list-none items-center gap-3 px-3 py-3 sm:px-4 sm:py-4 md:px-5">
+    <details
+      className="ad-card group !p-0 overflow-hidden open:!border-[var(--ad-accent)]/30"
+      style={{ borderLeft: `2px solid ${accent}` }}
+    >
+      <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 sm:px-5 transition-colors hover:bg-[var(--ad-surface-2)]">
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="font-black text-white">{order.order_code}</span>
-            <span
-              className={`rounded-full border px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide ${
-                orderStatusStyle[order.order_status] ||
-                "border-white/10 bg-white/5 text-white/60"
-              }`}
-            >
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="font-mono text-[13px] font-bold tracking-wide text-[var(--ad-text)]">
+              {order.order_code}
+            </span>
+            <Pill tone={orderStatusTone[order.order_status] ?? "neutral"}>
               {orderStatusLabel[order.order_status] || order.order_status}
-            </span>
-            <span
-              className={`rounded-full border px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide ${
-                paymentStatusStyle[order.payment_status] ||
-                "border-white/10 bg-white/5 text-white/60"
-              }`}
-            >
+            </Pill>
+            <Pill tone={paymentStatusTone[order.payment_status] ?? "neutral"}>
               {paymentStatusLabel[order.payment_status] || order.payment_status}
-            </span>
+            </Pill>
           </div>
-          <p className="mt-1 text-sm text-white/65">
+          <p className="mt-1.5 text-[13px] font-medium text-[var(--ad-text-2)]">
             {order.customer_name}
             {order.customer_phone ? ` · ${order.customer_phone}` : ""}
           </p>
-          <p className="text-[11px] text-white/40">
+          <p className="text-[11px] text-[var(--ad-text-3)]">
             {new Date(order.created_at).toLocaleString("id-ID", {
               day: "2-digit",
               month: "short",
@@ -321,34 +332,30 @@ export default function OrderCard({
           </p>
         </div>
         <div className="text-right">
-          <p className="text-base font-black text-[#d7ff53] md:text-lg">
+          <p className="text-[15px] font-bold text-[var(--ad-text)] md:text-[16px]">
             {rupiah(order.total_amount)}
           </p>
           {order.payment_method && (
-            <p className="mt-0.5 text-[10px] uppercase tracking-wider text-white/40">
+            <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--ad-text-3)]">
               {paymentMethodLabel[order.payment_method] || order.payment_method}
             </p>
           )}
         </div>
-        <ChevronRight
+        <ChevronDown
           size={16}
-          className="shrink-0 text-white/40 transition group-open:rotate-90"
+          className="shrink-0 text-[var(--ad-text-3)] transition group-open:rotate-180"
         />
       </summary>
 
-      <div className="border-t border-white/10 p-3 sm:p-4 md:p-5">
-        <form action={onUpdate} className="grid gap-4 lg:grid-cols-3">
+      <div className="border-t border-[var(--ad-border-soft)] p-4 sm:p-5">
+        <form action={onUpdate} className="grid gap-3.5 lg:grid-cols-3">
           <input type="hidden" name="id" value={order.id} />
 
           <div>
-            <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-white/40">
-              Status Pesanan
+            <label className="ad-label">
+              <span>Status Pesanan</span>
             </label>
-            <select
-              name="order_status"
-              defaultValue={order.order_status}
-              className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2.5 text-sm text-white outline-none focus:border-[#d7ff53]"
-            >
+            <select name="order_status" defaultValue={order.order_status} className={selectCls}>
               {ORDER_STATUS_OPTIONS.map((s) => (
                 <option key={s} value={s}>
                   {orderStatusLabel[s]}
@@ -358,14 +365,10 @@ export default function OrderCard({
           </div>
 
           <div>
-            <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-white/40">
-              Status Pembayaran
+            <label className="ad-label">
+              <span>Status Pembayaran</span>
             </label>
-            <select
-              name="payment_status"
-              defaultValue={order.payment_status}
-              className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2.5 text-sm text-white outline-none focus:border-[#d7ff53]"
-            >
+            <select name="payment_status" defaultValue={order.payment_status} className={selectCls}>
               {PAYMENT_STATUS_OPTIONS.map((s) => (
                 <option key={s} value={s}>
                   {paymentStatusLabel[s]}
@@ -375,62 +378,63 @@ export default function OrderCard({
           </div>
 
           <div>
-            <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-white/40">
-              Nomor Resi
+            <label className="ad-label">
+              <span>Nomor Resi</span>
             </label>
             <input
               name="tracking_number"
               defaultValue={order.tracking_number || ""}
               placeholder="JNE1234567890"
-              className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2.5 text-sm text-white outline-none placeholder:text-white/30 focus:border-[#d7ff53]"
+              className={`${selectCls} font-mono text-[12px]`}
             />
           </div>
 
-          <div className="lg:col-span-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-[11px] text-white/45">
-              Ubahan disimpan ke database dan dicatat di audit log admin.
+          <div className="lg:col-span-3 flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-[12px] text-[var(--ad-text-3)]">
+              Perubahan disimpan ke database dan tercatat di audit log admin.
             </p>
             <div className="flex flex-wrap gap-2">
-              <button
+              <AdminButton
                 type="button"
+                variant="secondary"
+                size="sm"
                 onClick={() => printReceipt(order)}
-                className="flex items-center gap-1.5 rounded-full border border-white/10 px-4 py-2 text-[11px] font-black uppercase tracking-wider text-white/70 transition hover:bg-white/5 hover:text-white"
               >
-                <Printer size={12} />
-                Cetak Resi
-              </button>
+                <Printer size={12} /> Cetak Resi
+              </AdminButton>
               <Link
                 href={`/order/${order.order_code}`}
                 target="_blank"
-                className="rounded-full border border-white/10 px-4 py-2 text-[11px] font-black uppercase tracking-wider text-white/70 transition hover:bg-white/5 hover:text-white"
+                className="ad-btn ad-btn-secondary ad-btn-sm"
               >
-                Lihat di Website
+                <ExternalLink size={12} /> Lihat di Website
               </Link>
-              <button
-                type="submit"
-                className="rounded-full bg-[#d7ff53] px-5 py-2 text-[11px] font-black uppercase tracking-wider text-black transition hover:bg-white"
-              >
+              <AdminButton type="submit" variant="primary" size="sm">
                 Simpan
-              </button>
+              </AdminButton>
             </div>
           </div>
         </form>
 
-        <div className="mt-4 grid gap-2 rounded-xl border border-white/5 bg-black/30 p-3 text-xs text-white/55 sm:grid-cols-2">
+        <div className="mt-4 grid gap-2.5 rounded-lg bg-[var(--ad-surface-2)] p-3 text-[12px] sm:grid-cols-2">
           <div>
-            <p className="text-[10px] font-black uppercase text-white/40">Email</p>
-            <p className="font-bold text-white/80">{order.customer_email || "-"}</p>
+            <p className="text-[10px] font-bold uppercase tracking-wide text-[var(--ad-text-3)]">
+              Email
+            </p>
+            <p className="font-semibold text-[var(--ad-text)]">{order.customer_email || "-"}</p>
           </div>
           <div>
-            <p className="text-[10px] font-black uppercase text-white/40">HP</p>
-            <p className="font-bold text-white/80">{order.customer_phone || "-"}</p>
+            <p className="text-[10px] font-bold uppercase tracking-wide text-[var(--ad-text-3)]">
+              HP
+            </p>
+            <p className="font-semibold text-[var(--ad-text)]">{order.customer_phone || "-"}</p>
           </div>
         </div>
 
         {/* Transfer proof */}
         {order.payment_method === "transfer" && (
-          <div className="mt-4 rounded-xl border border-[#d7ff53]/20 bg-[#d7ff53]/[0.04] p-3 sm:p-4">
-            <p className="mb-2 text-[10px] font-black uppercase tracking-widest text-[#d7ff53]">
+          <div className="ad-inset mt-4 p-3.5">
+            <p className="mb-2.5 text-[10.5px] font-bold uppercase tracking-widest text-[var(--ad-accent)]">
               Bukti Transfer
             </p>
             {order.transfer_proof_url ? (
@@ -439,7 +443,7 @@ export default function OrderCard({
                   href={order.transfer_proof_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group relative block h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-white/10"
+                  className="group relative block h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-[var(--ad-border)]"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -453,20 +457,20 @@ export default function OrderCard({
                   </span>
                 </a>
                 <div className="min-w-0">
-                  <p className="truncate text-xs font-bold text-white/70">
+                  <p className="truncate text-[12.5px] font-semibold text-[var(--ad-text-2)]">
                     {order.transfer_proof_filename || "Bukti transfer"}
                   </p>
                   <Link
                     href={order.transfer_proof_url}
                     target="_blank"
-                    className="mt-1 inline-block text-[10px] font-black uppercase tracking-wider text-[#d7ff53] hover:underline"
+                    className="mt-0.5 inline-block text-[11.5px] font-bold text-[var(--ad-accent)] hover:underline"
                   >
                     Buka File →
                   </Link>
                 </div>
               </div>
             ) : (
-              <p className="text-xs text-white/40">
+              <p className="text-[12px] text-[var(--ad-text-3)]">
                 Belum ada bukti transfer yang diunggah.
               </p>
             )}

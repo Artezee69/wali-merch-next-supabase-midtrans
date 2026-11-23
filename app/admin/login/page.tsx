@@ -1,6 +1,13 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Lock, AlertCircle, Globe, Package, ShoppingCart, ShieldCheck } from "lucide-react";
+import {
+  AlertCircle,
+  Globe,
+  Lock,
+  Package,
+  ShieldCheck,
+  ShoppingCart,
+} from "lucide-react";
 import { getCurrentUser } from "@/lib/serverAuth";
 import LoginForm from "@/components/admin/LoginForm";
 import Navbar from "@/components/Navbar";
@@ -36,37 +43,54 @@ export default async function AdminLoginPage({
   }
 
   return (
-    <main className="min-h-screen bg-[#0b0b0b] text-white dark:bg-[#0b0b0b] dark:text-gray-100">
+    <main className="wali-admin min-h-screen !bg-white text-[var(--ad-text)]">
       <Navbar activeKey="admin" variant="admin" />
-      <section className="relative flex min-h-[calc(100vh-200px)] items-center overflow-hidden px-4 py-12 sm:px-8 sm:py-16">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,#d7ff532e,transparent_40%),radial-gradient(circle_at_bottom_right,#ff3b3033,transparent_40%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent,#0b0b0b_92%)]" />
+      <section
+        className="relative flex min-h-[calc(100vh-200px)] items-center overflow-hidden px-4 py-12 sm:px-8 sm:py-16"
+        style={{ background: "linear-gradient(135deg, #eef2ff 0%, #f5f3ff 50%, #ffffff 100%)" }}
+      >
+        <div className="absolute inset-0" style={{ backgroundImage: "radial-gradient(rgba(79,70,229,0.10) 1px, transparent 1px)", backgroundSize: "22px 22px" }} />
 
-        <div className="relative mx-auto grid w-full max-w-7xl gap-8 lg:grid-cols-[1fr_420px] lg:items-center lg:gap-12">
+        <div className="relative mx-auto grid w-full max-w-6xl gap-8 lg:grid-cols-[1fr_400px] lg:items-center lg:gap-12">
           <div>
-            <Link href="/" className="mb-8 inline-block">
-              <div className="text-xl font-black tracking-[0.35em]">WALI</div>
-              <div className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.35em] text-white/45">
+            <Link href="/" className="mb-7 inline-block">
+              <div
+                className="text-[26px] font-bold tracking-[0.3em] text-[var(--ad-text)] sm:text-[30px]"
+                style={{ textShadow: "0 0 24px rgba(79,70,229,0.45)" }}
+              >
+                WALI
+              </div>
+              <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.3em] text-[var(--ad-text-3)]">
                 Official Merchandise
               </div>
             </Link>
 
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-black uppercase tracking-[0.25em] text-[#d7ff53]">
-              <Lock size={12} strokeWidth={3} />
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#c7d2fe] bg-[var(--ad-accent-soft)] px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--ad-accent)]">
+              <Lock size={12} strokeWidth={2.5} />
               Admin Login
             </div>
 
-            <h1 className="text-4xl font-black uppercase leading-[0.9] sm:text-5xl md:text-7xl">
-              Control
-              <span className="block text-[#d7ff53]">Your Store</span>
+            <h1 className="text-4xl font-bold leading-[1.02] tracking-tight text-[var(--ad-text)] sm:text-5xl md:text-6xl">
+              Kelola Toko
+              <span
+                className="block"
+                style={{
+                  background: "linear-gradient(135deg, #4f46e5, #7c3aed)",
+                  WebkitBackgroundClip: "text",
+                  backgroundClip: "text",
+                  color: "transparent",
+                }}
+              >
+                Dengan Mudah
+              </span>
             </h1>
 
-            <p className="mt-4 max-w-xl text-sm leading-7 text-white/65 sm:mt-6 sm:text-base sm:leading-8 md:text-lg md:leading-9">
-              Login admin untuk mengatur katalog merchandise, stok size, harga
-              produk, foto, status pesanan, dan data order customer.
+            <p className="mt-4 max-w-md text-[14px] leading-7 text-[var(--ad-text-2)] sm:mt-5">
+              Login admin untuk mengatur katalog merchandise, stok size,
+              harga produk, foto, status pesanan, dan data order customer.
             </p>
 
-            <div className="mt-6 grid max-w-sm gap-3 sm:mt-8 sm:max-w-md sm:grid-cols-3">
+            <div className="mt-6 grid max-w-sm gap-3 sm:mt-7 sm:max-w-md sm:grid-cols-3">
               {[
                 { icon: Package, label: "Produk" },
                 { icon: ShieldCheck, label: "Stok" },
@@ -76,13 +100,12 @@ export default async function AdminLoginPage({
                 return (
                   <div
                     key={item.label}
-                    className="rounded-xl border border-white/10 bg-white/[0.04] p-3 text-center transition hover:border-[#d7ff53]/30 sm:rounded-2xl sm:p-4"
+                    className="ad-card p-3.5 text-center transition hover:shadow-[0_4px_16px_rgba(16,24,40,0.08)] sm:p-4"
                   >
-                    <div className="mb-2 inline-flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#d7ff53] sm:h-12 sm:w-12 sm:rounded-xl">
-                      <Icon size={16} strokeWidth={2.5} className="sm:hidden" />
-                      <Icon size={20} strokeWidth={2.5} className="hidden sm:block" />
+                    <div className="mb-2 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--ad-accent-soft)] text-[var(--ad-accent)] sm:h-11 sm:w-11">
+                      <Icon size={17} strokeWidth={2.2} />
                     </div>
-                    <p className="text-[10px] font-black uppercase sm:text-xs">
+                    <p className="text-[11px] font-semibold text-[var(--ad-text-2)]">
                       {item.label}
                     </p>
                   </div>
@@ -91,31 +114,29 @@ export default async function AdminLoginPage({
             </div>
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-2xl backdrop-blur-xl sm:rounded-[2.5rem] sm:p-5">
-            <div className="rounded-2xl border border-white/10 bg-black/40 p-5 sm:rounded-[2rem] sm:p-8">
-              <div className="mb-6">
-                <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-[#d7ff53]">
-                  <Lock size={10} strokeWidth={2.5} />
-                  Secure Access
-                </div>
-                <h2 className="text-2xl font-black uppercase sm:text-3xl">
-                  Login Admin
-                </h2>
-                <p className="mt-2 text-xs leading-6 text-white/50 sm:mt-3 sm:text-sm sm:leading-7">
-                  Masukkan email dan password admin Supabase untuk masuk ke
-                  dashboard.
-                </p>
+          <div className="ad-card mx-auto w-full !p-5 sm:!p-6 !shadow-[0_16px_40px_-12px_rgba(16,24,40,0.15)] sm:!rounded-[20px] lg:mx-0 lg:w-auto max-w-md lg:max-w-none">
+            <div className="mb-5">
+              <div className="mb-3.5 inline-flex items-center gap-1.5 rounded-full border border-[#c7d2fe] bg-[var(--ad-accent-soft)] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--ad-accent)]">
+                <Lock size={10} strokeWidth={2.5} />
+                Secure Access
               </div>
-
-              {reason && (
-                <div className="mb-4 flex items-start gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-xs font-bold text-amber-200 sm:mb-5 sm:rounded-2xl sm:p-4 sm:text-sm">
-                  <AlertCircle size={16} strokeWidth={2.5} className="mt-0.5 shrink-0" />
-                  <span>{reason}</span>
-                </div>
-              )}
-
-              <LoginForm initialError={error} />
+              <h2 className="text-[22px] font-bold tracking-tight text-[var(--ad-text)] sm:text-2xl">
+                Login Admin
+              </h2>
+              <p className="mt-1.5 text-[12.5px] leading-5 text-[var(--ad-text-3)]">
+                Masukkan email dan password admin Supabase untuk masuk ke
+                dashboard.
+              </p>
             </div>
+
+            {reason && (
+              <div className="ad-alert ad-alert-warn mb-4">
+                <AlertCircle size={15} className="mt-0.5 shrink-0" />
+                <span>{reason}</span>
+              </div>
+            )}
+
+            <LoginForm initialError={error} />
           </div>
         </div>
       </section>

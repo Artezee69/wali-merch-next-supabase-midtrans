@@ -23,12 +23,12 @@ export default async function NewBannerPage() {
       adminName={profile?.full_name ?? null}
       adminEmail={profile?.email ?? session.email}
     >
-      <div className="mb-6">
+      <div className="mb-5">
         <Link
           href="/admin/banners"
-          className="inline-flex items-center gap-1 text-xs font-bold text-white/55 hover:text-[#d7ff53]"
+          className="inline-flex items-center gap-1 text-[12.5px] font-semibold text-[var(--ad-text-2)] transition hover:text-[var(--ad-accent)]"
         >
-          <ChevronLeft size={12} strokeWidth={2.5} />
+          <ChevronLeft size={13} strokeWidth={2.5} />
           Kembali ke daftar banner
         </Link>
       </div>

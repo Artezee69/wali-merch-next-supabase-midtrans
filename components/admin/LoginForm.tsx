@@ -2,11 +2,14 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
-import { Globe, Mail, Lock, AlertCircle, Loader2 } from "lucide-react";
+import { AlertTriangle, Globe, Loader2, Lock, Mail } from "lucide-react";
+import { Alert, AdminButton } from "@/components/admin/ui";
 
 type Props = {
   initialError?: string;
 };
+
+const inp = "ad-input";
 
 export default function LoginForm({ initialError }: Props) {
   const [email, setEmail] = useState("");
@@ -57,28 +60,23 @@ export default function LoginForm({ initialError }: Props) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
-        <div className="flex items-start gap-2 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-xs font-bold text-red-300 sm:rounded-2xl sm:p-4 sm:text-sm">
-          <AlertCircle
-            size={16}
-            strokeWidth={2.5}
-            className="mt-0.5 shrink-0"
-          />
+        <Alert tone="error" onClose={() => setError(null)}>
+          <AlertTriangle size={15} className="mt-0.5 shrink-0" />
           <span>{error}</span>
-        </div>
+        </Alert>
       )}
 
       <div>
         <label
           htmlFor="admin-email"
-          className="mb-2 block text-[10px] font-black uppercase tracking-widest text-white/40 sm:text-xs"
+          className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-[var(--ad-text-2)]"
         >
           Email Admin
         </label>
         <div className="relative">
           <Mail
-            size={16}
-            strokeWidth={2.2}
-            className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/40"
+            size={15}
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--ad-text-3)]"
           />
           <input
             id="admin-email"
@@ -91,7 +89,7 @@ export default function LoginForm({ initialError }: Props) {
             onChange={(e) => setEmail(e.target.value)}
             disabled={loading}
             placeholder="admin@wali.id"
-            className="w-full rounded-xl border border-white/10 bg-black/50 py-3 pl-11 pr-4 text-sm font-semibold text-white outline-none placeholder:text-white/30 focus:border-[#d7ff53] disabled:opacity-60 sm:rounded-2xl sm:py-4 sm:pl-12"
+            className={`${inp} pl-10`}
           />
         </div>
       </div>
@@ -99,15 +97,14 @@ export default function LoginForm({ initialError }: Props) {
       <div>
         <label
           htmlFor="admin-password"
-          className="mb-2 block text-[10px] font-black uppercase tracking-widest text-white/40 sm:text-xs"
+          className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-[var(--ad-text-2)]"
         >
           Password
         </label>
         <div className="relative">
           <Lock
-            size={16}
-            strokeWidth={2.2}
-            className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/40"
+            size={15}
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--ad-text-3)]"
           />
           <input
             id="admin-password"
@@ -119,42 +116,30 @@ export default function LoginForm({ initialError }: Props) {
             onChange={(e) => setPassword(e.target.value)}
             disabled={loading}
             placeholder="Masukkan password admin"
-            className="w-full rounded-xl border border-white/10 bg-black/50 py-3 pl-11 pr-4 text-sm font-semibold text-white outline-none placeholder:text-white/30 focus:border-[#d7ff53] disabled:opacity-60 sm:rounded-2xl sm:py-4 sm:pl-12"
+            className={`${inp} pl-10`}
           />
         </div>
       </div>
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="flex w-full items-center justify-center gap-2 rounded-full bg-[#d7ff53] px-7 py-3.5 text-xs font-black uppercase tracking-wider text-black transition active:scale-95 hover:bg-white disabled:cursor-not-allowed disabled:opacity-70 sm:px-7 sm:py-4 sm:text-sm"
-      >
-        {loading && (
-          <Loader2
-            size={14}
-            strokeWidth={2.5}
-            className="animate-spin"
-            aria-hidden="true"
-          />
-        )}
-        {loading ? "Memeriksa..." : "Login Admin"}
-      </button>
+      <AdminButton type="submit" variant="primary" disabled={loading} className="w-full !py-3">
+        {loading && <Loader2 size={14} className="animate-spin" />}
+        {loading ? "Memeriksa…" : "Login Admin"}
+      </AdminButton>
 
       <Link
         href="/"
-        className="flex w-full items-center justify-center gap-1.5 rounded-full border border-white/10 px-7 py-3.5 text-center text-xs font-black uppercase tracking-wider text-white/60 transition hover:border-white hover:bg-white hover:text-black sm:px-7 sm:py-4 sm:text-sm"
+        className="ad-btn ad-btn-secondary w-full !py-3 text-[13px]"
       >
-        <Globe size={12} strokeWidth={2.5} className="sm:hidden" />
-        <Globe size={14} strokeWidth={2.5} className="hidden sm:block" />
+        <Globe size={14} />
         Back To Website
       </Link>
 
-      <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 sm:rounded-2xl sm:p-4">
-        <p className="text-[10px] font-bold leading-5 text-white/45 sm:text-xs sm:leading-6">
+      <div className="rounded-lg border border-[var(--ad-border)] bg-[var(--ad-surface-2)] p-3.5">
+        <p className="text-[11.5px] leading-5 text-[var(--ad-text-3)]">
           Akses admin membutuhkan akun dengan role{" "}
-          <span className="text-[#d7ff53]">admin</span> di tabel{" "}
-          <span className="text-[#d7ff53]">profiles</span>. Hubungi pemilik
-          toko jika belum memiliki akses.
+          <span className="font-semibold text-[var(--ad-accent)]">admin</span> di tabel{" "}
+          <span className="font-mono text-[10.5px] font-semibold text-[var(--ad-accent)]">profiles</span>.
+          Hubungi pemilik toko jika belum memiliki akses.
         </p>
       </div>
     </form>

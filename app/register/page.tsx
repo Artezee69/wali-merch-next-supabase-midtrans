@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabasePublic } from "@/lib/supabasePublic";
 import { useAuth } from "@/hooks/useAuth";
-import { Eye, EyeOff, Loader2, User, Phone, Mail, Lock, MapPin, Calendar, FileText } from "lucide-react";
+import { Eye, EyeOff, Loader2, User, Phone, Mail, Lock, MapPin, Calendar, FileText, CheckCircle, ArrowLeft } from "lucide-react";
 
 type AvailabilityResult = {
   emailExists: boolean | null;
@@ -43,8 +43,6 @@ async function checkAvailability(input: {
       };
     }
 
-    // New contract: top-level booleans. Fall back to the legacy nested shape
-    // for older API responses.
     const emailExists =
       typeof data.emailExists === "boolean"
         ? data.emailExists
@@ -57,9 +55,6 @@ async function checkAvailability(input: {
         : data.phone && typeof data.phone.available === "boolean"
         ? !data.phone.available
         : null;
-
-    // eslint-disable-next-line no-console
-    console.log("Availability response:", { emailExists, phoneExists });
 
     return { emailExists, phoneExists };
   } catch (err) {
@@ -96,7 +91,7 @@ export default function RegisterPage() {
   // Errors
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Availability status for email & phone (debounced async check)
+  // Availability
   const [checkingEmail, setCheckingEmail] = useState(false);
   const [checkingPhone, setCheckingPhone] = useState(false);
   const [emailTaken, setEmailTaken] = useState(false);
@@ -122,7 +117,7 @@ export default function RegisterPage() {
     const errs: Record<string, string> = {};
 
     if (!fullName.trim()) errs.fullName = "Nama lengkap wajib diisi";
-    if (fullName.trim().length < 3) errs.fullName = "Nama minimal 3 karakter";
+    else if (fullName.trim().length < 3) errs.fullName = "Nama minimal 3 karakter";
 
     if (!phone.trim()) errs.phone = "Nomor HP wajib diisi";
     else if (!/^(\+62|62|0)8[1-9][0-9]{7,11}$/.test(phone.trim().replace(/[\s-]/g, "")))
@@ -149,7 +144,6 @@ export default function RegisterPage() {
 
     if (!agreePolicy) errs.policy = "Anda harus menyetujui kebijakan privasi";
 
-    // File validation
     if (avatarFile) {
       const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
       if (!allowedTypes.includes(avatarFile.type))
@@ -162,7 +156,7 @@ export default function RegisterPage() {
     return Object.keys(errs).length === 0;
   }
 
-  // Debounced async check: is the email already registered?
+  // Debounced email availability
   useEffect(() => {
     const trimmed = email.trim().toLowerCase();
     if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
@@ -179,9 +173,6 @@ export default function RegisterPage() {
         email: trimmed,
         signal: controller.signal,
       });
-      // Bail out if a newer check started, the input changed, or the
-      // request was aborted — never let a stale response flip a fresh
-      // input's state.
       if (seq !== emailCheckSeq.current) return;
       if (email.trim().toLowerCase() !== trimmed) return;
       if (result.emailExists === true) {
@@ -191,7 +182,6 @@ export default function RegisterPage() {
         setEmailTaken(false);
         setEmailAvailable(true);
       } else {
-        // null = server error; don't claim taken, but also don't claim free.
         setEmailTaken(false);
         setEmailAvailable(false);
         if (result.error) {
@@ -206,7 +196,7 @@ export default function RegisterPage() {
     };
   }, [email]);
 
-  // Debounced async check: is the phone already registered?
+  // Debounced phone availability
   useEffect(() => {
     const normalized = phone.trim().replace(/[\s-]/g, "");
     if (!/^(\+62|62|0)8[1-9][0-9]{7,11}$/.test(normalized)) {
@@ -250,8 +240,6 @@ export default function RegisterPage() {
     e.preventDefault();
     setErrors({});
 
-    // Re-check uniqueness right before submit (debounced check may not have
-    // resolved, or the user may have changed the field after the last check).
     const normalizedEmail = email.trim().toLowerCase();
     const normalizedPhone = phone.trim().replace(/[\s-]/g, "");
     const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail);
@@ -262,8 +250,6 @@ export default function RegisterPage() {
       phone: phoneValid ? normalizedPhone : undefined,
     });
 
-    // If the request itself failed, surface a general error and stop —
-    // never mark both fields as "taken" on a server error.
     if (result.emailExists == null && result.phoneExists == null) {
       setErrors((prev) => ({
         ...prev,
@@ -333,49 +319,87 @@ export default function RegisterPage() {
     }
   }
 
+  // Shared input styles
+  const inputStyle = {
+    background: "rgba(255,255,255,0.04)",
+    borderColor: "rgba(255,255,255,0.08)",
+    color: "var(--text-primary)",
+  };
+
+  const labelClass = "mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.1em]";
+  const inputClass =
+    "w-full rounded-2xl border px-5 py-4 text-[15px] outline-none transition-all duration-300 placeholder:opacity-35";
+
   // --- SUCCESS STATE ---
   if (success) {
     return (
-      <main className="min-h-screen bg-gray-50 text-gray-900 dark:bg-black dark:text-white px-4 py-16">
-        <div className="mx-auto max-w-md space-y-6 text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-white/5 border border-white/10">
-            <svg className="h-8 w-8 text-[#d7ff53]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
+      <main
+        className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-16 sm:px-6"
+        style={{ background: "var(--bg-primary)", color: "var(--text-primary)" }}
+      >
+        <div
+          aria-hidden
+          className="pointer-events-none absolute left-1/2 top-[40%] -z-10 h-[400px] w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-[0.05]"
+          style={{ background: "radial-gradient(circle, var(--accent-color) 0%, transparent 65%)" }}
+        />
+
+        <div className="w-full max-w-[400px] space-y-8 text-center">
+          {/* Checkmark */}
+          <div
+            className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border backdrop-blur-2xl"
+            style={{
+              background: "color-mix(in srgb, var(--accent-color) 8%, transparent)",
+              borderColor: "color-mix(in srgb, var(--accent-color) 25%, transparent)",
+              boxShadow: "0 0 40px -8px color-mix(in srgb, var(--accent-color) 20%, transparent)",
+            }}
+          >
+            <CheckCircle size={40} style={{ color: "var(--accent-color)" }} />
           </div>
-          <h1 className="text-2xl font-black text-gray-900 dark:text-white">Pendaftaran Berhasil!</h1>
-          <p className="text-sm text-gray-600 dark:text-white/70">
-            Kami sudah mengirim email verifikasi ke{" "}
-            <span className="font-semibold text-gray-900 dark:text-white">{email}</span>
-          </p>
-          <p className="text-sm text-gray-500 dark:text-white/60">
-            Silakan cek kotak masuk (dan folder spam) untuk memverifikasi email Anda sebelum masuk.
-          </p>
 
-          {!emailSent && (
-            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm text-white/80">
-              Verifikasi email sudah aktif untuk akun ini. Anda bisa langsung masuk.
-              <div className="mt-3">
-                <Link href="/login" className="font-bold text-[#d7ff53] underline">
-                  Langsung masuk →
-                </Link>
-              </div>
-            </div>
-          )}
+          <div>
+            <h1 className="text-[28px] font-black tracking-tight" style={{ color: "var(--text-primary)" }}>
+              Pendaftaran Berhasil!
+            </h1>
+            <p className="mt-3 text-[14px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+              Kami sudah mengirim email verifikasi ke{" "}
+              <span className="font-bold" style={{ color: "var(--text-primary)" }}>{email}</span>
+            </p>
+            <p className="mt-2 text-[13px] leading-relaxed opacity-60" style={{ color: "var(--text-secondary)" }}>
+              Silakan cek kotak masuk (dan folder spam) untuk memverifikasi email Anda sebelum masuk.
+            </p>
+          </div>
 
-          <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4 text-sm text-white/80">
-            <p className="mb-3 text-white/80">Belum diverifikasi?</p>
+          {/* Resend */}
+          <div
+            className="rounded-2xl border p-5 backdrop-blur-2xl"
+            style={{
+              background: "var(--bg-card)",
+              borderColor: "var(--border-color)",
+            }}
+          >
+            <p className="text-[13px] font-medium" style={{ color: "var(--text-secondary)" }}>
+              Belum menerima email?
+            </p>
             <button
               onClick={resendVerification}
-              className="rounded-lg border border-white/20 bg-white/[0.05] px-4 py-2 text-sm font-bold text-white transition hover:bg-white/[0.10]"
+              className="mt-3 w-full rounded-xl border py-3 text-[14px] font-bold transition-all duration-200 hover:opacity-80"
+              style={{
+                borderColor: "var(--border-color)",
+                background: "rgba(255,255,255,0.04)",
+                color: "var(--text-primary)",
+              }}
             >
               Kirim Ulang Email Verifikasi
             </button>
           </div>
 
-          <div className="text-sm">
-            <Link href="/" className="font-bold text-[#d7ff53] underline">
-              ← Kembali ke Beranda
+          <div className="flex items-center justify-center gap-6 text-[13px]">
+            <Link href="/login" className="font-bold transition-colors hover:opacity-80" style={{ color: "var(--accent-color)" }}>
+              Masuk
+            </Link>
+            <span className="opacity-30">·</span>
+            <Link href="/" className="font-medium transition-colors hover:opacity-70" style={{ color: "var(--text-secondary)" }}>
+              Beranda
             </Link>
           </div>
         </div>
@@ -385,53 +409,98 @@ export default function RegisterPage() {
 
   // --- FORM ---
   return (
-    <main className="min-h-screen bg-gray-50 text-gray-900 dark:bg-black dark:text-white px-4 py-16">
-      <div className="mx-auto max-w-md space-y-6">
+    <main
+      className="relative min-h-screen overflow-hidden px-4 py-12 sm:px-6 sm:py-16"
+      style={{ background: "var(--bg-primary)", color: "var(--text-primary)" }}
+    >
+      {/* Ambient glows */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-[12%] -z-10 h-[380px] w-[380px] -translate-x-1/2 rounded-full opacity-[0.05]"
+        style={{ background: "radial-gradient(circle, var(--accent-color) 0%, transparent 60%)" }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute right-[8%] bottom-[15%] -z-10 h-[200px] w-[200px] rounded-full opacity-[0.03]"
+        style={{ background: "radial-gradient(circle, var(--accent-color) 0%, transparent 60%)" }}
+      />
 
-        {/* Logo */}
-        <div className="text-center">
-          <h1 className="text-2xl font-black tracking-[0.25em] text-gray-900 dark:text-white">WALI</h1>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Buat akun baru</p>
+      <div className="mx-auto w-full max-w-[440px]">
+        {/* Header */}
+        <div className="mb-10 text-center">
+          <h1
+            className="text-[40px] font-black tracking-[0.35em] sm:text-[44px]"
+            style={{ color: "var(--text-primary)" }}
+          >
+            WALI
+          </h1>
+          <p className="mt-3 text-[13px] font-medium" style={{ color: "var(--text-secondary)" }}>
+            Buat akun untuk mengakses semua fitur
+          </p>
         </div>
 
-        {/* Card */}
-        <div className="rounded-2xl border border-white/10 bg-black/[0.3] p-6 md:p-8">
+        {/* Glass card */}
+        <div
+          className="rounded-[24px] border p-6 backdrop-blur-2xl sm:p-8"
+          style={{
+            background: "var(--bg-card)",
+            borderColor: "var(--border-color)",
+            boxShadow:
+              "0 0 0 1px rgba(255,255,255,0.03), 0 40px 80px -20px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06)",
+          }}
+        >
+          {/* General error */}
           {errors._general && (
-            <div className="mb-4 rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            <div
+              className="mb-6 rounded-xl border px-4 py-3 text-[13px] font-medium"
+              style={{
+                background: "color-mix(in srgb, var(--danger-color) 10%, transparent)",
+                borderColor: "color-mix(in srgb, var(--danger-color) 30%, transparent)",
+                color: "var(--danger-color)",
+              }}
+            >
               {errors._general}
             </div>
           )}
 
-          <form onSubmit={handleRegister} className="space-y-4" noValidate>
+          <form onSubmit={handleRegister} className="space-y-6" noValidate>
             {/* Full Name */}
             <div>
-              <label className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                <User size={14} className="text-gray-600 dark:text-gray-400" /> Nama Lengkap
+              <label className={labelClass} style={{ color: "var(--text-secondary)" }}>
+                <User size={12} /> Nama Lengkap
               </label>
               <input
                 type="text"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                  className={`w-full rounded-xl border ${
-                    errors.fullName ? "border-red-500/50" : (phoneTaken ? "border-red-500/50" : "border-black/20 dark:border-white/20")
-                  } bg-white/5 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/30 outline-none transition focus:border-[#d7ff53] focus:ring-1 focus:ring-[#d7ff53]/30 `}
+                className={inputClass}
+                style={{
+                  ...inputStyle,
+                  borderColor: errors.fullName ? "color-mix(in srgb, var(--danger-color) 40%, transparent)" : inputStyle.borderColor,
+                }}
                 placeholder="Nama lengkap Anda"
               />
-              {errors.fullName && <p className="mt-1.5 text-xs text-red-600 dark:text-red-300">{errors.fullName}</p>}
+              {errors.fullName && (
+                <p className="mt-1.5 text-[12px] font-medium" style={{ color: "var(--danger-color)" }}>{errors.fullName}</p>
+              )}
             </div>
 
             {/* Phone */}
             <div>
-              <label className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                <Phone size={14} className="text-gray-600 dark:text-gray-400" /> Nomor HP
+              <label className={labelClass} style={{ color: "var(--text-secondary)" }}>
+                <Phone size={12} /> Nomor HP
               </label>
               <input
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className={`w-full rounded-xl border ${
-                    errors.phone ? "border-red-500/50" : phoneTaken ? "border-red-500/50" : "border-black/20 dark:border-white/20"
-                  } bg-white/5 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/30 outline-none transition focus:border-[#d7ff53] focus:ring-1 focus:ring-[#d7ff53]/30 `}
+                className={inputClass}
+                style={{
+                  ...inputStyle,
+                  borderColor: errors.phone || phoneTaken
+                    ? "color-mix(in srgb, var(--danger-color) 40%, transparent)"
+                    : inputStyle.borderColor,
+                }}
                 placeholder="08xxxxxxxxxx"
               />
               <FieldStatus
@@ -445,22 +514,21 @@ export default function RegisterPage() {
 
             {/* Email */}
             <div>
-              <label className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-white/80">
-                <Mail size={14} /> Email
+              <label className={labelClass} style={{ color: "var(--text-secondary)" }}>
+                <Mail size={12} /> Email
               </label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value.toLowerCase())}
-                className={`w-full rounded-xl border bg-white/5 px-4 py-3 text-sm text-white placeholder-white/30 outline-none transition focus:border-[#d7ff53] focus:ring-1 focus:ring-[#d7ff53]/30 ${
-                  errors.email
-                    ? "border-red-500/50"
-                    : emailTaken
-                    ? "border-red-500/50"
-                    : "border-white/10"
-                }`}
+                className={inputClass}
+                style={{
+                  ...inputStyle,
+                  borderColor: errors.email || emailTaken
+                    ? "color-mix(in srgb, var(--danger-color) 40%, transparent)"
+                    : inputStyle.borderColor,
+                }}
                 placeholder="nama@email.com"
-                style={{ backgroundColor: "rgba(255, 255, 255, 0.05)" }}
               />
               <FieldStatus
                 loading={checkingEmail}
@@ -473,110 +541,149 @@ export default function RegisterPage() {
 
             {/* Password */}
             <div>
-              <label className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-white/80">
-                <Lock size={14} /> Kata Sandi
+              <label className={labelClass} style={{ color: "var(--text-secondary)" }}>
+                <Lock size={12} /> Kata Sandi
               </label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className={`w-full rounded-xl border bg-white/5 px-4 py-3 pr-12 text-sm text-white placeholder-white/30 outline-none transition focus:border-[#d7ff53] focus:ring-1 focus:ring-[#d7ff53]/30 ${
-                    errors.password ? "border-red-500/50" : "border-white/10"
-                  }`}
-                  style={{ backgroundColor: "rgba(255, 255, 255, 0.05)" }}
+                  className={`${inputClass} pr-14`}
+                  style={{
+                    ...inputStyle,
+                    borderColor: errors.password
+                      ? "color-mix(in srgb, var(--danger-color) 40%, transparent)"
+                      : inputStyle.borderColor,
+                  }}
                   placeholder="Minimal 8 karakter"
                 />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70">
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "Sembunyikan sandi" : "Tampilkan sandi"}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 transition-colors hover:opacity-70"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
-              {errors.password && <p className="mt-1.5 text-xs text-red-400">{errors.password}</p>}
+              {errors.password && (
+                <p className="mt-1.5 text-[12px] font-medium" style={{ color: "var(--danger-color)" }}>{errors.password}</p>
+              )}
             </div>
 
             {/* Confirm Password */}
             <div>
-              <label className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-white/80">
-                <Lock size={14} /> Konfirmasi Kata Sandi
+              <label className={labelClass} style={{ color: "var(--text-secondary)" }}>
+                <Lock size={12} /> Konfirmasi Kata Sandi
               </label>
               <div className="relative">
                 <input
                   type={showConfirm ? "text" : "password"}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className={`w-full rounded-xl border bg-white/5 px-4 py-3 pr-12 text-sm text-white placeholder-white/30 outline-none transition focus:border-[#d7ff53] focus:ring-1 focus:ring-[#d7ff53]/30 ${
-                    errors.confirmPassword ? "border-red-500/50" : "border-white/10"
-                  }`}
-                  style={{ backgroundColor: "rgba(255, 255, 255, 0.05)" }}
+                  className={`${inputClass} pr-14`}
+                  style={{
+                    ...inputStyle,
+                    borderColor: errors.confirmPassword
+                      ? "color-mix(in srgb, var(--danger-color) 40%, transparent)"
+                      : inputStyle.borderColor,
+                  }}
                   placeholder="Ulangi kata sandi"
                 />
-                <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70">
-                  {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm(!showConfirm)}
+                  aria-label={showConfirm ? "Sembunyikan sandi" : "Tampilkan sandi"}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 transition-colors hover:opacity-70"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  {showConfirm ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
-              {errors.confirmPassword && <p className="mt-1.5 text-xs text-red-400">{errors.confirmPassword}</p>}
+              {errors.confirmPassword && (
+                <p className="mt-1.5 text-[12px] font-medium" style={{ color: "var(--danger-color)" }}>{errors.confirmPassword}</p>
+              )}
             </div>
 
             {/* Address */}
             <div>
-              <label className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-white/80">
-                <MapPin size={14} /> Alamat Lengkap
+              <label className={labelClass} style={{ color: "var(--text-secondary)" }}>
+                <MapPin size={12} /> Alamat Lengkap
               </label>
               <textarea
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 rows={3}
-                className={`w-full rounded-xl border bg-white/5 px-4 py-3 text-sm text-white placeholder-white/30 outline-none transition focus:border-[#d7ff53] focus:ring-1 focus:ring-[#d7ff53]/30 ${
-                  errors.address ? "border-red-500/50" : "border-white/10"
-                }`}
+                className={`${inputClass} resize-none`}
+                style={{
+                  ...inputStyle,
+                  borderColor: errors.address
+                    ? "color-mix(in srgb, var(--danger-color) 40%, transparent)"
+                    : inputStyle.borderColor,
+                }}
                 placeholder="Jl. ..., RT/RW, Kelurahan, Kecamatan, Kota"
-                style={{ backgroundColor: "rgba(255, 255, 255, 0.05)" }}
               />
-              {errors.address && <p className="mt-1.5 text-xs text-red-400">{errors.address}</p>}
+              {errors.address && (
+                <p className="mt-1.5 text-[12px] font-medium" style={{ color: "var(--danger-color)" }}>{errors.address}</p>
+              )}
             </div>
 
             {/* Birth Date + Gender */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-white/80">
-                  <Calendar size={14} /> Tanggal Lahir
+                <label className={labelClass} style={{ color: "var(--text-secondary)" }}>
+                  <Calendar size={12} /> Tgl Lahir
                 </label>
                 <input
                   type="date"
                   value={birthDate}
                   onChange={(e) => setBirthDate(e.target.value)}
-                  className={`w-full rounded-xl border bg-white/5 px-4 py-3 text-sm text-white outline-none transition focus:border-[#d7ff53] focus:ring-1 focus:ring-[#d7ff53]/30 ${
-                    errors.birthDate ? "border-red-500/50" : "border-white/10"
-                  }`}
-                  style={{ backgroundColor: "rgba(255, 255, 255, 0.05)" }}
+                  className={inputClass}
+                  style={{
+                    ...inputStyle,
+                    borderColor: errors.birthDate
+                      ? "color-mix(in srgb, var(--danger-color) 40%, transparent)"
+                      : inputStyle.borderColor,
+                  }}
                 />
-                {errors.birthDate && <p className="mt-1.5 text-xs text-red-400">{errors.birthDate}</p>}
+                {errors.birthDate && (
+                  <p className="mt-1.5 text-[12px] font-medium" style={{ color: "var(--danger-color)" }}>{errors.birthDate}</p>
+                )}
               </div>
               <div>
-                <label className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-white/80">
+                <label className={labelClass} style={{ color: "var(--text-secondary)" }}>
                   Jenis Kelamin
                 </label>
                 <select
                   value={gender}
                   onChange={(e) => setGender(e.target.value)}
-                  className={`w-full rounded-xl border bg-white/5 px-4 py-3 text-sm text-white outline-none transition focus:border-[#d7ff53] focus:ring-1 focus:ring-[#d7ff53]/30 ${
-                    errors.gender ? "border-red-500/50" : "border-white/10"
-                  }`}
-                  style={{ backgroundColor: "rgba(255, 255, 255, 0.05)" }}
+                  className={`${inputClass} appearance-none`}
+                  style={{
+                    ...inputStyle,
+                    borderColor: errors.gender
+                      ? "color-mix(in srgb, var(--danger-color) 40%, transparent)"
+                      : inputStyle.borderColor,
+                    color: gender ? "var(--text-primary)" : "color-mix(in srgb, var(--text-primary) 40%, transparent)",
+                  }}
                 >
-                  <option value="" className="bg-white dark:bg-black/80 text-gray-600 dark:text-gray-300">Pilih</option>
-                  <option value="male" className="bg-white dark:bg-black/80">Laki-laki</option>
-                  <option value="female" className="bg-white dark:bg-black/80">Perempuan</option>
-                  <option value="other" className="bg-white dark:bg-black/80">Lainnya</option>
+                  <option value="" disabled hidden>Pilih</option>
+                  <option value="male" style={{ background: "var(--bg-secondary)", color: "var(--text-primary)" }}>Laki-laki</option>
+                  <option value="female" style={{ background: "var(--bg-secondary)", color: "var(--text-primary)" }}>Perempuan</option>
+                  <option value="other" style={{ background: "var(--bg-secondary)", color: "var(--text-primary)" }}>Lainnya</option>
                 </select>
-                {errors.gender && <p className="mt-1.5 text-xs text-red-400">{errors.gender}</p>}
+                {errors.gender && (
+                  <p className="mt-1.5 text-[12px] font-medium" style={{ color: "var(--danger-color)" }}>{errors.gender}</p>
+                )}
               </div>
             </div>
 
             {/* Avatar */}
             <div>
-              <label className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-white/80">
-                Foto Profil <span className="text-white/30 font-normal">(opsional)</span>
+              <label className={labelClass} style={{ color: "var(--text-secondary)" }}>
+                <FileText size={12} /> Foto Profil
+                <span className="normal-case opacity-40" style={{ fontWeight: 400, letterSpacing: "normal" }}>(opsional)</span>
               </label>
               <input
                 type="file"
@@ -585,41 +692,56 @@ export default function RegisterPage() {
                   const file = e.target.files?.[0];
                   if (file) setAvatarFile(file);
                 }}
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/60 file:mr-3 file:rounded-lg file:border-0 file:bg-white/10 file:px-3 file:py-2 file:text-sm file:font-bold file:text-white hover:file:bg-white/15"
-                style={{ backgroundColor: "rgba(255, 255, 255, 0.05)" }}
+                className="w-full cursor-pointer rounded-2xl border px-5 py-4 text-[13px] file:mr-4 file:rounded-xl file:border-0 file:px-4 file:py-2.5 file:text-[12px] file:font-bold file:uppercase file:tracking-wider"
+                style={{
+                  background: "rgba(255,255,255,0.03)",
+                  borderColor: "rgba(255,255,255,0.08)",
+                  color: "var(--text-secondary)",
+                }}
               />
-              {errors.avatar && <p className="mt-1.5 text-xs text-red-400">{errors.avatar}</p>}
+              {errors.avatar && (
+                <p className="mt-1.5 text-[12px] font-medium" style={{ color: "var(--danger-color)" }}>{errors.avatar}</p>
+              )}
             </div>
 
             {/* Privacy Policy */}
             <div>
-              <label className="flex cursor-pointer items-start gap-3 text-sm text-white/70">
+              <label className="flex cursor-pointer items-start gap-3 text-[13px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
                 <input
                   type="checkbox"
                   checked={agreePolicy}
                   onChange={(e) => setAgreePolicy(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded border-white/30 bg-black/20 text-[#d7ff53] focus:ring-[#d7ff53]/30"
+                  className="mt-0.5 h-[18px] w-[18px] rounded border-0"
+                  style={{ accentColor: "var(--accent-color)" }}
                 />
                 <span>
                   Saya menyetujui{" "}
-                  <Link href="/privacy" className="text-[#d7ff53] underline">
+                  <Link href="/privacy" className="font-bold underline underline-offset-4" style={{ color: "var(--accent-color)" }}>
                     Kebijakan Privasi
                   </Link>{" "}
                   dan bersedia data pribadi saya diproses sesuai ketentuan.
                 </span>
               </label>
-              {errors.policy && <p className="mt-1.5 ml-7 text-xs text-red-400">{errors.policy}</p>}
+              {errors.policy && (
+                <p className="ml-[30px] mt-1.5 text-[12px] font-medium" style={{ color: "var(--danger-color)" }}>{errors.policy}</p>
+              )}
             </div>
 
-            {/* Submit */}
+            {/* CTA */}
             <button
               type="submit"
               disabled={loading || emailTaken || phoneTaken}
-              className="w-full rounded-xl bg-[#d7ff53] px-4 py-3 text-sm font-black text-black transition hover:bg-[#c7ef33] disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full rounded-2xl py-4 text-[15px] font-bold transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-40"
+              style={{
+                background: "var(--accent-color)",
+                color: "var(--bg-primary)",
+                boxShadow:
+                  "0 12px 32px -8px color-mix(in srgb, var(--accent-color) 45%, transparent), inset 0 1px 0 rgba(255,255,255,0.2)",
+              }}
             >
               {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" /> Memproses...
+                <span className="inline-flex items-center justify-center gap-2.5">
+                  <Loader2 className="h-[18px] w-[18px] animate-spin" /> Memproses…
                 </span>
               ) : (
                 "Daftar"
@@ -627,12 +749,31 @@ export default function RegisterPage() {
             </button>
           </form>
 
-          <div className="mt-6 border-t border-white/10 pt-4 text-center text-sm text-white/50">
-            Sudah punya akun?{" "}
-            <Link href="/login" className="font-bold text-[#d7ff53] underline">
+          {/* Footer link */}
+          <div className="mt-7 text-center">
+            <span className="text-[13px]" style={{ color: "var(--text-secondary)" }}>
+              Sudah punya akun?{" "}
+            </span>
+            <Link
+              href="/login"
+              className="text-[13px] font-bold transition-colors hover:opacity-80"
+              style={{ color: "var(--accent-color)" }}
+            >
               Masuk
             </Link>
           </div>
+        </div>
+
+        {/* Back to home */}
+        <div className="mt-6 text-center">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-[13px] font-medium transition-colors hover:opacity-70"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            <ArrowLeft size={14} />
+            Kembali ke Beranda
+          </Link>
         </div>
       </div>
     </main>
@@ -650,17 +791,24 @@ type FieldStatusProps = {
 function FieldStatus({ loading, taken, available, takenText, availableText }: FieldStatusProps) {
   if (loading) {
     return (
-      <p className="mt-1 flex items-center gap-1 text-xs text-white/60">
-        <Loader2 className="h-3 w-3 animate-spin" />
-        Memeriksa...
+      <p className="mt-2 flex items-center gap-1.5 text-[12px] font-medium" style={{ color: "var(--text-secondary)" }}>
+        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        Memeriksa…
       </p>
     );
   }
   if (taken) {
-    return <p className="mt-1 text-xs text-red-400">{takenText}</p>;
+    return (
+      <p className="mt-2 text-[12px] font-medium" style={{ color: "var(--danger-color)" }}>{takenText}</p>
+    );
   }
   if (available) {
-    return <p className="mt-1 text-xs text-[#d7ff53]">{availableText}</p>;
+    return (
+      <p className="mt-2 flex items-center gap-1 text-[12px] font-medium" style={{ color: "var(--accent-color)" }}>
+        <CheckCircle size={12} />
+        {availableText}
+      </p>
+    );
   }
   return null;
 }

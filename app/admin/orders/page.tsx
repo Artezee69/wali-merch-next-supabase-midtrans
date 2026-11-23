@@ -4,7 +4,8 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { logAdminAction } from "@/lib/adminAudit";
 import AdminShell from "@/components/admin/AdminShell";
 import OrderCard, { type OrderRow } from "@/components/admin/OrderCard";
-import { ShoppingCart, Search, Filter } from "lucide-react";
+import { AdminCard, EmptyState } from "@/components/admin/ui";
+import { Filter, Search, ShoppingCart } from "lucide-react";
 
 const ORDER_STATUS_OPTIONS = [
   "waiting_payment",
@@ -73,6 +74,9 @@ async function updateOrderStatus(formData: FormData) {
   revalidatePath("/admin/orders");
 }
 
+const selectCls =
+  "ad-input w-full sm:w-auto !rounded-lg !py-2 text-[12.5px] font-medium";
+
 export default async function AdminOrdersPage({
   searchParams,
 }: {
@@ -121,111 +125,110 @@ export default async function AdminOrdersPage({
   const orders: OrderRow[] = (ordersRaw ?? []) as OrderRow[];
 
   return (
-    <AdminShell title="Pesanan" adminName={session.fullName} adminEmail={session.email}>
-      <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#d7ff53]">
-            Manajemen
-          </p>
-          <h1 className="mt-1 text-2xl font-black uppercase tracking-tight md:text-3xl">
-            Pesanan
-          </h1>
-          <p className="mt-1 text-sm text-white/55">
-            Cari, filter, dan ubah status pesanan customer.
-          </p>
-        </div>
-      </div>
+    <AdminShell
+      title="Pesanan"
+      subtitle="Cari, filter, dan ubah status pesanan customer"
+      adminName={session.fullName}
+      adminEmail={session.email}
+    >
+      <div className="space-y-4">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--ad-text-3)]">
+          Admin / Pesanan
+        </p>
 
-      {/* Filters */}
-      <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 sm:p-4">
-        <form className="grid gap-2 md:grid-cols-[1fr_auto_auto_auto_auto] md:items-center">
-          {/* Search */}
-          <div className="relative">
-            <Search
-              size={14}
-              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/40"
-            />
-            <input
-              name="q"
-              defaultValue={q}
-              placeholder="Cari ID, nama, email, HP..."
-              className="w-full rounded-full border border-white/10 bg-black/40 py-2.5 pl-10 pr-4 text-sm text-white outline-none placeholder:text-white/35 focus:border-[#d7ff53]"
-            />
-          </div>
-          {/* Status filter */}
-          <select
-            name="order_status"
-            defaultValue={orderStatusFilter}
-            className="w-full rounded-full border border-white/10 bg-black/40 px-3 py-2.5 text-xs font-black uppercase tracking-wider text-white outline-none focus:border-[#d7ff53] md:w-auto"
-          >
-            <option value="all">Semua Status</option>
-            {ORDER_STATUS_OPTIONS.map((s) => (
-              <option key={s} value={s}>
-                {s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
-              </option>
-            ))}
-          </select>
-          {/* Payment filter */}
-          <select
-            name="payment_status"
-            defaultValue={paymentStatusFilter}
-            className="w-full rounded-full border border-white/10 bg-black/40 px-3 py-2.5 text-xs font-black uppercase tracking-wider text-white outline-none focus:border-[#d7ff53] md:w-auto"
-          >
-            <option value="all">Semua Bayar</option>
-            {PAYMENT_STATUS_OPTIONS.map((s) => (
-              <option key={s} value={s}>
-                {s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
-              </option>
-            ))}
-          </select>
-          {/* Date range */}
-          <div className="flex gap-2">
-            <input
-              name="from"
-              type="date"
-              defaultValue={fromDate}
-              className="flex-1 rounded-full border border-white/10 bg-black/40 px-3 py-2.5 text-xs font-bold text-white outline-none focus:border-[#d7ff53] [color-scheme:dark]"
-            />
-            <input
-              name="to"
-              type="date"
-              defaultValue={toDate}
-              className="flex-1 rounded-full border border-white/10 bg-black/40 px-3 py-2.5 text-xs font-bold text-white outline-none focus:border-[#d7ff53] [color-scheme:dark]"
-            />
-          </div>
-          <button className="w-full rounded-full bg-[#d7ff53] px-4 py-2.5 text-xs font-black uppercase tracking-wider text-black transition hover:bg-white md:w-auto">
-            Terapkan
-          </button>
-        </form>
-        <div className="mt-2 flex items-center gap-1.5 text-[11px] text-white/45">
-          <Filter size={11} />
-          {orders.length} pesanan ditemukan
-        </div>
-      </section>
+        {/* Filters */}
+        <AdminCard style={{ background: "linear-gradient(to right, #ffffff, #f9fafb)" }}>
+          <form className="grid gap-2.5 lg:grid-cols-2 xl:grid-cols-[minmax(0,1.5fr)_1fr_1fr]">
+            <div className="relative">
+              <Search
+                size={14}
+                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--ad-text-3)]"
+              />
+              <input
+                name="q"
+                defaultValue={q}
+                placeholder="Cari ID, nama, email, HP…"
+                className="ad-input !rounded-lg pl-9"
+              />
+            </div>
 
-      <section className="mt-6">
+            <div className="grid grid-cols-2 gap-2">
+              <select name="order_status" defaultValue={orderStatusFilter} className={selectCls}>
+                <option value="all">Semua Status</option>
+                {ORDER_STATUS_OPTIONS.map((s) => (
+                  <option key={s} value={s}>
+                    {s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+                  </option>
+                ))}
+              </select>
+              <select
+                name="payment_status"
+                defaultValue={paymentStatusFilter}
+                className={selectCls}
+              >
+                <option value="all">Semua Bayar</option>
+                {PAYMENT_STATUS_OPTIONS.map((s) => (
+                  <option key={s} value={s}>
+                    {s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center lg:col-span-2 xl:col-span-1">
+              <div className="grid flex-1 grid-cols-2 gap-2">
+                <input
+                  name="from"
+                  type="date"
+                  defaultValue={fromDate}
+                  title="Dari tanggal"
+                  className="ad-input w-full !rounded-lg !py-2 text-[12px] font-medium [color-scheme:light]"
+                />
+                <input
+                  name="to"
+                  type="date"
+                  defaultValue={toDate}
+                  title="Sampai tanggal"
+                  className="ad-input w-full !rounded-lg !py-2 text-[12px] font-medium [color-scheme:light]"
+                />
+              </div>
+              <button
+                type="submit"
+                className="ad-btn ad-btn-primary w-full !rounded-lg sm:w-auto"
+              >
+                <Filter size={13} /> Terapkan
+              </button>
+            </div>
+          </form>
+        </AdminCard>
+
+        <p className="flex items-center gap-1.5 text-[12px] text-[var(--ad-text-3)]">
+          <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[var(--ad-accent-soft)] px-1.5 text-[11px] font-bold text-[var(--ad-accent)]">
+            {orders.length}
+          </span>
+          pesanan ditemukan
+        </p>
+
         {error ? (
-          <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-6 text-sm font-bold text-red-300">
+          <div className="ad-alert ad-alert-error">
             Gagal memuat pesanan: {error.message}
           </div>
         ) : orders.length === 0 ? (
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-10 text-center">
-            <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-white/5 text-white/50">
-              <ShoppingCart size={20} />
-            </div>
-            <h3 className="text-base font-black uppercase">Tidak ada pesanan</h3>
-            <p className="mt-1 text-xs text-white/45">
-              Coba ubah filter atau bersihkan pencarian.
-            </p>
-          </div>
+          <AdminCard>
+            <EmptyState
+              icon={<ShoppingCart size={20} />}
+              title="Tidak ada pesanan"
+              description="Coba ubah filter atau bersihkan pencarian."
+            />
+          </AdminCard>
         ) : (
-          <div className="grid gap-3">
+          <div className="grid gap-3.5">
             {orders.map((o) => (
               <OrderCard key={o.id} order={o} onUpdate={updateOrderStatus} />
             ))}
           </div>
         )}
-      </section>
+      </div>
     </AdminShell>
   );
 }

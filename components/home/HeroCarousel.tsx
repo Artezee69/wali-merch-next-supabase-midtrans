@@ -15,8 +15,8 @@ type Props = {
 };
 
 /**
- * Hero carousel sederhana berbasis CSS scroll-snap.
- * - Tidak butuh dependensi tambahan (tidak pakai embla/swiper).
+ * Hero carousel berbasis CSS scroll-snap.
+ * - Tanpa dependensi tambahan (tidak pakai embla/swiper).
  * - Auto-rotate setiap `autoRotateMs` (default 6000).
  * - Pause auto-rotate saat hover.
  * - Menghormati prefers-reduced-motion (no autoplay).
@@ -93,14 +93,14 @@ export default function HeroCarousel({ banners, autoRotateMs = 6000, fillHeight 
 
   return (
     <div
-      className={`${className} relative ${fillHeight ? "h-full" : ""} w-full`}
+      className={`${className} relative w-full`}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       aria-roledescription="carousel"
     >
       <div
         ref={containerRef}
-        className="flex w-full snap-x snap-mandatory overflow-x-hidden h-full touch-pan-x"
+        className="flex h-full w-full snap-x snap-mandatory overflow-x-hidden touch-pan-x"
         style={{ scrollBehavior: "smooth" }}
       >
         {validBanners.map((b, i) => (
@@ -115,6 +115,9 @@ export default function HeroCarousel({ banners, autoRotateMs = 6000, fillHeight 
         ))}
       </div>
 
+      {/* Bottom fade for text readability */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-44 bg-gradient-to-t from-black via-black/40 to-transparent sm:h-56" />
+
       {/* Arrow controls */}
       {validBanners.length > 1 && (
         <>
@@ -122,7 +125,7 @@ export default function HeroCarousel({ banners, autoRotateMs = 6000, fillHeight 
             type="button"
             onClick={() => goTo(-1)}
             aria-label="Slide sebelumnya"
-            className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full border border-white/20 bg-gray-900/60 p-2.5 text-white/90 backdrop-blur-md transition-all duration-300 hover:border-[#d7ff53] hover:bg-[#d7ff53]/20 hover:text-[#d7ff53] dark:bg-gray-800/60 active:scale-90 hidden sm:flex"
+            className="absolute left-4 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-black/40 text-white backdrop-blur-md transition-all duration-300 hover:scale-105 hover:border-[#d7ff53] hover:bg-[#d7ff53] hover:text-black active:scale-95 sm:left-6 sm:h-12 sm:w-12"
           >
             <ChevronLeft size={20} strokeWidth={2.5} />
           </button>
@@ -130,7 +133,7 @@ export default function HeroCarousel({ banners, autoRotateMs = 6000, fillHeight 
             type="button"
             onClick={() => goTo(1)}
             aria-label="Slide berikutnya"
-            className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full border border-white/20 bg-gray-900/60 p-2.5 text-white/90 backdrop-blur-md transition-all duration-300 hover:border-[#d7ff53] hover:bg-[#d7ff53]/20 hover:text-[#d7ff53] dark:bg-gray-800/60 active:scale-90 hidden sm:flex"
+            className="absolute right-4 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-black/40 text-white backdrop-blur-md transition-all duration-300 hover:scale-105 hover:border-[#d7ff53] hover:bg-[#d7ff53] hover:text-black active:scale-95 sm:right-6 sm:h-12 sm:w-12"
           >
             <ChevronRight size={20} strokeWidth={2.5} />
           </button>
@@ -139,7 +142,7 @@ export default function HeroCarousel({ banners, autoRotateMs = 6000, fillHeight 
 
       {/* Dots */}
       {validBanners.length > 1 && (
-        <div className="pointer-events-auto absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-2 sm:bottom-4">
+        <div className="absolute bottom-5 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5">
           {validBanners.map((b, i) => (
             <button
               key={`dot-${b.id}`}
@@ -149,10 +152,10 @@ export default function HeroCarousel({ banners, autoRotateMs = 6000, fillHeight 
                 scrollToIndex(i);
               }}
               aria-label={`Pergi ke slide ${i + 1}`}
-              className={`transition-all duration-300 ease-out ${
+              className={`rounded-full transition-all duration-400 ease-out ${
                 i === activeIndex
-                  ? "h-2 w-8 rounded-full bg-[#d7ff53] shadow-[0_0_10px_rgba(215,255,83,0.5)]"
-                  : "h-2 w-2 rounded-full bg-white/40 hover:bg-white/70"
+                  ? "h-1.5 w-7 bg-[#d7ff53]"
+                  : "h-1.5 w-1.5 bg-white/40 hover:bg-white/80"
               }`}
             />
           ))}
@@ -172,42 +175,42 @@ function BannerSlide({ banner, fillHeight = false }: { banner: Banner; fillHeigh
 
   const sizeClass = fillHeight
     ? "relative h-full w-full"
-    : "relative aspect-[16/9] sm:aspect-[16/7] md:aspect-[16/6] w-full";
+    : "relative aspect-[16/9] w-full sm:aspect-[16/7] md:aspect-[21/9]";
 
   return (
-    <div className={`${sizeClass} overflow-hidden bg-gray-900 dark:bg-gray-950`}>
+    <div className={`${sizeClass} overflow-hidden bg-black`}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={banner.image_url}
         alt={banner.title}
         loading={fillHeight ? "eager" : "lazy"}
         decoding="async"
-        className={`absolute inset-0 ${fillHeight ? "h-full w-full object-cover" : "object-cover"}`}
+        className="absolute inset-0 h-full w-full object-cover"
         draggable={false}
       />
-      {/* Gradient overlay for text readability — lighter on mobile */}
+      {/* Dark vignette — strongest behind the text block */}
       {showOverlay && (
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent sm:from-black/85 sm:via-black/30 dark:from-gray-950/85 dark:via-gray-900/30" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/15 to-black/10" />
       )}
       {showOverlay && (
-        <div className="absolute inset-x-0 bottom-0 z-10 px-4 pb-10 sm:px-8 sm:pb-14 md:px-12 md:pb-16">
-          <div className="mx-auto max-w-2xl sm:max-w-3xl">
+        <div className="absolute inset-x-0 bottom-0 z-10 px-5 pb-10 sm:px-8 sm:pb-14 md:px-12 md:pb-16">
+          <div className="mx-auto max-w-3xl">
             {banner.title && (
-              <h2 className="text-xl font-black uppercase tracking-tight text-white sm:text-3xl md:text-4xl lg:text-5xl leading-[1.05]">
+              <h2 className="text-3xl font-black uppercase leading-[1.02] tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl">
                 {banner.title}
               </h2>
             )}
             {banner.subtitle && (
-              <p className="mt-2 max-w-xl text-xs text-white/75 sm:text-sm md:text-base leading-relaxed">
+              <p className="mt-3 max-w-xl text-sm leading-relaxed text-white/80 sm:text-base md:mt-4 md:text-lg">
                 {banner.subtitle}
               </p>
             )}
             {banner.button_text && (
-              <div className="mt-4 sm:mt-5">
+              <div className="mt-6 sm:mt-7">
                 {/* @ts-expect-error - dynamic tag with conditional props */}
                 <Cta
                   {...ctaProps}
-                  className="inline-flex items-center gap-2 rounded-full bg-[#d7ff53] px-5 py-3 text-xs font-black uppercase tracking-wider text-black transition-all duration-300 hover:bg-[#c7ef33] hover:shadow-lg hover:shadow-[#d7ff53]/30 active:scale-95"
+                  className="inline-flex items-center rounded-full bg-[#d7ff53] px-7 py-3.5 text-xs font-black uppercase tracking-[0.15em] text-black transition-all duration-300 hover:scale-105 hover:shadow-[0_0_36px_rgba(215,255,83,0.5)] sm:px-8 sm:py-4 sm:text-sm"
                 >
                   {banner.button_text}
                 </Cta>

@@ -4,12 +4,30 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useToast } from "@/components/Toast";
 import { PopupAd } from "@/lib/adminPopupAds";
-import { ArrowLeft, Image as ImageIcon, Plus, Save, Eye } from "lucide-react";
+import {
+  Info,
+  Image as ImageIcon,
+  Loader2,
+  MousePointer,
+  Plus,
+  Save,
+  SlidersHorizontal,
+} from "lucide-react";
+import {
+  AdminButton,
+  AdminCard,
+  Alert,
+  Field,
+  Section,
+  Toggle,
+} from "@/components/admin/ui";
 
 type Props = {
   initialPopup?: Partial<PopupAd>;
   mode: "edit" | "create";
 };
+
+const inp = "ad-input";
 
 export default function PopupAdsForm({ initialPopup, mode }: Props) {
   const { show } = useToast();
@@ -19,12 +37,13 @@ export default function PopupAdsForm({ initialPopup, mode }: Props) {
   // Initialize form data from initialPopup if editing
   useEffect(() => {
     if (mode === "edit" && initialPopup) {
+      const imagePath = initialPopup.image_url || "";
       setData({
         title: initialPopup.title,
         subtitle: initialPopup.subtitle,
         body: initialPopup.body,
-        image_url: initialPopup.image_url,
-        storage_path: initialPopup.storage_path,
+        image_url: imagePath,
+        storage_path: initialPopup.storage_path || (imagePath.startsWith("/") ? imagePath.slice(1) : imagePath),
         button_text: initialPopup.button_text,
         button_link: initialPopup.button_link,
         position: initialPopup.position,
@@ -38,7 +57,7 @@ export default function PopupAdsForm({ initialPopup, mode }: Props) {
     }
   }, [mode, initialPopup]);
 
-  const handleChange = (field: string, value: any) => {
+  const handleChange = (field: string, value: unknown) => {
     setData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -47,11 +66,13 @@ export default function PopupAdsForm({ initialPopup, mode }: Props) {
     setLoading(true);
 
     try {
+      const imagePath = data.image_url || "";
       const payload = {
         title: data.title || "",
+        subtitle: data.subtitle || null,
         body: data.body || "",
-        image_url: data.image_url || "",
-        storage_path: data.storage_path || "",
+        image_url: imagePath,
+        storage_path: data.storage_path || (imagePath.startsWith("/") ? imagePath.slice(1) : imagePath),
         button_text: data.button_text || "Kunjungi",
         button_link: data.button_link || "/",
         position: data.position || "center",
@@ -81,278 +102,217 @@ export default function PopupAdsForm({ initialPopup, mode }: Props) {
     }
   };
 
-  const inputClass = "w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white text-sm focus:border-[#d7ff53] focus:outline-none focus:ring-1 focus:ring-[#d7ff53]/50 transition-all placeholder:text-gray-500";
-  const labelClass = "block text-sm font-medium text-gray-300 mb-2";
-  const sectionClass = "space-y-4";
-  const cardClass = "bg-white/5 border border-white/10 rounded-2xl p-4 md:p-5";
-
   return (
-    <div className="max-w-3xl">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          {mode === "create" && (
-            <Link
-              href="/admin/popup-ads"
-              className="p-2 rounded-lg hover:bg-white/10 transition-colors text-gray-400 hover:text-white"
-              aria-label="Kembali"
-            >
-              <ArrowLeft size={18} />
-            </Link>
-          )}
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            {mode === "create" ? (
-              <><Plus className="text-[#d7ff53]" size={20} /> Tambah Popup Baru</>
-            ) : (
-              <><Save className="text-[#d7ff53]" size={20} /> Edit Popup</>
-            )}
-          </h2>
-        </div>
+    <div className="max-w-3xl space-y-4">
+      {/* Breadcrumb */}
+      <nav className="text-[12px] text-[var(--ad-text-3)]" aria-label="Breadcrumb">
+        <Link href="/admin" className="hover:text-[var(--ad-accent)]">
+          Admin
+        </Link>
+        <span className="mx-1.5">/</span>
+        <Link href="/admin/popup-ads" className="hover:text-[var(--ad-accent)]">
+          Popup Ads
+        </Link>
+        <span className="mx-1.5">/</span>
+        <span className="font-medium text-[var(--ad-text)]">{mode}</span>
+      </nav>
 
-        {mode === "edit" && data.image_url && (
-          <Link
-            href={data.image_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-xs text-gray-400"
-          >
-            <Eye size={14} />
-            <span className="hidden sm:inline">Pratinjau Gambar</span>
-          </Link>
-        )}
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit}>
         {/* Basic Info */}
-        <div className={cardClass}>
-          <h3 className="text-sm font-semibold text-[#d7ff53] uppercase tracking-wider mb-4 flex items-center gap-2">
-            <span className="w-1 h-4 bg-[#d7ff53] rounded-full" />
-            Informasi Dasar
-          </h3>
-          <div className={sectionClass}>
-            <div>
-              <label className={labelClass}>Judul <span className="text-red-400">*</span></label>
+        <Section title="Informasi Dasar" icon={<Info size={14} />} open onToggle={() => {}} accent="#2563eb">
+          <div className="grid gap-4">
+            <Field label="Judul" required>
               <input
                 type="text"
                 value={data.title || ""}
                 onChange={(e) => handleChange("title", e.target.value)}
-                className={inputClass}
+                className={inp}
                 placeholder="Contoh: Promo Flash Sale!"
                 required
               />
-            </div>
+            </Field>
 
-            <div>
-              <label className={labelClass}>Subjudul (opsional)</label>
+            <Field label="Subjudul" hint="Opsional">
               <input
                 type="text"
                 value={data.subtitle || ""}
                 onChange={(e) => handleChange("subtitle", e.target.value)}
-                className={inputClass}
+                className={inp}
                 placeholder="Contoh: Dapatkan diskon 50% hari ini!"
               />
-            </div>
+            </Field>
 
-            <div>
-              <label className={labelClass}>Isi/Pesan <span className="text-red-400">*</span></label>
+            <Field label="Isi/Pesan" required>
               <textarea
                 value={data.body || ""}
                 onChange={(e) => handleChange("body", e.target.value)}
                 rows={4}
-                className={`${inputClass} resize-none`}
-                placeholder="Teks yang akan ditampilkan ke pengguna..."
+                className={`${inp} resize-none`}
+                placeholder="Teks yang akan ditampilkan ke pengguna…"
                 required
               />
-            </div>
+            </Field>
           </div>
-        </div>
+        </Section>
 
         {/* Image */}
-        <div className={cardClass}>
-          <h3 className="text-sm font-semibold text-[#d7ff53] uppercase tracking-wider mb-4 flex items-center gap-2">
-            <span className="w-1 h-4 bg-[#d7ff53] rounded-full" />
-            Gambar
-          </h3>
-          <div className={sectionClass}>
-            <div>
-              <label className={labelClass}>Path Gambar <span className="text-red-400">*</span></label>
+        <Section title="Gambar" icon={<ImageIcon size={14} />} open onToggle={() => {}} accent="#7c3aed">
+          <div className="grid gap-4">
+            <Field label="Path Gambar" required>
               <input
                 type="text"
                 value={data.image_url || ""}
                 onChange={(e) => handleChange("image_url", e.target.value)}
-                className={inputClass}
+                className={`${inp} font-mono text-[12px]`}
                 placeholder="/popup/banner-1.jpg"
                 required
               />
-              <p className="text-xs text-gray-500 mt-1.5">Letakkan gambar di folder <code className="bg-white/10 px-1.5 py-0.5 rounded text-[#d7ff53]/80">public/popup/</code></p>
-            </div>
+              <p className="mt-1.5 text-[11px] text-[var(--ad-text-3)]">
+                Letakkan gambar di folder{" "}
+                <code className="rounded bg-[var(--ad-surface-2)] px-1.5 py-0.5 text-[var(--ad-accent)]">
+                  public/popup/
+                </code>
+              </p>
+            </Field>
 
-            <div>
-              <label className={labelClass}>Path Penyimpanan (opsional)</label>
+            <Field label="Path Penyimpanan" hint="Opsional">
               <input
                 type="text"
                 value={data.storage_path || ""}
                 onChange={(e) => handleChange("storage_path", e.target.value)}
-                className={inputClass}
+                className={`${inp} font-mono text-[12px]`}
                 placeholder="popup/banner-1.jpg"
               />
-            </div>
+            </Field>
 
             {data.image_url && (
-              <div className="mt-3 rounded-xl overflow-hidden border border-white/10">
+              <div className="rounded-xl border border-[var(--ad-border)] overflow-hidden bg-[var(--ad-surface-2)]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={data.image_url} alt="Preview" className="w-full h-40 object-cover" />
               </div>
             )}
           </div>
-        </div>
+        </Section>
 
         {/* CTA & Position */}
-        <div className={cardClass}>
-          <h3 className="text-sm font-semibold text-[#d7ff53] uppercase tracking-wider mb-4 flex items-center gap-2">
-            <span className="w-1 h-4 bg-[#d7ff53] rounded-full" />
-            Tombol CTA & Posisi
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className={labelClass}>Teks Tombol</label>
+        <Section title="Tombol CTA & Posisi" icon={<MousePointer size={14} />} open onToggle={() => {}} accent="#d97706">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <Field label="Teks Tombol">
               <input
                 type="text"
                 value={data.button_text || ""}
                 onChange={(e) => handleChange("button_text", e.target.value)}
-                className={inputClass}
+                className={inp}
                 placeholder="Contoh: Beli Sekarang"
               />
-            </div>
+            </Field>
 
-            <div>
-              <label className={labelClass}>Link Target</label>
+            <Field label="Link Target">
               <input
                 type="text"
                 value={data.button_link || ""}
                 onChange={(e) => handleChange("button_link", e.target.value)}
-                className={inputClass}
+                className={inp}
                 placeholder="/produk/sale"
               />
-            </div>
+            </Field>
 
-            <div>
-              <label className={labelClass}>Posisi Popup</label>
+            <Field label="Posisi Popup">
               <select
                 value={data.position || "center"}
                 onChange={(e) => handleChange("position", e.target.value)}
-                className={inputClass}
+                className={inp}
               >
                 <option value="center">Tengah Layar (Modal Overlay)</option>
                 <option value="bottom_right">Pojok Bawah Kanan</option>
               </select>
-            </div>
+            </Field>
 
-            <div>
-              <label className={labelClass}>Target Audiens</label>
+            <Field label="Target Audiens">
               <select
                 value={data.audience || "logged_in"}
                 onChange={(e) => handleChange("audience", e.target.value)}
-                className={inputClass}
+                className={inp}
               >
                 <option value="logged_in">Hanya Pengguna Login</option>
                 <option value="all">Semua Pengunjung</option>
-                <option value="guest">Tamuan/Hanya Pengunjung</option>
+                <option value="guest">Tamu / Hanya Pengunjung</option>
               </select>
-            </div>
+            </Field>
           </div>
-        </div>
+        </Section>
 
         {/* Settings */}
-        <div className={cardClass}>
-          <h3 className="text-sm font-semibold text-[#d7ff53] uppercase tracking-wider mb-4 flex items-center gap-2">
-            <span className="w-1 h-4 bg-[#d7ff53] rounded-full" />
-            Pengaturan
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div>
-              <label className={labelClass}>Durasi (menit)</label>
+        <Section title="Pengaturan" icon={<SlidersHorizontal size={14} />} open onToggle={() => {}} accent="#16a34a">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <Field label="Durasi (menit)" hint="Hide setelah menutup">
               <input
                 type="number"
                 value={data.dismiss_minutes || 60}
                 onChange={(e) => handleChange("dismiss_minutes", Number(e.target.value))}
-                className={inputClass}
+                className={inp}
                 min="1"
                 max="1440"
               />
-              <p className="text-xs text-gray-500 mt-1.5">Hide setelah menutup</p>
-            </div>
+            </Field>
 
             <div>
-              <label className={labelClass}>Status</label>
-              <select
-                value={data.status !== false ? "on" : "off"}
-                onChange={(e) => handleChange("status", e.target.value === "on")}
-                className={inputClass}
-              >
-                <option value="on">✓ Aktif</option>
-                <option value="off">✗ Nonaktif</option>
-              </select>
+              <Field label="Status">
+                <Toggle
+                  value={data.status !== false}
+                  onChange={(v) => handleChange("status", v)}
+                />
+              </Field>
             </div>
 
-            <div>
-              <label className={labelClass}>Urutan Tampil</label>
+            <Field label="Urutan Tampil" hint="Kecil = lebih dulu tampil">
               <input
                 type="number"
                 value={data.sort_order || 0}
                 onChange={(e) => handleChange("sort_order", Number(e.target.value))}
-                className={inputClass}
+                className={inp}
                 min="0"
               />
-              <p className="text-xs text-gray-500 mt-1.5">Smaller = lebih dulu tampil</p>
-            </div>
+            </Field>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-            <div>
-              <label className={labelClass}>Mulai Tanggal (opsional)</label>
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field label="Mulai Tanggal" hint="Opsional">
               <input
                 type="datetime-local"
                 value={data.start_date ? data.start_date.slice(0, 16) || "" : ""}
                 onChange={(e) => handleChange("start_date", e.target.value + "Z")}
-                className={inputClass}
+                className={`${inp} [color-scheme:light]`}
               />
-            </div>
+            </Field>
 
-            <div>
-              <label className={labelClass}>Selesai Tanggal (opsional)</label>
+            <Field label="Selesai Tanggal" hint="Opsional">
               <input
                 type="datetime-local"
                 value={data.end_date ? data.end_date.slice(0, 16) || "" : ""}
                 onChange={(e) => handleChange("end_date", e.target.value + "Z")}
-                className={inputClass}
+                className={`${inp} [color-scheme:light]`}
               />
-            </div>
+            </Field>
           </div>
-        </div>
+        </Section>
 
         {/* Actions */}
-        <div className="flex flex-col sm:flex-row gap-3 pt-2">
-          <button
-            type="submit"
-            disabled={loading}
-            className="flex-1 flex items-center justify-center gap-2 py-3.5 px-6 bg-[#d7ff53] text-black font-bold rounded-xl hover:bg-opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
+        <div className="sticky bottom-0 z-10 mt-5 flex flex-col gap-2.5 border-t bg-white/95 p-4 backdrop-blur sm:flex-row">
+          <AdminButton type="submit" disabled={loading} className="flex-1 !py-3">
             {loading ? (
-              <><span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" /> Menyimpan...</>
+              <Loader2 size={15} className="animate-spin" />
             ) : mode === "create" ? (
-              <><Plus size={18} /> Buat Popup</>
+              <Plus size={15} />
             ) : (
-              <><Save size={18} /> Simpan Perubahan</>
+              <Save size={15} />
             )}
-          </button>
-          {mode === "create" && (
-            <Link
-              href="/admin/popup-ads"
-              className="flex items-center justify-center py-3.5 px-6 border border-white/10 bg-white/5 text-white rounded-xl hover:bg-white/10 transition-colors"
-            >
-              Batal
-            </Link>
-          )}
+            {loading
+              ? "Menyimpan…"
+              : mode === "create"
+                ? "Buat Popup"
+                : "Simpan Perubahan"}
+          </AdminButton>
         </div>
       </form>
     </div>

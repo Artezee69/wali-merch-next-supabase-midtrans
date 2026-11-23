@@ -124,31 +124,26 @@ export default async function AdminSettingsPage({
       adminName={session.fullName}
       adminEmail={session.email}
     >
-      <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+      <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#d7ff53]">
-            Manajemen
-          </p>
-          <h1 className="mt-1 text-2xl font-black uppercase tracking-tight md:text-3xl">
+          <h1 className="text-xl font-bold tracking-tight text-[var(--ad-text)]">
             Pengaturan
           </h1>
-          <p className="mt-1 text-sm text-white/55">
-            Identitas toko dan konten section Latest Drop di homepage — semua
+          <p className="mt-1 text-[13px] text-[var(--ad-text-3)]">
+            Identitas toko, section Latest Drop, dan data pembayaran — semua
             dapat diedit di sini. Perubahan tersimpan ke tabel{" "}
-            <code className="text-white/70">store_settings</code>.
+            <code className="rounded bg-[var(--ad-surface-2)] px-1 py-0.5 font-mono text-[11px] text-[var(--ad-accent)]">store_settings</code>.
           </p>
         </div>
       </div>
 
-      <div className="mb-6 rounded-2xl border border-yellow-500/20 bg-yellow-500/5 p-4 text-xs text-yellow-200">
-        <div className="flex items-start gap-2">
-          <ShieldAlert size={14} className="mt-0.5 shrink-0" />
-          <p>
-            <strong>Peringatan:</strong> secret seperti Supabase service role,
-            Midtrans server key, dan database password tetap disimpan di
-            environment variable server dan tidak dapat diubah dari halaman ini.
-          </p>
-        </div>
+      <div className="ad-alert ad-alert-warn mb-5">
+        <ShieldAlert size={15} className="mt-0.5 shrink-0" />
+        <p className="text-[12.5px] leading-5">
+          <strong>Peringatan:</strong> secret seperti Supabase service role,
+          Midtrans server key, dan database password tetap disimpan di
+          environment variable server dan tidak dapat diubah dari halaman ini.
+        </p>
       </div>
 
       <SettingsFormClient

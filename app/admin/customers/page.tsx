@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { requireAdmin } from "@/lib/adminAuth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { rupiah } from "@/lib/format";
 import AdminShell from "@/components/admin/AdminShell";
-import { Search, Users, ShieldCheck, Mail, Phone } from "lucide-react";
+import { AdminCard, EmptyState, Pill } from "@/components/admin/ui";
+import { Mail, Phone, Search, ShieldCheck, Users } from "lucide-react";
 
 type CustomerRow = {
   id: string;
@@ -76,111 +76,93 @@ export default async function AdminCustomersPage({
   });
 
   return (
-    <AdminShell title="Customer" adminName={session.fullName} adminEmail={session.email}>
-      <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#d7ff53]">
-            Manajemen
-          </p>
-          <h1 className="mt-1 text-2xl font-black uppercase tracking-tight md:text-3xl">
-            Customer
-          </h1>
-          <p className="mt-1 text-sm text-white/55">
-            Daftar akun customer terdaftar.
-          </p>
-        </div>
-      </div>
+    <AdminShell
+      title="Customer"
+      subtitle="Daftar akun customer terdaftar"
+      adminName={session.fullName}
+      adminEmail={session.email}
+    >
+      <div className="space-y-4">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--ad-text-3)]">
+          Admin / Customer
+        </p>
 
-      <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
-        <form>
-          <div className="relative">
+        <AdminCard style={{ background: "linear-gradient(to right, #ffffff, #f9fafb)" }}>
+          <form className="relative">
             <Search
               size={14}
-              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/40"
+              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--ad-text-3)]"
             />
             <input
               name="q"
               defaultValue={q}
-              placeholder="Cari nama, email, atau nomor HP..."
-              className="w-full rounded-full border border-white/10 bg-black/40 py-2.5 pl-10 pr-4 text-sm text-white outline-none placeholder:text-white/35 focus:border-[#d7ff53]"
+              placeholder="Cari nama, email, atau nomor HP…"
+              className="ad-input !rounded-lg pl-9"
             />
-          </div>
-        </form>
-      </section>
+          </form>
+        </AdminCard>
 
-      <section className="mt-6">
         {error ? (
-          <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-6 text-sm font-bold text-red-300">
+          <div className="ad-alert ad-alert-error">
             Gagal memuat customer: {error.message}
           </div>
         ) : customers.length === 0 ? (
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-10 text-center">
-            <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-white/5 text-white/50">
-              <Users size={20} />
-            </div>
-            <h3 className="text-base font-black uppercase">Tidak ada customer</h3>
-            <p className="mt-1 text-xs text-white/45">
-              Coba ubah pencarian.
-            </p>
-          </div>
+          <AdminCard>
+            <EmptyState
+              icon={<Users size={20} />}
+              title="Tidak ada customer"
+              description="Coba ubah pencarian."
+            />
+          </AdminCard>
         ) : (
-          <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
+          <AdminCard padded={false} className="overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="ad-table w-full">
                 <thead>
-                  <tr className="border-b border-white/10 text-left text-[10px] font-black uppercase tracking-wider text-white/40">
-                    <th className="px-4 py-3">Customer</th>
-                    <th className="px-3 py-3">Kontak</th>
-                    <th className="px-3 py-3 text-center">Pesanan</th>
-                    <th className="px-3 py-3 text-right">Total</th>
-                    <th className="px-3 py-3">Status</th>
-                    <th className="px-3 py-3">Terdaftar</th>
+                  <tr className="bg-[var(--ad-surface-2)]">
+                    <th>Customer</th>
+                    <th className="hidden md:table-cell">Kontak</th>
+                    <th className="text-center">Pesanan</th>
+                    <th className="text-right">Total</th>
+                    <th>Status</th>
+                    <th className="hidden sm:table-cell">Terdaftar</th>
                   </tr>
                 </thead>
                 <tbody>
                   {customers.map((c) => {
                     const stats = orderMap.get(c.id) ?? { count: 0, total: 0 };
                     return (
-                      <tr
-                        key={c.id}
-                        className="border-b border-white/5 last:border-0 transition hover:bg-white/[0.02]"
-                      >
-                        <td className="px-4 py-3">
-                          <p className="font-bold text-white">{c.full_name}</p>
+                      <tr key={c.id}>
+                        <td>
+                          <p className="font-semibold text-[var(--ad-text)]">{c.full_name}</p>
                           {c.role === "admin" && (
-                            <p className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-[#d7ff53]/15 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-[#d7ff53]">
+                            <span className="ad-pill ad-pill-accent mt-1.5">
                               <ShieldCheck size={10} /> Admin
-                            </p>
+                            </span>
                           )}
                         </td>
-                        <td className="px-3 py-3 text-white/75">
-                          <p className="flex items-center gap-1.5 text-[11px]">
-                            <Mail size={10} className="text-white/40" />
+                        <td className="hidden md:table-cell">
+                          <p className="flex items-center gap-1.5 text-[12px]">
+                            <Mail size={11} className="text-[var(--ad-text-3)]" />
                             {c.email}
                           </p>
-                          <p className="mt-0.5 flex items-center gap-1.5 text-[11px]">
-                            <Phone size={10} className="text-white/40" />
+                          <p className="mt-0.5 flex items-center gap-1.5 text-[12px]">
+                            <Phone size={11} className="text-[var(--ad-text-3)]" />
                             {c.phone}
                           </p>
                         </td>
-                        <td className="px-3 py-3 text-center font-bold text-white/85">
+                        <td className="text-center font-semibold text-[var(--ad-text)]">
                           {stats.count}
                         </td>
-                        <td className="px-3 py-3 text-right font-bold text-[#d7ff53]">
+                        <td className="text-right font-bold text-[var(--ad-accent)]">
                           {rupiah(stats.total)}
                         </td>
-                        <td className="px-3 py-3">
-                          <span
-                            className={`rounded-full border px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide ${
-                              c.is_email_verified
-                                ? "bg-[#d7ff53]/15 text-[#d7ff53] border-[#d7ff53]/30"
-                                : "bg-yellow-400/15 text-yellow-300 border-yellow-400/30"
-                            }`}
-                          >
+                        <td>
+                          <Pill tone={c.is_email_verified ? "green" : "amber"}>
                             {c.is_email_verified ? "Verified" : "Unverified"}
-                          </span>
+                          </Pill>
                         </td>
-                        <td className="px-3 py-3 text-[11px] text-white/55">
+                        <td className="hidden text-[11.5px] sm:table-cell">
                           {new Date(c.created_at).toLocaleDateString("id-ID", {
                             day: "2-digit",
                             month: "short",
@@ -193,14 +175,14 @@ export default async function AdminCustomersPage({
                 </tbody>
               </table>
             </div>
-          </div>
+          </AdminCard>
         )}
 
-        <p className="mt-3 text-[11px] text-white/35">
+        <p className="text-[11.5px] text-[var(--ad-text-3)]">
           Untuk alasan keamanan, password customer tidak pernah ditampilkan
           atau dikirim ke admin.
         </p>
-      </section>
+      </div>
     </AdminShell>
   );
 }

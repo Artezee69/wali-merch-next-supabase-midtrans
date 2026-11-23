@@ -4,7 +4,21 @@ import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Minus, Plus, ShoppingCart, Trash2, Loader2 } from "lucide-react";
+import {
+  Minus,
+  Plus,
+  ShoppingCart,
+  Trash2,
+  Loader2,
+  ArrowRight,
+  ArrowLeft,
+  X,
+  Lock,
+  Package,
+  ShieldCheck,
+  Sparkles,
+  CreditCard,
+} from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
@@ -49,6 +63,13 @@ export default function CartPage() {
 
   const autoRedirectedRef = useRef(false);
 
+  // Auto-dismiss toasts
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 3000);
+    return () => clearTimeout(timer);
+  }, [toast]);
+
   // If a signed-in user lands here with no items at all, still show the
   // empty-cart UI (don't bounce them to /products).
   useEffect(() => {
@@ -79,7 +100,7 @@ export default function CartPage() {
         const [{ data: prods }, { data: vars }] = await Promise.all([
           supabasePublic
             .from("products")
-            .select("id, name, slug, price, is_active, product_images(image_url)")
+            .select("id, name, slug, price, is_active, product_images(image_url, sort_order)")
             .in("id", productIds),
           supabasePublic
             .from("product_variants")
@@ -91,13 +112,16 @@ export default function CartPage() {
 
         const next: Record<string, ProductMeta> = {};
         (prods ?? []).forEach((p: any) => {
+          const sortedImages = [...(p.product_images || [])].sort(
+            (a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
+          );
           next[p.id] = {
             id: p.id,
             name: p.name,
             slug: p.slug,
             price: Number(p.price ?? 0),
             is_active: p.is_active !== false,
-            image_url: p.product_images?.[0]?.image_url ?? null,
+            image_url: sortedImages[0]?.image_url ?? null,
             size: null,
             stock: null,
           };
@@ -161,6 +185,7 @@ export default function CartPage() {
       setActionLoading(id);
       try {
         await removeItem(id);
+        setToast({ type: "success", msg: "Item dihapus dari keranjang" });
       } catch (err) {
         console.error("removeItem error:", err);
         setToast({ type: "error", msg: "Gagal menghapus item" });
@@ -179,16 +204,24 @@ export default function CartPage() {
     [items]
   );
 
+  const totalItems = useMemo(
+    () => items.reduce((s, i) => s + i.quantity, 0),
+    [items]
+  );
+
   // ------------------------- RENDER: AUTH LOADING -------------------------
   if (authLoading) {
     return (
       <>
         <Navbar />
-        <main className="min-h-screen bg-gray-900 text-gray-300 dark:bg-black dark:text-gray-200 px-4 py-16">
-          <div className="mx-auto max-w-3xl">
-            <p className="flex items-center gap-3 text-gray-600 dark:text-gray-400">
-              <Loader2 className="h-5 w-5 animate-spin" /> Memuat...
-            </p>
+        <main className="relative flex min-h-[70vh] items-center justify-center overflow-hidden bg-theme-primary px-4 py-16">
+          <div
+            className="pointer-events-none absolute -top-40 left-1/2 h-[400px] w-[600px] -translate-x-1/2 rounded-full opacity-40 blur-[120px]"
+            style={{ background: "radial-gradient(circle, var(--accent-color), transparent 70%)" }}
+          />
+          <div className="relative flex items-center gap-3 text-theme-secondary">
+            <Loader2 className="h-5 w-5 animate-spin accent-text" />
+            <span className="text-sm tracking-wide">MEMUAT KERANJANG…</span>
           </div>
         </main>
         <Footer />
@@ -202,39 +235,66 @@ export default function CartPage() {
     return (
       <>
         <Navbar />
-        <main className="min-h-screen bg-gray-900 text-gray-300 dark:bg-black dark:text-gray-200 px-4 py-16">
-          <div className="mx-auto max-w-3xl space-y-6 text-center">
-            <ShoppingCart size={56} className="mx-auto text-gray-300 dark:text-gray-600" />
-            <h1 className="text-2xl font-black tracking-wide text-gray-900 dark:text-gray-100">
-              Keranjang
-            </h1>
-            <p className="text-base text-gray-600 dark:text-gray-400">
-              Keranjang hanya tersedia untuk customer yang sudah login.
-            </p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Silakan login atau daftar terlebih dahulu untuk mulai belanja.
-            </p>
-            <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <button
-                type="button"
-                onClick={() => openLoginModal({ mode: "login", redirectTo })}
-                className="w-full rounded-xl bg-[#d7ff53] px-6 py-3 text-sm font-black text-black transition hover:bg-[#c7ef33] sm:w-auto"
-              >
-                Masuk
-              </button>
-              <button
-                type="button"
-                onClick={() => openLoginModal({ mode: "register", redirectTo })}
-                className="w-full rounded-xl border border-white/15 bg-white/5 px-6 py-3 text-sm font-black text-white transition hover:border-white/30 sm:w-auto"
-              >
-                Daftar
-              </button>
-              <Link
-                href="/products"
-                className="w-full rounded-xl border border-white/10 px-6 py-3 text-sm font-bold text-white/70 transition hover:border-white/30 hover:text-white sm:w-auto"
-              >
-                Kembali Belanja
-              </Link>
+        <main className="relative overflow-hidden bg-theme-primary px-4 py-14 lg:py-20">
+          {/* Ambient glow */}
+          <div
+            className="pointer-events-none absolute -top-48 left-1/2 h-[500px] w-[700px] -translate-x-1/2 rounded-full opacity-30 blur-[130px]"
+            style={{ background: "radial-gradient(circle, var(--accent-color), transparent 70%)" }}
+          />
+          <div
+            className="pointer-events-none absolute bottom-0 right-0 h-[300px] w-[300px] rounded-full opacity-20 blur-[100px]"
+            style={{ background: "radial-gradient(circle, #6366f1, transparent 70%)" }}
+          />
+
+          <div className="relative mx-auto flex min-h-[60vh] max-w-md items-center justify-center">
+            <div className="w-full">
+              <div className="rounded-3xl border border-theme bg-theme-card p-8 text-center backdrop-blur-xl sm:p-10">
+                <div className="mx-auto mb-7 flex h-20 w-20 items-center justify-center rounded-2xl border border-theme bg-theme-card shadow-[0_0_40px_-10px_rgba(215,255,83,0.25)]">
+                  <ShoppingCart className="h-8 w-8 accent-text" strokeWidth={1.5} />
+                </div>
+
+                <div className="mb-1 text-[11px] font-bold uppercase tracking-[0.2em] text-theme-secondary/50">
+                  Akses Dibatasi
+                </div>
+                <h1 className="text-2xl font-black tracking-tight text-theme-primary sm:text-3xl">
+                  {cartCopy.title}
+                </h1>
+                <p className="mt-4 text-sm leading-relaxed text-theme-secondary">
+                  Keranjang hanya tersedia untuk customer yang sudah login.
+                </p>
+                <p className="mt-1.5 text-xs text-theme-secondary/50">
+                  Silakan login atau daftar untuk mulai belanja.
+                </p>
+
+                <div className="mt-9 space-y-3">
+                  <button
+                    type="button"
+                    onClick={() => openLoginModal({ mode: "login", redirectTo })}
+                    className="group flex w-full items-center justify-center gap-2.5 rounded-xl py-4 text-sm font-black tracking-tight text-black transition-all duration-200 hover:scale-[1.02] hover:shadow-[0_0_30px_-5px_rgba(215,255,83,0.4)] active:scale-[0.98]"
+                    style={{ backgroundColor: "var(--accent-color)" }}
+                  >
+                    <Lock className="h-4 w-4 transition-transform group-hover:rotate-[-6deg]" />
+                    Masuk
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openLoginModal({ mode: "register", redirectTo })}
+                    className="w-full rounded-xl border border-theme bg-transparent py-4 text-sm font-bold text-theme-primary transition-all duration-200 hover:border-white/40 hover:bg-white/5 active:scale-[0.98]"
+                  >
+                    Daftar Akun Baru
+                  </button>
+                </div>
+
+                <div className="mt-8 border-t border-theme pt-6">
+                  <Link
+                    href="/products"
+                    className="group inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-theme-secondary/60 transition-all hover:text-theme-primary"
+                  >
+                    <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-1" />
+                    Kembali Belanja
+                  </Link>
+                </div>
+              </div>
             </div>
           </div>
         </main>
@@ -247,173 +307,403 @@ export default function CartPage() {
   return (
     <>
       <Navbar />
-      <main className="min-h-screen bg-gray-900 text-gray-300 dark:bg-black dark:text-gray-200 px-4 py-16">
-        <div className="mx-auto max-w-3xl space-y-6">
+      <main className="relative overflow-hidden bg-theme-primary">
+        {/* Ambient glow layers */}
+        <div
+          className="pointer-events-none fixed -top-40 right-0 h-[450px] w-[550px] rounded-full opacity-25 blur-[130px]"
+          style={{ background: "radial-gradient(circle, var(--accent-color), transparent 70%)" }}
+        />
+        <div
+          className="pointer-events-none fixed bottom-0 left-0 h-[350px] w-[350px] rounded-full opacity-15 blur-[110px]"
+          style={{ background: "radial-gradient(circle, #6366f1, transparent 70%)" }}
+        />
+
+        <div className="relative mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:py-14">
+          {/* ─── Toast ─── */}
           {toast && (
             <div
-              className={`rounded-xl border px-4 py-3 text-sm ${
+              className={`mb-6 flex items-center justify-between rounded-xl border px-5 py-3.5 text-sm font-medium backdrop-blur-md transition-all ${
                 toast.type === "success"
-                  ? "border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400"
-                  : "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-400"
+                  ? "border-green-500/30 bg-green-500/10 text-green-400"
+                  : "border-red-500/30 bg-red-500/10 text-red-400"
               }`}
             >
-              {toast.msg}
+              <div className="flex items-center gap-2.5">
+                {toast.type === "success" ? (
+                  <ShieldCheck className="h-4 w-4" />
+                ) : (
+                  <X className="h-4 w-4" />
+                )}
+                <span>{toast.msg}</span>
+              </div>
+              <button
+                onClick={() => setToast(null)}
+                className="rounded-md p-1.5 transition-colors hover:bg-white/10"
+                aria-label="Tutup notifikasi"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
             </div>
           )}
 
-          <div>
-            <h1 className="text-2xl font-black tracking-wide text-gray-900 dark:text-gray-100">
-              {cartCopy.title}
-            </h1>
-          </div>
+          {/* ─── Page header ─── */}
+          <header className="mb-10">
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <div className="mb-2 flex items-center gap-2">
+                  <div className="h-px w-8 bg-theme-secondary/30" />
+                  <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-theme-secondary/60">
+                    {cartCopy.title}
+                  </span>
+                </div>
+                <h1 className="text-3xl font-black tracking-tight text-theme-primary sm:text-4xl lg:text-[2.75rem]">
+                  {items.length > 0
+                    ? `${totalItems} Item`
+                    : "Keranjangmu"}
+                </h1>
+                {items.length > 0 && (
+                  <p className="mt-1.5 text-sm text-theme-secondary/70">
+                    Pilih ukuran, atur jumlah, lalu checkout.
+                  </p>
+                )}
+              </div>
 
+              {items.length > 0 && (
+                <Link
+                  href="/products"
+                  className="group hidden items-center gap-2 rounded-full border border-theme px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-theme-secondary transition-all duration-200 hover:border-white/30 hover:bg-white/5 hover:text-theme-primary sm:flex"
+                >
+                  <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" />
+                  Lanjut Belanja
+                </Link>
+              )}
+            </div>
+          </header>
+
+          {/* ─── Cart loading ─── */}
           {cartLoading ? (
-            <div className="rounded-2xl border border-black/20 dark:border-white/10 bg-gray-50 dark:bg-gray-800/30 p-12 text-center">
-              <p className="flex items-center justify-center gap-3 text-gray-500 dark:text-gray-400">
-                <Loader2 className="h-5 w-5 animate-spin text-gray-500 dark:text-gray-400" /> Memuat keranjang...
+            <div className="flex flex-col items-center justify-center rounded-3xl border border-theme bg-theme-card p-20 backdrop-blur-sm">
+              <div className="relative">
+                <div
+                  className="absolute inset-0 rounded-2xl opacity-40 blur-xl"
+                  style={{ background: "var(--accent-color)" }}
+                />
+                <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl border border-theme bg-theme-card">
+                  <Loader2 className="h-6 w-6 animate-spin accent-text" />
+                </div>
+              </div>
+              <p className="mt-5 text-xs font-bold uppercase tracking-[0.15em] text-theme-secondary/60">
+                Memuat Keranjangmu
               </p>
             </div>
           ) : items.length === 0 ? (
-            <div className="rounded-2xl border border-black/20 dark:border-white/10 bg-gray-50 dark:bg-gray-800/30 p-12 text-center">
-              <div className="space-y-4">
-                <ShoppingCart size={48} className="mx-auto mb-4 text-gray-500 dark:text-gray-400" />
-                <div className="bg-green-600/10 dark:bg-green-900/20 rounded-xl px-4 py-3 border border-green-600/20 dark:border-green-900/30">
-                  <p className="text-sm text-green-700 dark:text-green-400 font-bold">
-                    Keranjangmu masih kosong 😊
-                  </p>
-                  <p className="text-xs text-green-600 dark:text-green-500 mt-1">
-                    Yuk mulai belanja sekarang!
-                  </p>
+            /* ─── EMPTY STATE ─── */
+            <div className="flex flex-col items-center justify-center rounded-3xl border border-theme bg-theme-card p-12 sm:p-16">
+              <div className="relative mb-8">
+                <div
+                  className="absolute inset-0 rounded-3xl opacity-20 blur-2xl"
+                  style={{ background: "var(--accent-color)" }}
+                />
+                <div className="relative flex h-24 w-24 items-center justify-center rounded-3xl border border-theme bg-theme-card">
+                  <ShoppingCart className="h-10 w-10 text-theme-secondary/40" strokeWidth={1.25} />
                 </div>
-                <button
-                  onClick={() => router.push("/products")}
-                  className="mt-4 rounded-xl bg-green-600 dark:bg-green-500 px-6 py-3 text-sm font-bold text-white transition hover:bg-green-700 dark:hover:bg-green-500/90"
-                >
-                  Lihat Produk
-                </button>
               </div>
+
+              <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-theme-secondary/50">
+                Belum Ada Item
+              </div>
+              <h2 className="mt-3 text-2xl font-black tracking-tight text-theme-primary sm:text-3xl">
+                Keranjangmu masih kosong
+              </h2>
+              <p className="mt-3 max-w-sm text-center text-sm leading-relaxed text-theme-secondary/70">
+                Yuk mulai belanja sekarang! Temukan koleksi terbaik untukmu dan
+                bangun keranjang impianmu.
+              </p>
+
+              <button
+                onClick={() => router.push("/products")}
+                className="group mt-10 flex items-center gap-2.5 rounded-2xl px-10 py-4 text-sm font-black uppercase tracking-wider text-black transition-all duration-200 hover:scale-[1.03] hover:shadow-[0_0_40px_-8px_rgba(215,255,83,0.5)] active:scale-[0.97]"
+                style={{ backgroundColor: "var(--accent-color)" }}
+              >
+                <Sparkles className="h-4 w-4 transition-transform group-hover:rotate-12" />
+                Mulai Belanja
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              </button>
             </div>
           ) : (
-            <>
-              <div className="space-y-3">
-                {items.map((item) => {
-                  const meta = products[item.product_id];
-                  const variant = variants[item.variant_id];
-                  const imageSrc = meta?.image_url;
-                  const stock = variant?.stock ?? null;
-
-                  return (
-                    <div
-                      key={item.id}
-                      className="rounded-2xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-gray-800/30 p-4"
-                    >
-                      <div className="flex gap-4">
-                        <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-700/50">
-                          {imageSrc ? (
-                            <Image
-                              src={imageSrc}
-                              alt={meta?.name || item.name || "Produk"}
-                              fill
-                              className="object-cover"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).style.display = "none";
-                              }}
-                            />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center text-xs text-gray-400 dark:text-gray-500">
-                              Tidak ada gambar
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="text-sm font-bold text-gray-900 dark:text-white">
-                            {meta?.name || item.name || "Produk"}
-                          </h3>
-                          <div className="text-xs text-gray-600 dark:text-gray-400">
-                            {variant ? (
-                              <span>
-                                {[
-                                  variant.option1Name ? `${variant.option1Name}: ${variant.option1Value}` : undefined,
-                                  variant.option2Name ? `${variant.option2Name}: ${variant.option2Value}` : undefined,
-                                ].filter(Boolean).join(", ") || "-"}
-                              </span>
-                            ) : (
-                              item.size?.trim() ? item.size.trim() : "-"
-                            )}
-                          </div>
-                          {meta && !meta.is_active && (
-                            <p className="mt-1 text-xs text-red-600 dark:text-red-300">
-                              Produk tidak aktif
-                            </p>
-                          )}
-                          {stock !== null && item.quantity > stock && (
-                            <p className="mt-1 text-xs text-yellow-700 dark:text-yellow-400">
-                              Stok tersisa {stock}
-                            </p>
-                          )}
-                          <p className="mt-1 text-sm font-bold text-green-700 dark:text-green-400">
-                            {formatPrice(item.price)}
-                          </p>
-                        </div>
-                        <div className="flex flex-col items-end gap-2">
-                          <div className="flex items-center gap-1">
-                            <button
-                              onClick={() =>
-                                handleUpdateQuantity(item.id, item.quantity, -1)
-                              }
-                              disabled={
-                                item.quantity <= 1 || !!actionLoading
-                              }
-                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 dark:border-white/20 text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/30 transition hover:border-green-600 dark:hover:border-green-500 hover:text-green-700 dark:hover:text-green-400 disabled:opacity-30"
-                            >
-                              <Minus size={14} />
-                            </button>
-                            <span className="w-8 text-center text-sm font-bold text-gray-900 dark:text-white">
-                              {item.quantity}
-                            </span>
-                            <button
-                              onClick={() =>
-                                handleUpdateQuantity(item.id, item.quantity, 1)
-                              }
-                              disabled={
-                                !!actionLoading ||
-                                (stock !== null && item.quantity >= stock)
-                              }
-                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 dark:border-white/20 text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/30 transition hover:border-green-600 dark:hover:border-green-500 hover:text-green-700 dark:hover:text-green-400 disabled:opacity-30"
-                            >
-                              <Plus size={14} />
-                            </button>
-                          </div>
-                          <button
-                            onClick={() => handleRemove(item.id)}
-                            disabled={!!actionLoading}
-                            className="rounded-lg p-1.5 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 transition hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-700 dark:hover:text-red-300 disabled:opacity-30"
-                            aria-label="Hapus item"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-gray-800/30 p-6">
-                <div className="mb-4 flex justify-between text-sm text-gray-600 dark:text-gray-400">
-                  <span>
-                    Subtotal ({items.reduce((s, i) => s + i.quantity, 0)} item)
+            /* ─── CART ITEMS + SUMMARY (responsive: stacked / side-by-side) ─── */
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_minmax(360px,420px)] lg:gap-10">
+              {/* ═══ LEFT: ITEMS LIST ═══ */}
+              <div>
+                <div className="mb-4 flex items-center justify-between">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-theme-secondary/50">
+                    Item ({totalItems})
                   </span>
-                  <span className="text-gray-900 dark:text-white font-bold">{formatPrice(subtotal)}</span>
+                  <button
+                    onClick={() => {
+                      if (confirm("Hapus semua item dari keranjang?")) {
+                        clearCart().catch(() =>
+                          setToast({ type: "error", msg: "Gagal menghapus keranjang" })
+                        );
+                      }
+                    }}
+                    className="group flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-theme-secondary/50 transition-all hover:text-red-400"
+                  >
+                    <Trash2 className="h-3.5 w-3.5 transition-transform group-hover:scale-110" />
+                    Hapus Semua
+                  </button>
                 </div>
+
+                <div className="space-y-3">
+                  {items.map((item, idx) => {
+                    const meta = products[item.product_id];
+                    const variant = item.variant_id ? variants[item.variant_id] : null;
+                    const imageSrc = meta?.image_url;
+                    const stock = variant?.stock ?? null;
+                    const isLoading = actionLoading === item.id;
+                    const overStock = stock !== null && item.quantity > stock;
+
+                    const variantLabel = variant
+                      ? [
+                          variant.option1Name ? `${variant.option1Name}: ${variant.option1Value}` : undefined,
+                          variant.option2Name ? `${variant.option2Name}: ${variant.option2Value}` : undefined,
+                        ]
+                          .filter(Boolean)
+                          .join("  ·  ")
+                      : item.size?.trim() || "";
+
+                    return (
+                      <article
+                        key={item.id}
+                        className="group relative overflow-hidden rounded-2xl border border-theme bg-theme-card p-5 backdrop-blur-md transition-all duration-300 hover:border-white/20 hover:bg-white/[0.06] sm:p-6"
+                        style={{ animationDelay: `${idx * 60}ms` }}
+                      >
+                        {/* subtle left accent bar on hover */}
+                        <div className="absolute left-0 top-0 h-full w-[3px] opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                          style={{ background: "var(--accent-color)" }}
+                        />
+
+                        <div className="flex gap-4 sm:gap-5">
+                          {/* Product image */}
+                          <Link
+                            href={`/products/${meta?.slug || ""}`}
+                            className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-[#0a0a0a] sm:h-28 sm:w-28"
+                          >
+                            {imageSrc ? (
+                              <Image
+                                src={imageSrc}
+                                alt={meta?.name || item.name || "Produk"}
+                                fill
+                                sizes="112px"
+                                className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display = "none";
+                                }}
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center bg-[#0d0d0d]">
+                                <Package className="h-7 w-7 text-theme-secondary/20" strokeWidth={1.5} />
+                              </div>
+                            )}
+                            {/* image overlay gradient */}
+                            <div className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-inset ring-white/10" />
+                          </Link>
+
+                          {/* Product info + controls (stacked on mobile) */}
+                          <div className="flex flex-1 flex-col justify-between gap-4 min-w-0 sm:flex-row sm:items-start">
+                            {/* Info block */}
+                            <div className="min-w-0 flex-1">
+                              <h3 className="truncate text-[15px] font-bold tracking-tight text-theme-primary sm:text-base">
+                                {meta?.name || item.name || "Produk"}
+                              </h3>
+
+                              {variantLabel && (
+                                <div className="mt-1.5">
+                                  <span className="inline-block rounded-md border border-theme bg-white/[0.03] px-2.5 py-1 text-[11px] font-medium tracking-wide text-theme-secondary">
+                                    {variantLabel}
+                                  </span>
+                                </div>
+                              )}
+
+                              <div className="mt-3 flex flex-wrap items-center gap-2">
+                                <span className="text-base font-black tracking-tight text-theme-primary sm:text-lg">
+                                  {formatPrice(item.price)}
+                                </span>
+                                {item.quantity > 1 && (
+                                  <span className="text-xs text-theme-secondary/50 tabular-nums">
+                                    × {item.quantity}
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Status badges */}
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                {meta && !meta.is_active && (
+                                  <span className="inline-flex items-center gap-1 rounded-full border border-red-500/30 bg-red-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-red-400">
+                                    <X className="h-2.5 w-2.5" />
+                                    Tidak aktif
+                                  </span>
+                                )}
+                                {overStock && (
+                                  <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-400">
+                                    <Package className="h-2.5 w-2.5" />
+                                    Stok tersisa {stock}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Controls: quantity + line total + remove */}
+                            <div className="flex shrink-0 flex-col items-start gap-3 sm:items-end">
+                              {/* Quantity stepper */}
+                              <div className="flex items-center gap-0.5 rounded-full border border-theme bg-[#0a0a0a]/60 p-1 backdrop-blur-sm">
+                                <button
+                                  onClick={() => handleUpdateQuantity(item.id, item.quantity, -1)}
+                                  disabled={item.quantity <= 1 || !!actionLoading}
+                                  className="flex h-8 w-8 items-center justify-center rounded-full text-theme-secondary transition-all duration-200 hover:bg-white/10 hover:text-theme-primary active:scale-90 disabled:opacity-20 disabled:cursor-not-allowed"
+                                  aria-label="Kurangi jumlah"
+                                >
+                                  {isLoading ? (
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  ) : (
+                                    <Minus className="h-4 w-4" />
+                                  )}
+                                </button>
+                                <span className="w-9 text-center text-sm font-black text-theme-primary tabular-nums select-none">
+                                  {item.quantity}
+                                </span>
+                                <button
+                                  onClick={() => handleUpdateQuantity(item.id, item.quantity, 1)}
+                                  disabled={!!actionLoading || overStock}
+                                  className="flex h-8 w-8 items-center justify-center rounded-full text-theme-secondary transition-all duration-200 hover:bg-white/10 hover:text-theme-primary active:scale-90 disabled:opacity-20 disabled:cursor-not-allowed"
+                                  aria-label="Tambah jumlah"
+                                >
+                                  <Plus className="h-4 w-4" />
+                                </button>
+                              </div>
+
+                              {/* Line total + remove */}
+                              <div className="flex items-center gap-3">
+                                <span className="text-sm font-bold text-theme-primary tabular-nums">
+                                  {formatPrice(item.price * item.quantity)}
+                                </span>
+                                <button
+                                  onClick={() => handleRemove(item.id)}
+                                  disabled={!!actionLoading}
+                                  className="group/remove relative flex h-8 w-8 items-center justify-center rounded-full text-theme-secondary/40 transition-all duration-200 hover:bg-red-500/15 hover:text-red-400 active:scale-90 disabled:opacity-25 disabled:cursor-not-allowed"
+                                  aria-label="Hapus item"
+                                >
+                                  <X className="h-4 w-4 transition-transform duration-200 group-hover/remove:scale-110" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+
+                {/* Mobile-only "continue shopping" link */}
                 <button
-                  onClick={() => router.push("/checkout")}
-                  className="w-full rounded-xl bg-green-600 dark:bg-green-500 py-3 text-sm font-black text-white transition hover:bg-green-700 dark:hover:bg-green-500/90"
+                  onClick={() => router.push("/products")}
+                  className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl border border-theme py-3.5 text-xs font-bold uppercase tracking-wider text-theme-secondary/70 transition-all hover:border-white/25 hover:text-theme-primary sm:hidden"
                 >
-                  Ke Checkout
+                  <ArrowLeft className="h-3.5 w-3.5" />
+                  Lanjut Belanja
                 </button>
               </div>
-            </>
+
+              {/* ═══ RIGHT: ORDER SUMMARY ═══ */}
+              <aside>
+                <div className="relative overflow-hidden rounded-3xl border border-theme bg-theme-card p-6 backdrop-blur-xl lg:sticky lg:top-24 lg:p-8">
+                  {/* top accent line */}
+                  <div
+                    className="absolute inset-x-0 top-0 h-[3px]"
+                    style={{
+                      background:
+                        "linear-gradient(90deg, transparent, var(--accent-color), transparent)",
+                    }}
+                  />
+
+                  <div className="mb-1 flex items-center gap-2">
+                    <CreditCard className="h-4 w-4 accent-text" strokeWidth={2} />
+                    <h2 className="text-[11px] font-bold uppercase tracking-[0.25em] text-theme-secondary/50">
+                      Ringkasan Pesanan
+                    </h2>
+                  </div>
+
+                  {/* Breakdown */}
+                  <dl className="mt-6 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <dt className="text-sm font-medium text-theme-secondary/80">
+                        Subtotal
+                      </dt>
+                      <dd className="text-sm font-bold text-theme-primary tabular-nums">
+                        {formatPrice(subtotal)}
+                      </dd>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <dt className="text-sm font-medium text-theme-secondary/80">
+                        Jumlah Item
+                      </dt>
+                      <dd className="text-sm font-bold text-theme-primary tabular-nums">
+                        {totalItems}
+                      </dd>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <dt className="text-sm font-medium text-theme-secondary/80">
+                        Pengiriman
+                      </dt>
+                      <dd className="text-xs font-bold uppercase tracking-wider text-theme-secondary/50">
+                        Dihitung di checkout
+                      </dd>
+                    </div>
+                  </dl>
+
+                  <div className="my-6 h-px bg-gradient-to-r from-transparent via-theme to-transparent" />
+
+                  {/* Total */}
+                  <div className="flex items-end justify-between">
+                    <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-theme-secondary/50">
+                      Total Estimasi
+                    </span>
+                    <span
+                      className="text-2xl font-black tracking-tight sm:text-[1.75rem]"
+                      style={{ color: "var(--accent-color)" }}
+                    >
+                      {formatPrice(subtotal)}
+                    </span>
+                  </div>
+
+                  {/* CTA */}
+                  <button
+                    onClick={() => router.push("/checkout")}
+                    className="group mt-7 flex w-full items-center justify-center gap-3 rounded-2xl px-6 py-4 text-sm font-black uppercase tracking-wider text-black transition-all duration-200 hover:scale-[1.02] hover:shadow-[0_0_40px_-6px_rgba(215,255,83,0.45)] active:scale-[0.98]"
+                    style={{ backgroundColor: "var(--accent-color)" }}
+                  >
+                    Lanjut ke Checkout
+                    <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
+                  </button>
+
+                  {/* Trust badges */}
+                  <div className="mt-6 grid grid-cols-2 gap-2.5">
+                    <div className="flex items-center gap-2 rounded-xl border border-theme/60 bg-white/[0.02] px-3 py-2.5">
+                      <ShieldCheck className="h-4 w-4 shrink-0 text-theme-secondary/50" />
+                      <span className="text-[11px] font-semibold leading-tight text-theme-secondary/60">
+                        Pembayaran Aman
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 rounded-xl border border-theme/60 bg-white/[0.02] px-3 py-2.5">
+                      <Package className="h-4 w-4 shrink-0 text-theme-secondary/50" />
+                      <span className="text-[11px] font-semibold leading-tight text-theme-secondary/60">
+                        Gratis Retur 7 Hari
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </aside>
+            </div>
           )}
         </div>
       </main>

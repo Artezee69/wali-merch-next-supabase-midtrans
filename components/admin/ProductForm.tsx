@@ -6,8 +6,6 @@ import Link from "next/link";
 import {
   ArrowLeft,
   Check,
-  ChevronDown,
-  ChevronUp,
   Eye,
   Image as ImageIcon,
   Info,
@@ -20,9 +18,23 @@ import {
   Upload,
   X,
   Star,
-  GripVertical,
   Copy,
+  Boxes,
+  Truck,
+  Sparkles,
 } from "lucide-react";
+import {
+  AdminButton,
+  AdminCard,
+  AdminLink,
+  Alert,
+  Field,
+  Pill,
+  Section,
+  Toggle,
+} from "@/components/admin/ui";
+
+import type { ReactNode } from "react";
 
 /* ============== Types ============== */
 
@@ -111,11 +123,16 @@ function formatRupiah(n: number) {
   return "Rp " + Math.max(0, n || 0).toLocaleString("id-ID");
 }
 
-const STATUS_OPTIONS: Array<{ v: ProductFormValues["status"]; l: string; desc: string; color: string }> = [
-  { v: "draft", l: "Draft", desc: "Tidak tampil di katalog publik", color: "bg-white/10 text-white/70 border-white/15" },
-  { v: "active", l: "Aktif", desc: "Tampil di katalog dan dapat dibeli", color: "bg-[#d7ff53]/15 text-[#d7ff53] border-[#d7ff53]/30" },
-  { v: "inactive", l: "Nonaktif", desc: "Disembunyikan dari katalog publik", color: "bg-orange-500/15 text-orange-300 border-orange-500/30" },
-  { v: "archived", l: "Arsip", desc: "Diarsipkan permanen", color: "bg-red-500/15 text-red-300 border-red-500/30" },
+const STATUS_OPTIONS: Array<{
+  v: ProductFormValues["status"];
+  l: string;
+  desc: string;
+  tone: "neutral" | "green" | "amber" | "red";
+}> = [
+  { v: "draft", l: "Draft", desc: "Tidak tampil di katalog publik", tone: "neutral" },
+  { v: "active", l: "Aktif", desc: "Tampil di katalog dan dapat dibeli", tone: "green" },
+  { v: "inactive", l: "Nonaktif", desc: "Disembunyikan dari katalog publik", tone: "amber" },
+  { v: "archived", l: "Arsip", desc: "Diarsipkan permanen", tone: "red" },
 ];
 
 const CONDITION_OPTIONS = ["Baru", "Bekas - Seperti Baru", "Bekas - Bagus", "Bekas - Wajar"];
@@ -123,6 +140,9 @@ const CONDITION_OPTIONS = ["Baru", "Bekas - Seperti Baru", "Bekas - Bagus", "Bek
 const MAX_IMAGES = 9;
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+
+const inp = "ad-input";
+const inpMono = "ad-input font-mono text-[11px]";
 
 /* ============== Component ============== */
 
@@ -334,15 +354,18 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
                   id: uploaded.id ?? img.id,
                   image_url: uploaded.image_url ?? img.image_url,
                   storage_path: uploaded.storage_path ?? img.storage_path,
-                  sort_order: typeof uploaded.sort_order === "number" ? uploaded.sort_order : img.sort_order,
+                  sort_order:
+                    typeof uploaded.sort_order === "number"
+                      ? uploaded.sort_order
+                      : img.sort_order,
                   isNew: true,
                 }
               : img
           ),
         }));
       }
-    } catch (err: any) {
-      setGeneralError(`Upload foto gagal: ${err?.message || "Unknown error"}`);
+    } catch (err: unknown) {
+      setGeneralError(`Upload foto gagal: ${err instanceof Error ? err.message : "Unknown error"}`);
       setFailedUploads((prev) => [...prev, ...accepted.map((f) => f.name)]);
     } finally {
       setUploading(false);
@@ -368,8 +391,8 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
       try {
         const res = await fetch(`/api/admin/products/images/${img.id}`, { method: "DELETE" });
         if (!res.ok) throw new Error((await res.json())?.error || "Gagal hapus");
-      } catch (err: any) {
-        setGeneralError(`Gagal hapus foto: ${err.message}`);
+      } catch (err: unknown) {
+        setGeneralError(`Gagal hapus foto: ${err instanceof Error ? err.message : "error"}`);
         return;
       }
     }
@@ -403,7 +426,6 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
 
   // Auto-sync variant rows to match current option_1_values × option_2_values.
   // Preserves existing price/stock/is_active/sku for matching combinations.
-  // Called reactively whenever option values change.
   const syncVariantsFromOptions = (
     opt1Values: string[],
     opt2Values: string[],
@@ -414,7 +436,6 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
     salePrice: number | null,
     sku: string,
   ): ProductVariantRow[] => {
-    // Build the set of expected combos
     const combos: Array<[string, string | null, string | null]> = [];
     if (opt2Values.length) {
       for (const v1 of opt1Values) {
@@ -428,9 +449,6 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
       }
     }
 
-    const expectedKeys = new Set(combos.map(([v1, , v2]) => `${v1}|${v2 || ""}`));
-
-    // Map existing variants by combo key (preserve their values)
     const existing = new Map<string, ProductVariantRow>();
     for (const va of currentVariants) {
       if (va.toDelete) continue; // keep toDelete rows untouched
@@ -438,13 +456,14 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
       if (!existing.has(key)) existing.set(key, va);
     }
 
-    // Build new variant list: existing matched + new defaults
     const newVariants: ProductVariantRow[] = combos.map(([v1, n2, v2], i) => {
       const key = `${v1}|${v2 || ""}`;
       const found = existing.get(key);
       if (found) return found;
       return {
-        sku: `${sku || "PROD"}-${v1}${v2 ? "-" + v2 : ""}-${i + 1}`.toUpperCase().replace(/\s+/g, ""),
+        sku: `${sku || "PROD"}-${v1}${v2 ? "-" + v2 : ""}-${i + 1}`
+          .toUpperCase()
+          .replace(/\s+/g, ""),
         option_1_name: opt1Name || "Option 1",
         option_1_value: v1,
         option_2_name: n2,
@@ -485,7 +504,7 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
     }));
   };
 
-  const updateVariant = (idx: number, field: keyof ProductVariantRow, value: any) => {
+  const updateVariant = (idx: number, field: keyof ProductVariantRow, value: unknown) => {
     setValues((v) => {
       const variants = [...v.variants];
       variants[idx] = { ...variants[idx], [field]: value };
@@ -546,7 +565,6 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
       return;
     }
     setValues((v) => {
-      // Determine which variant indices to update.
       const targetIndices = new Set<number>();
       if (selectedVariants.size > 0) {
         v.variants.forEach((va, i) => {
@@ -606,7 +624,11 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
       ...v,
       variants: v.variants.map((va, i) => ({
         ...va,
-        sku: `${v.sku || "PROD"}-${va.option_1_value}${va.option_2_value ? "-" + va.option_2_value : ""}-${i + 1}`.toUpperCase().replace(/\s+/g, ""),
+        sku: `${v.sku || "PROD"}-${va.option_1_value}${
+          va.option_2_value ? "-" + va.option_2_value : ""
+        }-${i + 1}`
+          .toUpperCase()
+          .replace(/\s+/g, ""),
       })),
     }));
   };
@@ -622,7 +644,8 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
       if (values.images.length === 0) errs.images = "Minimal 1 foto produk";
       if (values.has_variants) {
         if (values.variants.length === 0) errs.variants = "Minimal 1 variasi";
-        if (values.variants.some((v) => !v.sku.trim())) errs.variants = "Semua variasi wajib memiliki SKU";
+        if (values.variants.some((v) => !v.sku.trim()))
+          errs.variants = "Semua variasi wajib memiliki SKU";
         const skus = values.variants.map((v) => v.sku.trim());
         if (new Set(skus).size !== skus.length) errs.variants = "SKU variasi harus unik";
       } else {
@@ -675,12 +698,11 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
 
       const body = {
         ...values,
-        status: action === "publish" ? "active" : values.status === "active" ? "draft" : values.status,
+        status:
+          action === "publish" ? "active" : values.status === "active" ? "draft" : values.status,
         _intent: action,
       };
       // Untuk produk dengan varian, stok di-handle per-variant.
-      // Jangan kirim `stock` global ke API karena kolom itu tidak ada
-      // di tabel `products` untuk produk with_variants.
       if (values.has_variants) {
         delete (body as Record<string, unknown>).stock;
       }
@@ -694,19 +716,23 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
       const text = await res.text();
       console.log("[FormSubmit] status:", res.status, "text:", text.slice(0, 500));
 
-      let data;
-      try { data = JSON.parse(text); } catch { data = { error: "Invalid JSON response" }; }
+      let data: { success?: boolean; error?: string; errors?: Record<string, string>; product?: { id: string } };
+      try {
+        data = JSON.parse(text);
+      } catch {
+        data = { error: "Invalid JSON response" };
+      }
 
       if (!res.ok || !data?.success) {
         if (data?.errors) setErrors(data.errors);
         throw new Error(data?.error || "Gagal menyimpan");
       }
 
-      setSuccessMsg(action === "publish" ? "Produk berhasil dipublikasikan!" : "Draft berhasil disimpan");
+      setSuccessMsg(
+        action === "publish" ? "Produk berhasil dipublikasikan!" : "Draft berhasil disimpan"
+      );
       setIsDirty(false);
 
-      // For create mode: attach any orphan (product_id = null) images that
-      // were uploaded before the product existed to the new product.
       if (mode === "create" && data.product?.id) {
         const orphanImageIds = values.images
           .filter((img) => img.id && img.isNew)
@@ -719,17 +745,22 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
               product_id: data.product.id,
               image_ids: orphanImageIds,
             }),
-          }).catch(() => null);
+          }).catch((err) => {
+            console.error("[AttachImages] failed:", err);
+            throw err;
+          });
         }
 
         startTransition(() => {
-          router.push(`/admin/products/${data.product.id}/edit`);
+          router.push(`/admin/products/${data.product!.id}/edit`);
         });
       } else {
         startTransition(() => router.refresh());
       }
-    } catch (err: any) {
-      setGeneralError(err.message || "Gagal menyimpan produk");
+    } catch (err: unknown) {
+      setGeneralError(
+        err instanceof Error ? err.message : "Gagal menyimpan produk"
+      );
     } finally {
       setSavingDraft(false);
       setPublishing(false);
@@ -744,8 +775,8 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
       const data = await res.json();
       if (!res.ok || !data?.success) throw new Error(data?.error || "Gagal duplikasi");
       router.push(`/admin/products/${data.product.id}/edit`);
-    } catch (err: any) {
-      setGeneralError(err.message);
+    } catch (err: unknown) {
+      setGeneralError(err instanceof Error ? err.message : "Gagal duplikasi");
     }
   };
 
@@ -767,7 +798,9 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
       if (prices.length === 0) return null;
       const min = Math.min(...prices);
       const max = Math.max(...prices);
-      return min === max ? formatRupiah(min) : `${formatRupiah(min)} - ${formatRupiah(max)}`;
+      return min === max
+        ? formatRupiah(min)
+        : `${formatRupiah(min)} – ${formatRupiah(max)}`;
     }
     if (values.sale_price) return `${formatRupiah(values.sale_price)} (diskon)`;
     return formatRupiah(values.base_price);
@@ -779,9 +812,19 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
       { key: "slug", label: "Slug", done: !!values.slug.trim() },
       { key: "category", label: "Kategori", done: !!values.category.trim() },
       { key: "images", label: "Minimal 1 foto", done: values.images.length > 0 },
-      { key: "price", label: "Harga", done: values.has_variants ? values.variants.length > 0 : values.base_price > 0 },
+      {
+        key: "price",
+        label: "Harga",
+        done: values.has_variants ? values.variants.length > 0 : values.base_price > 0,
+      },
       { key: "stock", label: "Stok", done: totalStock > 0 },
-      { key: "variants", label: "Variasi lengkap", done: !values.has_variants || values.variants.every((v) => v.sku && v.option_1_value) },
+      {
+        key: "variants",
+        label: "Variasi lengkap",
+        done:
+          !values.has_variants ||
+          values.variants.every((v) => v.sku && v.option_1_value),
+      },
     ];
     const doneCount = checks.filter((c) => c.done).length;
     return { pct: Math.round((doneCount / checks.length) * 100), checks };
@@ -794,76 +837,75 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
   /* ============== Render ============== */
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
-      <div className="space-y-4 min-w-0">
+    <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="min-w-0 space-y-4">
         {/* Top bar */}
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
-          <Link
+        <div className="ad-card flex flex-wrap items-center justify-between gap-2 px-4 py-3 !shadow-none">
+          <AdminLink
             href="/admin/products"
-            className="flex items-center gap-1.5 text-xs font-bold text-white/60 transition hover:text-[#d7ff53]"
+            variant="secondary"
+            size="sm"
+            className="!border-transparent !bg-transparent text-[var(--ad-text-2)] hover:bg-[var(--ad-surface-2)]"
           >
-            <ArrowLeft size={14} /> Kembali
-          </Link>
+            <ArrowLeft size={13} /> Kembali
+          </AdminLink>
           <div className="flex items-center gap-2">
             {isDirty && (
-              <span className="flex items-center gap-1 rounded-full bg-orange-500/15 px-2.5 py-1 text-[10px] font-black uppercase text-orange-300">
-                <span className="h-1.5 w-1.5 rounded-full bg-orange-400" /> Belum disimpan
-              </span>
+              <Pill tone="amber">
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--ad-amber)]" />
+                Belum disimpan
+              </Pill>
             )}
             {mode === "edit" && (
-              <button
-                onClick={handleDuplicate}
-                className="flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1.5 text-[11px] font-black uppercase text-white/70 transition hover:bg-white/5"
-              >
+              <AdminButton variant="secondary" size="sm" onClick={handleDuplicate}>
                 <Copy size={12} /> Duplikasi
-              </button>
+              </AdminButton>
             )}
             {mode === "edit" && values.slug && (
-              <Link
+              <AdminLink
                 href={`/products/${values.slug}`}
                 target="_blank"
-                className="flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1.5 text-[11px] font-black uppercase text-white/70 transition hover:bg-white/5"
+                variant="secondary"
+                size="sm"
               >
                 <Eye size={12} /> Preview
-              </Link>
+              </AdminLink>
             )}
           </div>
         </div>
 
         {generalError && (
-          <div className="flex items-start justify-between gap-2 rounded-2xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-300">
-            <span>{generalError}</span>
-            <button onClick={() => setGeneralError(null)}><X size={14} /></button>
-          </div>
+          <Alert tone="error" onClose={() => setGeneralError(null)}>
+            {generalError}
+          </Alert>
         )}
         {successMsg && (
-          <div className="flex items-start justify-between gap-2 rounded-2xl border border-[#d7ff53]/30 bg-[#d7ff53]/10 p-3 text-sm text-[#d7ff53]">
-            <span>{successMsg}</span>
-            <button onClick={() => setSuccessMsg(null)}><X size={14} /></button>
-          </div>
+          <Alert tone="success" onClose={() => setSuccessMsg(null)}>
+            {successMsg}
+          </Alert>
         )}
 
         {/* === Section: Basic === */}
         <Section
-          id="basic"
           title="Informasi Dasar"
-          icon={Info}
+          icon={<Info size={14} />}
+          accent="#2563eb"
           open={openSection === "basic"}
           onToggle={() => sectionToggle("basic")}
-          errors={["name", "slug", "category", "status", "condition", "brand", "sku"].filter((k) => errors[k])}
+          errorCount={["name", "slug", "category", "status", "condition", "brand", "sku"].filter((k) => errors[k]).length}
         >
           <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Nama Produk" required error={errors.name} hint={`${values.name.length}/200`}>
+            <AccentRow label="Nama Produk" color="#2563eb" error={errors.name}>
               <input
                 data-field="name"
                 value={values.name}
                 onChange={(e) => update("name", e.target.value.slice(0, 200))}
                 placeholder="WALI Player Edition T-Shirt"
-                className="wali-input"
+                className={inp}
               />
-            </Field>
+            </AccentRow>
 
-            <Field label="Slug" required error={errors.slug} hint="URL: /products/[slug]">
+            <AccentRow label="Slug" color="#2563eb" error={errors.slug}>
               <input
                 data-field="slug"
                 value={values.slug}
@@ -872,228 +914,254 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
                   update("slug", slugify(e.target.value));
                 }}
                 placeholder="wali-player-edition-t-shirt"
-                className="wali-input"
+                className={inp}
               />
-            </Field>
+            </AccentRow>
 
-            <Field label="Kategori" error={errors.category}>
+            <AccentRow label="Kategori" color="#2563eb" error={errors.category}>
               <input
                 data-field="category"
                 value={values.category}
                 onChange={(e) => update("category", e.target.value)}
-                placeholder="T-Shirt, Topi, Aksesoris..."
-                className="wali-input"
+                placeholder="T-Shirt, Topi, Aksesoris…"
+                className={inp}
               />
-            </Field>
+            </AccentRow>
 
-            <Field label="Brand / Merek">
+            <AccentRow label="Brand / Merek" color="#2563eb">
               <input
                 value={values.brand}
                 onChange={(e) => update("brand", e.target.value)}
                 placeholder="WALI Merch"
-                className="wali-input"
+                className={inp}
               />
-            </Field>
+            </AccentRow>
 
-            <Field label="Kondisi Produk">
+            <AccentRow label="Kondisi Produk" color="#2563eb">
               <select
                 value={values.condition}
                 onChange={(e) => update("condition", e.target.value)}
-                className="wali-input"
+                className={inp}
               >
                 {CONDITION_OPTIONS.map((c) => (
-                  <option key={c} value={c}>{c}</option>
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
                 ))}
               </select>
-            </Field>
+            </AccentRow>
 
-            <Field label="Status">
+            <AccentRow label="Status" color="#2563eb">
               <select
                 value={values.status}
                 onChange={(e) => update("status", e.target.value as ProductFormValues["status"])}
-                className="wali-input"
+                className={inp}
               >
                 {STATUS_OPTIONS.map((s) => (
-                  <option key={s.v} value={s.v}>{s.l} — {s.desc}</option>
+                  <option key={s.v} value={s.v}>
+                    {s.l} — {s.desc}
+                  </option>
                 ))}
               </select>
-            </Field>
+            </AccentRow>
 
-            <Field label="SKU Utama" hint="Otomatis dibuat jika kosong">
+            <AccentRow label="SKU Utama" color="#2563eb" hint="Otomatis dibuat jika kosong">
               <input
                 value={values.sku}
                 onChange={(e) => update("sku", e.target.value.toUpperCase())}
                 placeholder="WALI-TEE-001"
-                className="wali-input"
+                className={inp}
               />
-            </Field>
+            </AccentRow>
 
-            <Field label="Deskripsi Singkat" hint={`${values.short_description.length}/300`}>
+            <AccentRow label="Deskripsi Singkat" color="#2563eb">
               <input
                 value={values.short_description}
                 onChange={(e) => update("short_description", e.target.value.slice(0, 300))}
-                placeholder="1 kalimat yang menjual..."
-                className="wali-input"
+                placeholder="1 kalimat yang menjual…"
+                className={inp}
               />
-            </Field>
+            </AccentRow>
 
             <div className="md:col-span-2">
-              <Field label="Deskripsi Lengkap" hint={`${values.description.length}/5000`}>
+              <AccentRow label="Deskripsi" color="#2563eb" full>
                 <textarea
                   value={values.description}
                   onChange={(e) => update("description", e.target.value.slice(0, 5000))}
                   rows={6}
-                  placeholder="Bahan, detail sablon, cara perawatan, ukuran, dll..."
-                  className="wali-input resize-y"
+                  placeholder="Bahan, detail sablon, cara perawatan, ukuran, dll…"
+                  className={`${inp} resize-y`}
                 />
-              </Field>
+              </AccentRow>
             </div>
           </div>
         </Section>
 
         {/* === Section: Images === */}
         <Section
-          id="images"
           title="Foto Produk"
-          icon={ImageIcon}
+          icon={<ImageIcon size={14} />}
+          accent="#7c3aed"
           open={openSection === "images"}
           onToggle={() => sectionToggle("images")}
           badge={`${values.images.length}/${MAX_IMAGES}`}
-          errors={errors.images ? ["images"] : []}
+          errorCount={errors.images ? 1 : 0}
         >
-          <div
-            data-field="images"
-            onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
-            onDragLeave={() => setDragActive(false)}
-            onDrop={handleDrop}
-            className={`rounded-2xl border-2 border-dashed p-6 text-center transition ${
-              dragActive ? "border-[#d7ff53] bg-[#d7ff53]/5" : "border-white/10 bg-white/[0.02]"
-            }`}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept={ALLOWED_IMAGE_TYPES.join(",")}
-              multiple
-              onChange={(e) => e.target.files && handleFiles(e.target.files)}
-              className="hidden"
-            />
-            <Upload className="mx-auto mb-2 text-white/40" size={28} />
-            <p className="text-sm font-bold text-white/80">Drag & drop foto di sini</p>
-            <p className="mt-1 text-[11px] text-white/50">atau</p>
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading || values.images.length >= MAX_IMAGES}
-              className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[#d7ff53] px-4 py-1.5 text-[11px] font-black uppercase text-black transition hover:bg-white disabled:opacity-50"
+          <div className="space-y-4">
+            <div
+              data-field="images"
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragActive(true);
+              }}
+              onDragLeave={() => setDragActive(false)}
+              onDrop={handleDrop}
+              className={`rounded-xl border-2 border-dashed p-6 text-center transition ${
+                dragActive
+                  ? "border-[var(--ad-accent)] bg-[var(--ad-accent-soft)]"
+                  : "border-[var(--ad-border)] bg-[var(--ad-surface-2)]"
+              }`}
             >
-              {uploading ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
-              {uploading ? "Mengupload..." : "Pilih File"}
-            </button>
-            <p className="mt-2 text-[10px] text-white/40">JPG, JPEG, PNG, WebP • Maks 5MB • Maks {MAX_IMAGES} foto</p>
-            {errors.images && <p className="mt-2 text-xs font-bold text-red-300">{errors.images}</p>}
-          </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept={ALLOWED_IMAGE_TYPES.join(",")}
+                multiple
+                onChange={(e) => e.target.files && handleFiles(e.target.files)}
+                className="hidden"
+              />
+              <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--ad-accent-soft)] text-[var(--ad-accent)]">
+                <Upload size={20} />
+              </div>
+              <p className="text-[13px] font-semibold text-[var(--ad-text)]">
+                Drag & drop foto di sini
+              </p>
+              <p className="mt-0.5 text-[11px] text-[var(--ad-text-3)]">atau</p>
+              <AdminButton
+                variant="primary"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading || values.images.length >= MAX_IMAGES}
+                className="mt-2.5"
+              >
+                {uploading ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+                {uploading ? "Mengupload…" : "Pilih File"}
+              </AdminButton>
+              <p className="mt-2.5 text-[10.5px] text-[var(--ad-text-3)]">
+                JPG, JPEG, PNG, WebP • Maks 5MB • Maks {MAX_IMAGES} foto
+              </p>
+              {errors.images && <p className="ad-error-text mt-2">{errors.images}</p>}
+            </div>
 
-          {uploadProgress.length > 0 && (
-            <div className="mt-3 space-y-1">
-              {uploadProgress.map((p) => (
-                <div key={p.name} className="rounded-lg border border-white/10 bg-white/[0.03] p-2 text-xs">
-                  <div className="flex items-center justify-between">
-                    <span className="truncate font-semibold">{p.name}</span>
-                    <span className="text-white/50">{p.pct}%</span>
+            {uploadProgress.length > 0 && (
+              <div className="space-y-1.5">
+                {uploadProgress.map((p) => (
+                  <div key={p.name} className="ad-inset p-2.5 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="truncate font-semibold text-[var(--ad-text-2)]">{p.name}</span>
+                      <span className="text-[var(--ad-text-3)]">{p.pct}%</span>
+                    </div>
+                    <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-[var(--ad-border-soft)]">
+                      <div
+                        className="h-full rounded-full bg-[var(--ad-accent)] transition-all"
+                        style={{ width: `${p.pct}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="mt-1 h-1 overflow-hidden rounded-full bg-white/10">
-                    <div className="h-full bg-[#d7ff53] transition-all" style={{ width: `${p.pct}%` }} />
-                  </div>
+                ))}
+              </div>
+            )}
+
+            {failedUploads.length > 0 && (
+              <div className="ad-alert ad-alert-error !items-start">
+                <div className="flex-1 text-xs">
+                  <p className="font-semibold">Gagal diupload:</p>
+                  <ul className="mt-1 list-inside list-disc text-[11px]">
+                    {failedUploads.map((f, i) => (
+                      <li key={i}>{f}</li>
+                    ))}
+                  </ul>
                 </div>
-              ))}
-            </div>
-          )}
-
-          {failedUploads.length > 0 && (
-            <div className="mt-3 rounded-lg border border-red-500/20 bg-red-500/10 p-2 text-xs text-red-300">
-              <p className="font-bold">Gagal diupload:</p>
-              <ul className="mt-1 list-inside list-disc">
-                {failedUploads.map((f, i) => <li key={i}>{f}</li>)}
-              </ul>
-              <button onClick={() => setFailedUploads([])} className="mt-1 text-[10px] underline">Hapus</button>
-            </div>
-          )}
-
-          {values.images.length > 0 && (
-            <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {values.images.map((img, idx) => (
-                <div
-                  key={img.id || img.image_url || idx}
-                  className="group relative aspect-square overflow-hidden rounded-xl border border-white/10 bg-black/40"
+                <button
+                  onClick={() => setFailedUploads([])}
+                  className="text-[10px] font-semibold underline"
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={img.image_url}
-                    alt={`Foto ${idx + 1}`}
-                    className="h-full w-full object-cover"
-                  />
-                  {img.is_primary && (
-                    <span className="absolute left-1.5 top-1.5 flex items-center gap-1 rounded-full bg-[#d7ff53] px-2 py-0.5 text-[9px] font-black uppercase text-black">
-                      <Star size={9} fill="currentColor" /> Utama
+                  Hapus
+                </button>
+              </div>
+            )}
+
+            {values.images.length > 0 && (
+              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+                {values.images.map((img, idx) => (
+                  <div
+                    key={img.id || img.image_url || idx}
+                    className="group relative aspect-square overflow-hidden rounded-xl border border-[var(--ad-border)] bg-[var(--ad-surface-2)]"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={img.image_url}
+                      alt={`Foto ${idx + 1}`}
+                      className="h-full w-full object-cover"
+                    />
+                    <span className="absolute left-2 bottom-2 z-10 inline-flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-[10px] font-bold text-white backdrop-blur-sm">
+                      {idx + 1}
                     </span>
-                  )}
-                  <div className="absolute inset-0 flex items-end justify-between gap-1 bg-gradient-to-t from-black/80 via-black/0 to-black/0 p-1.5 opacity-0 transition group-hover:opacity-100">
-                    <div className="flex gap-1">
-                      <button
-                        onClick={() => moveImage(idx, -1)}
-                        disabled={idx === 0}
-                        className="flex h-7 w-7 items-center justify-center rounded-full bg-black/70 text-white disabled:opacity-30"
-                        title="Pindah ke kiri"
-                      >
-                        <ChevronUp size={12} className="-rotate-90" />
-                      </button>
-                      <button
-                        onClick={() => moveImage(idx, 1)}
-                        disabled={idx === values.images.length - 1}
-                        className="flex h-7 w-7 items-center justify-center rounded-full bg-black/70 text-white disabled:opacity-30"
-                        title="Pindah ke kanan"
-                      >
-                        <ChevronDown size={12} className="-rotate-90" />
-                      </button>
-                    </div>
-                    <div className="flex gap-1">
-                      {!img.is_primary && (
+                    {idx === 0 && (
+                      <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-[var(--ad-accent)] px-2 py-0.5 text-[9.5px] font-bold text-white shadow-sm">
+                        <Star size={9} fill="currentColor" /> Utama
+                      </span>
+                    )}
+                    <div className="absolute inset-0 flex items-end justify-between gap-1 bg-gradient-to-t from-black/75 via-black/0 to-transparent p-2 opacity-0 transition group-hover:opacity-100">
+                      <div className="flex gap-1">
                         <button
-                          onClick={() => setPrimary(idx)}
-                          className="flex h-7 w-7 items-center justify-center rounded-full bg-[#d7ff53] text-black"
-                          title="Jadikan utama"
+                          onClick={() => moveImage(idx, -1)}
+                          disabled={idx === 0}
+                          className="flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-slate-700 shadow disabled:opacity-40"
+                          title="Pindah ke kiri"
                         >
-                          <Star size={12} />
+                          <X size={12} className="rotate-45" />
                         </button>
-                      )}
-                      <button
-                        onClick={() => removeImage(idx)}
-                        className="flex h-7 w-7 items-center justify-center rounded-full bg-red-500 text-white"
-                        title="Hapus"
-                      >
-                        <Trash2 size={12} />
-                      </button>
+                        <button
+                          onClick={() => moveImage(idx, 1)}
+                          disabled={idx === values.images.length - 1}
+                          className="flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-slate-700 shadow disabled:opacity-40"
+                          title="Pindah ke kanan"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => removeImage(idx)}
+                          className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--ad-red)] text-white shadow"
+                          title="Hapus"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </Section>
 
         {/* === Section: Sales (no variants) === */}
         {!values.has_variants && (
           <Section
-            id="sales"
             title="Informasi Penjualan"
-            icon={Package}
+            icon={<Truck size={14} />}
+            accent="#16a34a"
             open={openSection === "sales"}
             onToggle={() => sectionToggle("sales")}
-            errors={["base_price", "sale_price", "stock", "min_purchase", "max_purchase"].filter((k) => errors[k])}
+            errorCount={["base_price", "sale_price", "stock", "min_purchase", "max_purchase"].filter(
+              (k) => errors[k]
+            ).length}
           >
             <div className="grid gap-4 md:grid-cols-2">
-              <Field label="Harga Normal (IDR)" required error={errors.base_price}>
+              <AccentRow label="Harga" color="#16a34a" required error={errors.base_price}>
                 <input
                   data-field="base_price"
                   type="number"
@@ -1101,29 +1169,35 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
                   value={values.base_price || ""}
                   onChange={(e) => update("base_price", Number(e.target.value) || 0)}
                   placeholder="199000"
-                  className="wali-input"
+                  className={inp}
                 />
-                <p className="mt-1 text-[10px] text-white/40">Preview: {formatRupiah(values.base_price)}</p>
-              </Field>
+                <p className="mt-1 text-[10.5px] text-[var(--ad-text-3)]">
+                  Preview: {formatRupiah(values.base_price)}
+                </p>
+              </AccentRow>
 
-              <Field label="Harga Diskon (opsional)" error={errors.sale_price}>
+              <AccentRow label="Harga Diskon" color="#16a34a" error={errors.sale_price}>
                 <input
                   data-field="sale_price"
                   type="number"
                   min={0}
                   value={values.sale_price ?? ""}
-                  onChange={(e) => update("sale_price", e.target.value === "" ? null : Number(e.target.value))}
+                  onChange={(e) =>
+                    update("sale_price", e.target.value === "" ? null : Number(e.target.value))
+                  }
                   placeholder="150000"
-                  className="wali-input"
+                  className={inp}
                 />
-                {values.sale_price !== null && values.sale_price > 0 && values.base_price > 0 && (
-                  <p className="mt-1 text-[10px] text-[#d7ff53]">
-                    Hemat {Math.round(((values.base_price - values.sale_price) / values.base_price) * 100)}%
-                  </p>
-                )}
-              </Field>
+                {values.sale_price !== null &&
+                  values.sale_price > 0 &&
+                  values.base_price > 0 && (
+                    <p className="mt-1 text-[10.5px] font-semibold text-[var(--ad-green)]">
+                      Hemat {Math.round(((values.base_price - values.sale_price) / values.base_price) * 100)}%
+                    </p>
+                  )}
+              </AccentRow>
 
-              <Field label="Stok" error={errors.stock}>
+              <AccentRow label="Stok" color="#16a34a" error={errors.stock}>
                 <input
                   data-field="stock"
                   type="number"
@@ -1131,139 +1205,136 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
                   value={values.stock || ""}
                   onChange={(e) => update("stock", Number(e.target.value) || 0)}
                   placeholder="0"
-                  className="wali-input"
+                  className={inp}
                 />
-              </Field>
+              </AccentRow>
 
-              <Field label="Status Stok" hint="Otomatis dari nilai stok">
-                <div className="wali-input flex items-center gap-2">
-                  <span
-                    className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-black uppercase ${
-                      totalStock > 10
-                        ? "border-[#d7ff53]/30 bg-[#d7ff53]/15 text-[#d7ff53]"
-                        : totalStock > 0
-                        ? "border-orange-500/30 bg-orange-500/15 text-orange-300"
-                        : "border-red-500/30 bg-red-500/15 text-red-300"
-                    }`}
-                  >
-                    {totalStock > 10 ? "Tersedia" : totalStock > 0 ? "Stok Rendah" : "Habis"}
-                  </span>
+              <AccentRow label="Status Stok" color="#16a34a" hint="Otomatis dari nilai stok">
+                <div className="flex items-center py-1.5">
+                  {totalStock > 10 ? (
+                    <Pill tone="green">Tersedia</Pill>
+                  ) : totalStock > 0 ? (
+                    <Pill tone="amber">Stok Rendah</Pill>
+                  ) : (
+                    <Pill tone="red">Habis</Pill>
+                  )}
                 </div>
-              </Field>
+              </AccentRow>
 
-              <Field label="Minimal Pembelian" error={errors.min_purchase}>
+              <AccentRow label="Min Pembelian" color="#16a34a" error={errors.min_purchase}>
                 <input
                   type="number"
                   min={1}
                   value={values.min_purchase || ""}
                   onChange={(e) => update("min_purchase", Math.max(1, Number(e.target.value) || 1))}
-                  className="wali-input"
+                  className={inp}
                 />
-              </Field>
+              </AccentRow>
 
-              <Field label="Maksimal Pembelian" hint="0 = tidak terbatas" error={errors.max_purchase}>
+              <AccentRow label="Maks Pembelian" color="#16a34a" hint="0 = tidak terbatas" error={errors.max_purchase}>
                 <input
                   type="number"
                   min={0}
                   value={values.max_purchase || ""}
                   onChange={(e) => update("max_purchase", Number(e.target.value) || 0)}
-                  className="wali-input"
+                  className={inp}
                 />
-              </Field>
+              </AccentRow>
             </div>
           </Section>
         )}
 
         {/* === Section: Variants === */}
         <Section
-          id="variants"
           title="Variasi Produk"
-          icon={Package}
+          icon={<Boxes size={14} />}
+          accent="#d97706"
           open={openSection === "variants"}
           onToggle={() => sectionToggle("variants")}
           badge={values.has_variants ? `${values.variants.length} varian` : "Nonaktif"}
-          errors={errors.variants ? ["variants"] : []}
+          errorCount={errors.variants ? 1 : 0}
         >
           <div className="space-y-4">
-            <label className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+            <div className="ad-inset flex items-center justify-between gap-3 p-3.5">
               <div>
-                <p className="text-sm font-bold">Produk memiliki variasi</p>
-                <p className="text-[11px] text-white/50">Aktifkan untuk membuat kombinasi ukuran/warna dll.</p>
+                <p className="text-[13px] font-semibold text-[var(--ad-text)]">
+                  Produk memiliki variasi
+                </p>
+                <p className="mt-0.5 text-[11.5px] text-[var(--ad-text-3)]">
+                  Aktifkan untuk membuat kombinasi ukuran / warna dll.
+                </p>
               </div>
               <input
                 type="checkbox"
                 checked={values.has_variants}
                 onChange={(e) => update("has_variants", e.target.checked)}
-                className="h-5 w-5 cursor-pointer accent-[#d7ff53]"
+                className="ad-checkbox h-4.5 w-4.5 !h-[18px] !w-[18px]"
               />
-            </label>
+            </div>
 
             {values.has_variants && (
               <>
                 <div className="grid gap-4 md:grid-cols-2">
-                  <Field label="Variasi 1 (mis. Ukuran)">
+                  <AccentRow label="Variasi 1 (mis. Ukuran)" color="#d97706">
                     <input
                       value={values.option_1_name}
                       onChange={(e) => update("option_1_name", e.target.value)}
                       placeholder="Ukuran"
-                      className="wali-input"
+                      className={inp}
                     />
-                  </Field>
-                  <Field label="Pilihan Variasi 1" error={errors.option_1_values} hint="Pisahkan dengan koma atau Enter">
+                  </AccentRow>
+                  <AccentRow label="Pilihan Variasi 1" color="#d97706" error={errors.option_1_values} hint="Koma atau Enter">
                     <OptionInput
                       values={values.option_1_values}
                       onChange={(v) => update("option_1_values", v)}
                     />
-                  </Field>
-                  <Field label="Variasi 2 (opsional, mis. Warna)">
+                  </AccentRow>
+                  <AccentRow label="Variasi 2 (opsional, mis. Warna)" color="#d97706">
                     <input
                       value={values.option_2_name}
                       onChange={(e) => update("option_2_name", e.target.value)}
                       placeholder="Warna"
-                      className="wali-input"
+                      className={inp}
                     />
-                  </Field>
-                  <Field label="Pilihan Variasi 2" hint="Pisahkan dengan koma atau Enter">
+                  </AccentRow>
+                  <AccentRow label="Pilihan Variasi 2" color="#d97706" hint="Koma atau Enter">
                     <OptionInput
                       values={values.option_2_values}
                       onChange={(v) => update("option_2_values", v)}
                     />
-                  </Field>
+                  </AccentRow>
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={generateVariants}
-                    className="flex items-center gap-1.5 rounded-full bg-[#d7ff53] px-4 py-1.5 text-[11px] font-black uppercase text-black transition hover:bg-white"
-                  >
+                  <AdminButton variant="primary" size="sm" onClick={generateVariants}>
                     <Plus size={12} /> Generate Kombinasi
-                  </button>
-                  <button
-                    type="button"
-                    onClick={autoGenerateSku}
-                    className="flex items-center gap-1.5 rounded-full border border-white/15 px-4 py-1.5 text-[11px] font-black uppercase text-white/70 transition hover:bg-white/5"
-                  >
+                  </AdminButton>
+                  <AdminButton variant="secondary" size="sm" onClick={autoGenerateSku}>
                     Auto SKU
-                  </button>
+                  </AdminButton>
                 </div>
 
                 {values.variants.length > 0 && (
                   <>
-                    <div className="overflow-hidden rounded-xl border border-white/10">
+                    <div
+                      className="overflow-hidden rounded-xl border border-[var(--ad-border)]"
+                      style={{ boxShadow: "0 2px 8px rgba(16,24,40,0.06)" }}
+                    >
                       <div className="overflow-x-auto">
-                        <table className="w-full text-xs">
+                        <table className="ad-table w-full">
                           <thead>
-                            <tr className="border-b border-white/10 bg-white/[0.04] text-left text-[10px] font-black uppercase tracking-wider text-white/40">
-                              <th className="px-2 py-2 w-8"></th>
-                              <th className="px-2 py-2">{values.option_1_name || "Varian 1"}</th>
-                              {values.option_2_name && <th className="px-2 py-2">{values.option_2_name}</th>}
-                              <th className="px-2 py-2">SKU</th>
-                              <th className="px-2 py-2 text-right">Harga</th>
-                              <th className="px-2 py-2 text-right">Diskon</th>
-                              <th className="px-2 py-2 text-right">Stok</th>
-                              <th className="px-2 py-2 text-center">Aktif</th>
-                              <th className="px-2 py-2 w-8"></th>
+                            <tr className="bg-[var(--ad-surface-2)]">
+                              <th className="w-8 px-2 py-2.5"></th>
+                              <th className="px-2 py-2.5">{values.option_1_name || "Varian 1"}</th>
+                              {values.option_2_name && (
+                                <th className="px-2 py-2.5">{values.option_2_name}</th>
+                              )}
+                              <th className="px-2 py-2.5">SKU</th>
+                              <th className="px-2 py-2.5 text-right">Harga</th>
+                              <th className="px-2 py-2.5 text-right">Diskon</th>
+                              <th className="px-2 py-2.5 text-right">Stok</th>
+                              <th className="px-2 py-2.5 text-center">Aktif</th>
+                              <th className="w-8 px-2 py-2.5"></th>
                             </tr>
                           </thead>
                           <tbody>
@@ -1271,8 +1342,12 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
                               if (va.toDelete) return null;
                               const key = va.id || `idx-${idx}`;
                               return (
-                                <tr key={key} className="border-b border-white/5 last:border-0">
-                                  <td className="px-2 py-1.5">
+                                <tr
+                                  key={key}
+                                  style={{ borderLeft: "2px solid transparent" }}
+                                  className="ad-variant-row"
+                                >
+                                  <td className="px-2 py-2">
                                     <input
                                       type="checkbox"
                                       checked={selectedVariants.has(key)}
@@ -1284,63 +1359,75 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
                                           return next;
                                         });
                                       }}
-                                      className="h-3.5 w-3.5 accent-[#d7ff53]"
+                                      className="ad-checkbox"
                                     />
                                   </td>
-                                  <td className="px-2 py-1.5 font-bold text-white/85">{va.option_1_value}</td>
+                                  <td className="px-2 py-2 font-semibold text-[var(--ad-text)]">
+                                    {va.option_1_value}
+                                  </td>
                                   {values.option_2_name && (
-                                    <td className="px-2 py-1.5 text-white/70">{va.option_2_value || "-"}</td>
+                                    <td className="px-2 py-2">{va.option_2_value || "—"}</td>
                                   )}
-                                  <td className="px-2 py-1.5">
+                                  <td className="px-2 py-2">
                                     <input
                                       value={va.sku}
                                       onChange={(e) => updateVariant(idx, "sku", e.target.value)}
-                                      className="w-28 rounded border border-white/10 bg-black/30 px-1.5 py-1 text-[11px] font-mono outline-none focus:border-[#d7ff53]"
+                                      className={`${inpMono} w-28 !px-2 !py-1.5 rounded-md`}
                                     />
                                   </td>
-                                  <td className="px-2 py-1.5">
+                                  <td className="px-2 py-2">
                                     <input
                                       type="number"
                                       min={0}
                                       value={va.price || ""}
-                                      onChange={(e) => updateVariant(idx, "price", Number(e.target.value) || 0)}
-                                      className="w-20 rounded border border-white/10 bg-black/30 px-1.5 py-1 text-[11px] text-right outline-none focus:border-[#d7ff53]"
+                                      onChange={(e) =>
+                                        updateVariant(idx, "price", Number(e.target.value) || 0)
+                                      }
+                                      className={`${inpMono} w-20 !px-2 !py-1.5 rounded-md text-right`}
                                     />
                                   </td>
-                                  <td className="px-2 py-1.5">
+                                  <td className="px-2 py-2">
                                     <input
                                       type="number"
                                       min={0}
                                       value={va.sale_price ?? ""}
-                                      onChange={(e) => updateVariant(idx, "sale_price", e.target.value === "" ? null : Number(e.target.value))}
-                                      className="w-20 rounded border border-white/10 bg-black/30 px-1.5 py-1 text-[11px] text-right outline-none focus:border-[#d7ff53]"
+                                      onChange={(e) =>
+                                        updateVariant(
+                                          idx,
+                                          "sale_price",
+                                          e.target.value === "" ? null : Number(e.target.value)
+                                        )
+                                      }
+                                      className={`${inpMono} w-20 !px-2 !py-1.5 rounded-md text-right`}
                                     />
                                   </td>
-                                  <td className="px-2 py-1.5">
+                                  <td className="px-2 py-2">
                                     <input
                                       type="number"
                                       min={0}
                                       value={va.stock || ""}
-                                      onChange={(e) => updateVariant(idx, "stock", Number(e.target.value) || 0)}
-                                      className="w-16 rounded border border-white/10 bg-black/30 px-1.5 py-1 text-[11px] text-right outline-none focus:border-[#d7ff53]"
+                                      onChange={(e) =>
+                                        updateVariant(idx, "stock", Number(e.target.value) || 0)
+                                      }
+                                      className={`${inpMono} w-16 !px-2 !py-1.5 rounded-md text-right`}
                                     />
                                   </td>
-                                  <td className="px-2 py-1.5 text-center">
+                                  <td className="px-2 py-2 text-center">
                                     <input
                                       type="checkbox"
                                       checked={va.is_active}
                                       onChange={(e) => updateVariant(idx, "is_active", e.target.checked)}
-                                      className="h-3.5 w-3.5 accent-[#d7ff53]"
+                                      className="ad-checkbox"
                                     />
                                   </td>
-                                  <td className="px-2 py-1.5">
+                                  <td className="px-2 py-2">
                                     <button
                                       type="button"
                                       onClick={() => removeVariant(idx)}
-                                      className="text-red-300/60 hover:text-red-300"
+                                      className="text-[var(--ad-text-3)] transition hover:text-[var(--ad-red)]"
                                       title="Hapus variasi"
                                     >
-                                      <Trash2 size={11} />
+                                      <Trash2 size={14} />
                                     </button>
                                   </td>
                                 </tr>
@@ -1352,68 +1439,56 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
                     </div>
 
                     {/* Bulk actions */}
-                    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] p-2">
-                      <p className="px-2 text-[10px] font-black uppercase text-white/40">
-                        Bulk: {selectedVariants.size > 0 ? `${selectedVariants.size} dipilih` : "semua"}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => setShowBulkPrice((s) => !s)}
-                        className="rounded-full border border-white/10 px-2.5 py-1 text-[10px] font-bold uppercase text-white/65 hover:bg-white/5"
-                      >
+                    <div className="ad-inset flex flex-wrap items-center gap-2 p-2.5">
+                      <span className="px-1.5 text-[11px] font-semibold text-[var(--ad-text-2)]">
+                        Bulk:{" "}
+                        {selectedVariants.size > 0
+                          ? `${selectedVariants.size} dipilih`
+                          : "semua"}
+                      </span>
+                      <span className="h-4 w-px bg-[var(--ad-border)]" />
+                      <AdminButton variant="secondary" size="sm" onClick={() => setShowBulkPrice((s) => !s)}>
                         Set Harga
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setShowBulkStock((s) => !s)}
-                        className="rounded-full border border-white/10 px-2.5 py-1 text-[10px] font-bold uppercase text-white/65 hover:bg-white/5"
-                      >
+                      </AdminButton>
+                      <AdminButton variant="secondary" size="sm" onClick={() => setShowBulkStock((s) => !s)}>
                         Set Stok
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => applyBulkStatus(true)}
-                        className="rounded-full border border-[#d7ff53]/20 px-2.5 py-1 text-[10px] font-bold uppercase text-[#d7ff53] hover:bg-[#d7ff53]/10"
-                      >
+                      </AdminButton>
+                      <AdminButton variant="secondary" size="sm" onClick={() => applyBulkStatus(true)}>
                         Aktifkan
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => applyBulkStatus(false)}
-                        className="rounded-full border border-orange-500/20 px-2.5 py-1 text-[10px] font-bold uppercase text-orange-300 hover:bg-orange-500/10"
-                      >
+                      </AdminButton>
+                      <AdminButton variant="secondary" size="sm" onClick={() => applyBulkStatus(false)}>
                         Nonaktifkan
-                      </button>
+                      </AdminButton>
                     </div>
 
                     {showBulkPrice && (
-                      <div className="flex items-center gap-2 rounded-xl border border-[#d7ff53]/20 bg-[#d7ff53]/5 p-2">
+                      <div className="ad-alert ad-alert-info flex-wrap !gap-2">
                         <input
                           type="number"
                           min={0}
                           value={bulkPrice}
                           onChange={(e) => setBulkPrice(e.target.value)}
                           placeholder="Harga baru"
-                          className="w-32 rounded border border-white/10 bg-black/30 px-2 py-1 text-xs outline-none focus:border-[#d7ff53]"
+                          className={`${inp} w-32 !py-1.5 text-xs`}
                         />
-                        <button
-                          onClick={applyBulkPrice}
-                          className="rounded-full bg-[#d7ff53] px-3 py-1 text-[10px] font-black uppercase text-black"
-                        >
+                        <AdminButton variant="primary" size="sm" onClick={applyBulkPrice}>
                           Terapkan
-                        </button>
-                        <button onClick={() => setShowBulkPrice(false)} className="text-white/50">
-                          <X size={12} />
+                        </AdminButton>
+                        <button
+                          onClick={() => setShowBulkPrice(false)}
+                          className="text-[var(--ad-text-3)]"
+                        >
+                          <X size={13} />
                         </button>
                       </div>
                     )}
 
                     {showBulkStock && (
-                      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[#d7ff53]/20 bg-[#d7ff53]/5 p-2">
+                      <div className="ad-alert ad-alert-info flex-wrap !gap-2">
                         <select
                           value={bulkAdjust}
                           onChange={(e) => setBulkAdjust(e.target.value)}
-                          className="rounded border border-white/10 bg-black/30 px-2 py-1 text-xs outline-none focus:border-[#d7ff53]"
+                          className={`${inp} w-auto !py-1.5 text-xs`}
                         >
                           <option value="set">Set</option>
                           <option value="add">Tambah</option>
@@ -1425,22 +1500,22 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
                           value={bulkStock}
                           onChange={(e) => setBulkStock(e.target.value)}
                           placeholder="Jumlah"
-                          className="w-24 rounded border border-white/10 bg-black/30 px-2 py-1 text-xs outline-none focus:border-[#d7ff53]"
+                          className={`${inp} w-24 !py-1.5 text-xs`}
                         />
-                        <button
-                          onClick={applyBulkStock}
-                          className="rounded-full bg-[#d7ff53] px-3 py-1 text-[10px] font-black uppercase text-black"
-                        >
+                        <AdminButton variant="primary" size="sm" onClick={applyBulkStock}>
                           Terapkan
-                        </button>
-                        <button onClick={() => setShowBulkStock(false)} className="text-white/50">
-                          <X size={12} />
+                        </AdminButton>
+                        <button
+                          onClick={() => setShowBulkStock(false)}
+                          className="text-[var(--ad-text-3)]"
+                        >
+                          <X size={13} />
                         </button>
                       </div>
                     )}
 
                     {errors.variants && (
-                      <p className="text-xs font-bold text-red-300">{errors.variants}</p>
+                      <p className="text-xs font-medium text-[var(--ad-red)]">{errors.variants}</p>
                     )}
                   </>
                 )}
@@ -1451,15 +1526,15 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
 
         {/* === Section: Shipping === */}
         <Section
-          id="shipping"
           title="Pengiriman"
-          icon={Package}
+          icon={<Package size={14} />}
+          accent="#0891b2"
           open={openSection === "shipping"}
           onToggle={() => sectionToggle("shipping")}
-          errors={errors.weight ? ["weight"] : []}
+          errorCount={errors.weight ? 1 : 0}
         >
           <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Berat (gram)" hint="Wajib untuk produk fisik" error={errors.weight}>
+            <AccentRow label="Berat (gram)" color="#0891b2" hint="Wajib untuk produk fisik" error={errors.weight}>
               <input
                 data-field="weight"
                 type="number"
@@ -1467,124 +1542,97 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
                 value={values.weight || ""}
                 onChange={(e) => update("weight", Number(e.target.value) || 0)}
                 placeholder="300"
-                className="wali-input"
+                className={inp}
               />
-            </Field>
-            <Field label="Panjang (cm)">
+            </AccentRow>
+            <AccentRow label="Panjang (cm)" color="#0891b2">
               <input
                 type="number"
                 min={0}
                 value={values.length || ""}
                 onChange={(e) => update("length", Number(e.target.value) || 0)}
-                className="wali-input"
+                className={inp}
               />
-            </Field>
-            <Field label="Lebar (cm)">
+            </AccentRow>
+            <AccentRow label="Lebar (cm)" color="#0891b2">
               <input
                 type="number"
                 min={0}
                 value={values.width || ""}
                 onChange={(e) => update("width", Number(e.target.value) || 0)}
-                className="wali-input"
+                className={inp}
               />
-            </Field>
-            <Field label="Tinggi (cm)">
+            </AccentRow>
+            <AccentRow label="Tinggi (cm)" color="#0891b2">
               <input
                 type="number"
                 min={0}
                 value={values.height || ""}
                 onChange={(e) => update("height", Number(e.target.value) || 0)}
-                className="wali-input"
+                className={inp}
               />
-            </Field>
+            </AccentRow>
           </div>
         </Section>
 
         {/* === Section: Additional === */}
         <Section
-          id="additional"
           title="Informasi Tambahan"
-          icon={Info}
+          icon={<Sparkles size={14} />}
+          accent="#64748b"
           open={openSection === "additional"}
           onToggle={() => sectionToggle("additional")}
         >
           <div className="space-y-4">
-            <div className="grid gap-3 md:grid-cols-3">
-              <ToggleCard
-                label="Produk Unggulan"
-                desc="Tampil di section khusus"
-                value={values.is_featured}
-                onChange={(v) => update("is_featured", v)}
-              />
-              <ToggleCard
-                label="Produk Baru"
-                desc="Tampil di section terbaru"
-                value={values.is_new}
-                onChange={(v) => update("is_new", v)}
-              />
-              <ToggleCard
-                label="Pre-Order"
-                desc={values.is_preorder ? `Waktu proses: ${values.preorder_days} hari` : "Stok langsung dikirim"}
-                value={values.is_preorder}
-                onChange={(v) => update("is_preorder", v)}
-              />
-            </div>
-
             {values.is_preorder && (
-              <Field label="Waktu Proses (hari)">
+              <AccentRow label="Waktu Proses (hari)" color="#64748b">
                 <input
                   type="number"
                   min={0}
                   value={values.preorder_days || ""}
                   onChange={(e) => update("preorder_days", Number(e.target.value) || 0)}
                   placeholder="7"
-                  className="wali-input"
+                  className={inp}
                 />
-              </Field>
+              </AccentRow>
             )}
 
-            <Field label="Catatan Internal (tidak tampil ke customer)">
+            <AccentRow label="Catatan Internal" color="#64748b" hint="Tidak tampil ke customer" full>
               <textarea
                 value={values.internal_notes}
                 onChange={(e) => update("internal_notes", e.target.value)}
                 rows={3}
-                placeholder="Catatan untuk tim internal..."
-                className="wali-input resize-none"
+                placeholder="Catatan untuk tim internal…"
+                className={`${inp} resize-none`}
               />
-            </Field>
+            </AccentRow>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <Field label="SEO Title" hint={`${values.seo_title.length}/70`}>
+              <AccentRow label="SEO Title" color="#64748b" hint={`${values.seo_title.length}/70`}>
                 <input
                   value={values.seo_title}
                   onChange={(e) => update("seo_title", e.target.value.slice(0, 70))}
                   placeholder="Otomatis dari nama produk"
-                  className="wali-input"
+                  className={inp}
                 />
-              </Field>
-              <Field label="SEO Description" hint={`${values.seo_description.length}/160`}>
+              </AccentRow>
+              <AccentRow label="SEO Description" color="#64748b" hint={`${values.seo_description.length}/160`}>
                 <textarea
                   value={values.seo_description}
                   onChange={(e) => update("seo_description", e.target.value.slice(0, 160))}
                   rows={2}
-                  className="wali-input resize-none"
+                  className={`${inp} resize-none`}
                 />
-              </Field>
+              </AccentRow>
             </div>
           </div>
         </Section>
 
-        {/* Mobile-only sticky save bar */}
-        <MobileSaveBar
-          onSaveDraft={() => submit("draft")}
-          onPublish={() => submit("publish")}
-          savingDraft={savingDraft}
-          publishing={publishing}
-        />
       </div>
 
-      {/* === Sidebar Summary === */}
+      {/* === Sidebar === */}
       <SidebarSummary
+        name={values.name}
         status={values.status}
         onStatusChange={(s) => update("status", s)}
         completion={completion}
@@ -1592,90 +1640,57 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
         priceRange={priceRange || "—"}
         variantCount={values.has_variants ? values.variants.filter((v) => !v.toDelete).length : 0}
         hasVariants={values.has_variants}
+        isFeatured={values.is_featured}
+        isNew={values.is_new}
+        isPreorder={values.is_preorder}
+        onToggleFeatured={(v) => update("is_featured", v)}
+        onToggleNew={(v) => update("is_new", v)}
+        onTogglePreorder={(v) => update("is_preorder", v)}
         onSaveDraft={() => submit("draft")}
         onPublish={() => submit("publish")}
         savingDraft={savingDraft}
         publishing={publishing}
+        isDirty={isDirty}
         mode={mode}
       />
-
-      <ProductFormStyles />
     </div>
   );
 }
 
 /* ============== Subcomponents ============== */
 
-function Section({
-  id,
-  title,
-  icon: Icon,
-  open,
-  onToggle,
-  children,
-  badge,
-  errors,
-}: {
-  id: string;
-  title: string;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
-  open: boolean;
-  onToggle: () => void;
-  children: React.ReactNode;
-  badge?: string;
-  errors?: string[];
-}) {
-  return (
-    <div data-section={id} className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left"
-      >
-        <div className="flex items-center gap-2">
-          <Icon size={16} className="text-[#d7ff53]" />
-          <h2 className="text-sm font-black uppercase tracking-wide">{title}</h2>
-          {badge && (
-            <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-black uppercase text-white/65">
-              {badge}
-            </span>
-          )}
-          {errors && errors.length > 0 && (
-            <span className="rounded-full bg-red-500/15 px-2 py-0.5 text-[10px] font-black uppercase text-red-300">
-              {errors.length} error
-            </span>
-          )}
-        </div>
-        {open ? <ChevronUp size={16} className="text-white/50" /> : <ChevronDown size={16} className="text-white/50" />}
-      </button>
-      {open && <div className="border-t border-white/5 p-4">{children}</div>}
-    </div>
-  );
-}
-
-function Field({
+/**
+ * A form field row that tints its label & focus state with the owning
+ * section's accent color (mirrors the 4px left bar of the section card).
+ */
+function AccentRow({
   label,
+  color,
   hint,
   required,
   error,
+  full,
   children,
 }: {
   label: string;
+  color: string;
   hint?: string;
   required?: boolean;
   error?: string;
-  children: React.ReactNode;
+  full?: boolean;
+  children: ReactNode;
 }) {
   return (
-    <div>
-      <label className="mb-1.5 flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-white/40">
+    <div className={full ? "md:col-span-2" : undefined}>
+      <label className="ad-label">
         <span>
-          {label} {required && <span className="text-red-300">*</span>}
+          <span style={{ color }}>{label}</span>
+          {required && <span className="ml-0.5 text-[var(--ad-red)]">*</span>}
         </span>
-        {hint && <span className="text-white/30">{hint}</span>}
+        {hint && <span className="ad-hint">{hint}</span>}
       </label>
       {children}
-      {error && <p className="mt-1 text-[11px] font-bold text-red-300">{error}</p>}
+      {error && <p className="ad-error-text">{error}</p>}
     </div>
   );
 }
@@ -1695,17 +1710,17 @@ function OptionInput({
     setInput("");
   };
   return (
-    <div className="wali-input flex flex-wrap items-center gap-1.5 !py-2">
+    <div className="ad-input flex flex-wrap items-center gap-1.5 !py-2">
       {values.map((v, i) => (
         <span
           key={i}
-          className="flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-bold"
+          className="inline-flex items-center gap-1 rounded-full bg-[var(--ad-accent-soft)] px-2 py-0.5 text-[11px] font-semibold text-[var(--ad-accent)]"
         >
           {v}
           <button
             type="button"
             onClick={() => onChange(values.filter((_, idx) => idx !== i))}
-            className="text-white/50 hover:text-white"
+            className="text-[var(--ad-accent)]/60 transition hover:text-[var(--ad-accent)]"
           >
             <X size={10} />
           </button>
@@ -1724,49 +1739,14 @@ function OptionInput({
         }}
         onBlur={() => add(input)}
         placeholder={values.length ? "" : "S, M, L, XL"}
-        className="flex-1 min-w-[80px] bg-transparent text-xs outline-none"
+        className="min-w-[80px] flex-1 bg-transparent text-xs outline-none"
       />
     </div>
   );
 }
 
-function ToggleCard({
-  label,
-  desc,
-  value,
-  onChange,
-}: {
-  label: string;
-  desc: string;
-  value: boolean;
-  onChange: (v: boolean) => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={() => onChange(!value)}
-      className={`rounded-xl border p-3 text-left transition ${
-        value
-          ? "border-[#d7ff53]/40 bg-[#d7ff53]/10"
-          : "border-white/10 bg-white/[0.02] hover:bg-white/[0.05]"
-      }`}
-    >
-      <div className="flex items-center justify-between">
-        <p className={`text-sm font-bold ${value ? "text-[#d7ff53]" : "text-white/85"}`}>{label}</p>
-        <span
-          className={`flex h-5 w-5 items-center justify-center rounded-full ${
-            value ? "bg-[#d7ff53] text-black" : "bg-white/10 text-transparent"
-          }`}
-        >
-          <Check size={11} strokeWidth={3} />
-        </span>
-      </div>
-      <p className="mt-1 text-[11px] text-white/50">{desc}</p>
-    </button>
-  );
-}
-
 function SidebarSummary({
+  name,
   status,
   onStatusChange,
   completion,
@@ -1774,12 +1754,20 @@ function SidebarSummary({
   priceRange,
   variantCount,
   hasVariants,
+  isFeatured,
+  isNew,
+  isPreorder,
+  onToggleFeatured,
+  onToggleNew,
+  onTogglePreorder,
   onSaveDraft,
   onPublish,
   savingDraft,
   publishing,
+  isDirty,
   mode,
 }: {
+  name: string;
   status: ProductFormValues["status"];
   onStatusChange: (s: ProductFormValues["status"]) => void;
   completion: { pct: number; checks: Array<{ key: string; label: string; done: boolean }> };
@@ -1787,186 +1775,201 @@ function SidebarSummary({
   priceRange: string;
   variantCount: number;
   hasVariants: boolean;
+  isFeatured: boolean;
+  isNew: boolean;
+  isPreorder: boolean;
+  onToggleFeatured: (v: boolean) => void;
+  onToggleNew: (v: boolean) => void;
+  onTogglePreorder: (v: boolean) => void;
   onSaveDraft: () => void;
   onPublish: () => void;
   savingDraft: boolean;
   publishing: boolean;
+  isDirty: boolean;
   mode: "create" | "edit";
 }) {
   return (
-    <div className="space-y-4 lg:sticky lg:top-4 lg:self-start">
-      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-        <h3 className="text-[10px] font-black uppercase tracking-widest text-white/40">
-          Status Kelengkapan
-        </h3>
-        <div className="mt-3 flex items-center gap-3">
-          <div className="relative h-16 w-16">
-            <svg viewBox="0 0 36 36" className="h-full w-full -rotate-90">
-              <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="3" />
-              <circle
-                cx="18"
-                cy="18"
-                r="15"
-                fill="none"
-                stroke="#d7ff53"
-                strokeWidth="3"
-                strokeDasharray={`${(completion.pct / 100) * 94.2} 94.2`}
-                strokeLinecap="round"
-                className="transition-all"
-              />
-            </svg>
-            <div className="absolute inset-0 flex items-center justify-center text-base font-black">
-              {completion.pct}%
+    <aside className="lg:sticky lg:top-20 lg:self-start">
+      <div className="space-y-4">
+        {/* === Card 1: Ringkasan Produk === */}
+        <AdminCard>
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="text-[10.5px] font-bold uppercase tracking-widest text-[var(--ad-text-3)]">
+              Ringkasan Produk
+            </h3>
+            <Pill tone={STATUS_OPTIONS.find((s) => s.v === status)?.tone ?? "neutral"}>
+              {STATUS_OPTIONS.find((s) => s.v === status)?.l}
+            </Pill>
+          </div>
+
+          <p
+            className="mt-2.5 truncate text-[15px] font-semibold text-[var(--ad-text)]"
+            title={name}
+          >
+            {name || "Tanpa nama"}
+          </p>
+
+          {/* Completion ring */}
+          <div className="mt-4 flex items-center gap-3.5">
+            <div className="relative h-14 w-14 shrink-0">
+              <svg viewBox="0 0 36 36" className="h-full w-full -rotate-90">
+                <circle
+                  cx="18"
+                  cy="18"
+                  r="15"
+                  fill="none"
+                  stroke="var(--ad-border-soft)"
+                  strokeWidth="3"
+                />
+                <circle
+                  cx="18"
+                  cy="18"
+                  r="15"
+                  fill="none"
+                  stroke="var(--ad-accent)"
+                  strokeWidth="3"
+                  strokeDasharray={`${(completion.pct / 100) * 94.2} 94.2`}
+                  strokeLinecap="round"
+                  className="transition-all duration-300"
+                />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center text-[13px] font-bold text-[var(--ad-text)]">
+                {completion.pct}%
+              </div>
+            </div>
+            <ul className="flex-1 space-y-1 text-[11.5px]">
+              {completion.checks.map((c) => (
+                <li key={c.key} className="flex items-center gap-1.5">
+                  {c.done ? (
+                    <Check size={11} className="text-[var(--ad-green)]" />
+                  ) : (
+                    <X size={11} className="text-[var(--ad-text-3)]" />
+                  )}
+                  <span className={c.done ? "text-[var(--ad-text-3)] line-through" : "text-[var(--ad-text-2)]"}>
+                    {c.label}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Key stats */}
+          <dl className="mt-4 space-y-2.5 border-t border-[var(--ad-border-soft)] pt-3.5 text-[13px]">
+            <Row label="Harga" value={priceRange} />
+            <Row
+              label="Total Stok"
+              value={
+                <span
+                  className={
+                    totalStock === 0
+                      ? "text-[var(--ad-red)]"
+                      : totalStock < 10
+                        ? "text-[var(--ad-amber)]"
+                        : "text-[var(--ad-green)]"
+                  }
+                >
+                  {totalStock}
+                </span>
+              }
+            />
+            {hasVariants && <Row label="Jumlah Variasi" value={String(variantCount)} />}
+          </dl>
+        </AdminCard>
+
+        {/* === Card 2: Status & Visibilitas === */}
+        <AdminCard>
+          <h3 className="text-[10.5px] font-bold uppercase tracking-widest text-[var(--ad-text-3)]">
+            Status & Visibilitas
+          </h3>
+          <div className="mt-3 space-y-1.5">
+            <Toggle
+              label="Unggulan"
+              hint="Tampil di section unggulan"
+              value={isFeatured}
+              onChange={onToggleFeatured}
+            />
+            <Toggle
+              label="Produk Baru"
+              hint="Tampil di section terbaru"
+              value={isNew}
+              onChange={onToggleNew}
+            />
+            <Toggle
+              label="Pre-Order"
+              hint="Dipesan, dikirim kemudian"
+              value={isPreorder}
+              onChange={onTogglePreorder}
+            />
+            <div className="border-t border-[var(--ad-border-soft)] pt-2.5">
+              <Field label="Status">
+                <select
+                  value={status}
+                  onChange={(e) => onStatusChange(e.target.value as ProductFormValues["status"])}
+                  className={inp}
+                >
+                  {STATUS_OPTIONS.map((s) => (
+                    <option key={s.v} value={s.v}>
+                      {s.l}
+                    </option>
+                  ))}
+                </select>
+              </Field>
             </div>
           </div>
-          <ul className="flex-1 space-y-0.5 text-[11px]">
-            {completion.checks.map((c) => (
-              <li key={c.key} className="flex items-center gap-1.5">
-                {c.done ? (
-                  <Check size={10} className="text-[#d7ff53]" />
-                ) : (
-                  <X size={10} className="text-red-300/70" />
-                )}
-                <span className={c.done ? "text-white/70 line-through" : "text-white/85"}>
-                  {c.label}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
+        </AdminCard>
 
-      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-        <h3 className="text-[10px] font-black uppercase tracking-widest text-white/40">
-          Ringkasan
-        </h3>
-        <dl className="mt-3 space-y-2 text-xs">
-          <Row label="Harga" value={priceRange} />
-          <Row label="Total Stok" value={String(totalStock)} accent={totalStock === 0 ? "red" : totalStock < 10 ? "orange" : "green"} />
-          {hasVariants && <Row label="Jumlah Variasi" value={String(variantCount)} />}
-          <Row label="Status" value={
-            <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-black uppercase ${STATUS_OPTIONS.find((s) => s.v === status)?.color}`}>
-              {STATUS_OPTIONS.find((s) => s.v === status)?.l}
-            </span>
-          } />
-        </dl>
+        {/* === Card 3: Aksi === */}
+        <AdminCard>
+          <div className="flex items-center justify-between">
+            <h3 className="text-[10.5px] font-bold uppercase tracking-widest text-[var(--ad-text-3)]">
+              Aksi
+            </h3>
+            {isDirty && (
+              <Pill tone="amber">
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--ad-amber)]" />
+                Belum disimpan
+              </Pill>
+            )}
+          </div>
+          <div className="mt-3 space-y-2">
+            <AdminButton
+              variant="secondary"
+              size="sm"
+              className="w-full !py-2.5"
+              onClick={onSaveDraft}
+              disabled={savingDraft || publishing}
+            >
+              {savingDraft ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
+              Simpan Draft
+            </AdminButton>
+            <AdminButton
+              variant="primary"
+              size="sm"
+              className="w-full !py-2.5"
+              onClick={onPublish}
+              disabled={publishing || savingDraft}
+            >
+              {publishing ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
+              {publishing || savingDraft ? "Menyimpan…" : "Simpan & Publikasikan"}
+            </AdminButton>
+          </div>
+          <p className="mt-3 text-[11px] leading-5 text-[var(--ad-text-3)]">
+            {mode === "create"
+              ? "Produk baru dibuat sebagai draft sampai kamu klik “Simpan & Publikasikan”."
+              : "Perubahan disimpan per produk. Gunakan tombol di atas untuk menyimpan."}
+          </p>
+        </AdminCard>
       </div>
+    </aside>
+  );
+}
 
-      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-        <h3 className="text-[10px] font-black uppercase tracking-widest text-white/40">
-          Publikasi
-        </h3>
-        <div className="mt-3 space-y-2">
-          <button
-            onClick={onPublish}
-            disabled={publishing || savingDraft}
-            className="flex w-full items-center justify-center gap-1.5 rounded-full bg-[#d7ff53] px-4 py-2.5 text-sm font-black uppercase text-black transition hover:bg-white disabled:opacity-50"
-          >
-            {publishing ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-            {mode === "create" ? "Simpan & Publikasikan" : "Simpan & Publikasikan"}
-          </button>
-          <button
-            onClick={onSaveDraft}
-            disabled={savingDraft || publishing}
-            className="flex w-full items-center justify-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-black uppercase text-white/80 transition hover:bg-white/10 disabled:opacity-50"
-          >
-            {savingDraft ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-            Simpan Draft
-          </button>
-          <Link
-            href="/admin/products"
-            className="flex w-full items-center justify-center gap-1.5 rounded-full border border-white/10 px-4 py-2 text-xs font-bold text-white/60 transition hover:bg-white/5"
-          >
-            Batal
-          </Link>
-        </div>
-
-        <div className="mt-3 border-t border-white/5 pt-3">
-          <label className="text-[10px] font-black uppercase tracking-widest text-white/40">
-            Status
-          </label>
-          <select
-            value={status}
-            onChange={(e) => onStatusChange(e.target.value as ProductFormValues["status"])}
-            className="wali-input mt-1.5"
-          >
-            {STATUS_OPTIONS.map((s) => (
-              <option key={s.v} value={s.v}>{s.l}</option>
-            ))}
-          </select>
-        </div>
-      </div>
+function Row({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <dt className="text-[var(--ad-text-3)]">{label}</dt>
+      <dd className="text-right font-semibold text-[var(--ad-text)]">{value}</dd>
     </div>
   );
 }
 
-function Row({ label, value, accent }: { label: string; value: React.ReactNode; accent?: "green" | "orange" | "red" }) {
-  const color = accent === "red" ? "text-red-300" : accent === "orange" ? "text-orange-300" : accent === "green" ? "text-[#d7ff53]" : "text-white/85";
-  return (
-    <div className="flex items-center justify-between">
-      <dt className="text-white/50">{label}</dt>
-      <dd className={`font-bold ${color}`}>{value}</dd>
-    </div>
-  );
-}
-
-function MobileSaveBar({
-  onSaveDraft,
-  onPublish,
-  savingDraft,
-  publishing,
-}: {
-  onSaveDraft: () => void;
-  onPublish: () => void;
-  savingDraft: boolean;
-  publishing: boolean;
-}) {
-  return (
-    <div className="sticky bottom-0 left-0 right-0 z-10 -mx-4 mt-6 flex gap-2 border-t border-white/10 bg-black/95 p-3 backdrop-blur lg:hidden">
-      <button
-        onClick={onSaveDraft}
-        disabled={savingDraft || publishing}
-        className="flex-1 rounded-full border border-white/15 bg-white/5 px-3 py-2.5 text-xs font-black uppercase text-white/80 disabled:opacity-50"
-      >
-        {savingDraft ? "..." : "Draft"}
-      </button>
-      <button
-        onClick={onPublish}
-        disabled={publishing || savingDraft}
-        className="flex-[2] rounded-full bg-[#d7ff53] px-3 py-2.5 text-xs font-black uppercase text-black disabled:opacity-50"
-      >
-        {publishing ? "Menyimpan..." : "Publikasikan"}
-      </button>
-    </div>
-  );
-}
-
-function ProductFormStyles() {
-  return (
-    <style jsx global>{`
-      .wali-input {
-        width: 100%;
-        border-radius: 0.75rem;
-        border: 1px solid rgba(255,255,255,0.10);
-        background: rgba(0,0,0,0.40);
-        padding: 0.625rem 0.875rem;
-        font-size: 0.8125rem;
-        font-weight: 600;
-        color: white;
-        outline: none;
-        transition: border-color 0.15s;
-      }
-      .wali-input::placeholder {
-        color: rgba(255,255,255,0.30);
-        font-weight: 400;
-      }
-      .wali-input:focus {
-        border-color: #d7ff53;
-      }
-      .wali-input option {
-        background: #000;
-        color: white;
-      }
-    `}</style>
-  );
-}

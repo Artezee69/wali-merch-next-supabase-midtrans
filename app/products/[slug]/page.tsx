@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import Image from "next/image";
+import { ArrowLeft, Truck, Shield, Package } from "lucide-react";
 import ProductImageGallery from "@/components/ProductImageGallery";
 import AddToCartBox from "@/components/AddToCartBox";
 import ProductCard from "@/components/ProductCard";
@@ -35,8 +35,8 @@ type Product = {
   slug: string;
   description: string | null;
   price: number;
-  base_price?: number | null;    // Harga asli (untuk diskon)
-  sale_price?: number | null;   // Harga diskon
+  base_price?: number | null;
+  sale_price?: number | null;
   image_url: string | null;
   category: string | null;
   fit: string | null;
@@ -44,11 +44,8 @@ type Product = {
   is_active: boolean | null;
   product_images: ProductImage[] | null;
   product_variants: ProductVariant[] | null;
-  soldCount?: number;           // Jumlah terjual (opsional)
-  rating?: {                    // Rating ulasan (opsional)
-    avg: number;
-    count: number;
-  };
+  soldCount?: number;
+  rating?: { avg: number; count: number };
 };
 
 type PageProps = {
@@ -139,7 +136,6 @@ export default async function ProductDetailPage({ params }: PageProps) {
     0
   );
 
-  // Discount detection - determine effective price and discount info
   const hasDiscount = Boolean(
     product.base_price != null &&
     product.sale_price != null &&
@@ -165,7 +161,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
     (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
   );
 
-  // Fetch semua product lain (excl current) untuk catalog produk terkait
+  // Fetch related products (limit 8 to keep the page light)
   let relatedProducts: Product[] = [];
   const { data: related, error: relatedError } = await supabaseAdmin
     .from("products")
@@ -191,172 +187,267 @@ export default async function ProductDetailPage({ params }: PageProps) {
       )
     `
     )
-    .neq("id", product.id);
+    .neq("id", product.id)
+    .limit(8);
   if (!relatedError && related) {
-    relatedProducts = related as Product[];
+    relatedProducts = (related as Product[]).map((p) => ({
+      ...p,
+      product_images: [...(p.product_images || [])].sort(
+        (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
+      ),
+    }));
   }
 
+  // Status color logic
+  const statusColor =
+    normalizeStatus(product.status) === "Stok Habis"
+      ? "text-red-400"
+      : normalizeStatus(product.status) === "Segera Hadir"
+      ? "text-amber-400"
+      : "text-[#d7ff53]";
+
+  const discountPercent = hasDiscount
+    ? Math.round(
+        ((Number(product.base_price) - Number(product.sale_price)) /
+          Number(product.base_price)) *
+          100
+      )
+    : 0;
+
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#050505] text-white">
-      {/* Cinematic ambient backdrop — desktop only (mobile: no blur cost) */}
-      <div className="hidden pointer-events-none absolute inset-0 -z-10 sm:block">
-        <div className="absolute -left-32 top-1/4 h-96 w-96 rounded-full bg-[#d7ff53]/8 blur-[140px] animate-aurora-1" />
-        <div className="absolute -right-32 top-2/3 h-96 w-96 rounded-full bg-[#5e8bff]/8 blur-[140px] animate-aurora-2" />
-        <div className="absolute inset-0 bg-grid-fade [background-size:64px_64px] opacity-[0.18]" />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#050505] via-[#0a0a0a] to-[#050505]" />
-      </div>
-
-      {/* Top action bar */}
-      <section className="relative border-b border-white/10 bg-gradient-to-b from-[#10150a] via-[#0a0a0a] to-[#050505]">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-5 py-4 sm:py-5">
-          <Link
-            href="/products"
-            className="group inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-5 py-3 text-xs font-black uppercase tracking-[0.25em] text-white/70 transition-all duration-300 hover:border-[#d7ff53] hover:text-[#d7ff53]"
-          >
-            <span className="transition-transform duration-300 group-hover:-translate-x-0.5">
-              ←
+    <div
+      className="min-h-screen bg-[#050505] text-white"
+      style={{ backgroundColor: "var(--bg-primary)" }}
+    >
+      {/* ── Breadcrumb / back link ────────────────────────────── */}
+      <nav
+        className="border-b border-white/5"
+        style={{ backgroundColor: "var(--bg-secondary)" }}
+      >
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="flex items-center gap-3 py-3 sm:py-4">
+            <Link
+              href="/products"
+              className="group inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-white/40 transition-colors duration-300 hover:text-white/80"
+            >
+              <ArrowLeft className="h-3.5 w-3.5 transition-transform duration-300 group-hover:-translate-x-0.5" />
+              <span>Produk</span>
+            </Link>
+            <span className="text-white/15">/</span>
+            <span className="text-xs font-semibold uppercase tracking-widest text-white/70">
+              {product.name}
             </span>
-            <span>Kembali</span>
-          </Link>
-
-          <Link
-            href="/cart"
-            className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-[#d7ff53] px-5 py-3 text-xs font-black uppercase tracking-[0.25em] text-black transition-transform duration-300 hover:scale-105"
-          >
-            <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-            <span className="relative">Keranjang</span>
-          </Link>
+          </div>
         </div>
-      </section>
+      </nav>
 
-      {/* Detail grid */}
-      <section className="relative mx-auto grid max-w-7xl gap-6 sm:gap-10 px-4 sm:px-5 py-8 sm:py-10 lg:grid-cols-[1.05fr_0.95fr] lg:py-14">
-        <div>
-          <ProductImageGallery
-            productName={product.name}
-            images={sortedGalleryImages}
-          />
-        </div>
+      {/* ── Main product grid ──────────────────────────────────── */}
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
+        <div className="grid gap-6 sm:gap-10 lg:grid-cols-2 py-6 sm:py-8 lg:py-12">
 
-        <div className="lg:sticky lg:top-6 lg:self-start">
-          <div className="mb-4 sm:mb-8 inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-[#d7ff53]/30 bg-[#d7ff53]/[0.04] px-3 sm:px-5 py-2 sm:py-3 text-[9px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.35em] text-[#d7ff53] sm:backdrop-blur-md">
-            <span className="h-1 w-1 sm:h-1.5 sm:w-1.5 rounded-full bg-[#d7ff53] animate-pulse-soft" />
-            Detail Produk
+          {/* Left: Image gallery */}
+          <div className="lg:sticky lg:top-6 lg:self-start">
+            <div
+              style={{ animation: "fade-up 600ms cubic-bezier(0.16,1,0.3,1) both" }}
+            >
+              <ProductImageGallery
+                productName={product.name}
+                images={sortedGalleryImages}
+              />
+            </div>
           </div>
 
-          <h1 className="bg-gradient-to-b from-white via-white to-white/60 bg-clip-text text-3xl sm:text-5xl md:text-6xl font-black uppercase leading-[0.95] tracking-tight text-transparent">
-            {product.name}
-          </h1>
-
-          <div className="mt-4 sm:mt-7 flex flex-wrap items-center gap-2 sm:gap-3">
-            {/* Price display with optional discount */}
-            {(product.base_price !== undefined && product.base_price != null &&
-                product.sale_price !== undefined &&
-                product.sale_price != null &&
-                Number(product.sale_price) < Number(product.base_price))
-              ? (
-                  <div className="flex items-baseline gap-1.5 sm:gap-2 flex-wrap">
-                    {/* Original price (strikethrough) */}
-                    <span className="font-display text-sm sm:text-base font-black text-gray-400 line-through">
-                      {rupiah(product.base_price)}
-                    </span>
-                    {/* Sale price prominent */}
-                    <span className="font-display text-sm sm:text-lg font-black text-[#d7ff53] px-3 sm:px-5 py-1.5 sm:py-3 rounded-full shadow-[0_0_24px_-6px_rgba(215,255,83,0.5)] bg-[#d7ff53] text-black">
-                      {rupiah(product.sale_price)}
-                    </span>
-                    {/* Discount percentage badge */}
-                    <span className="text-xs sm:text-sm font-bold bg-red-500/20 text-red-400 px-1.5 sm:px-2 py-0.5 rounded">
-                      {Math.round(((Number(product.base_price) - Number(product.sale_price)) / Number(product.base_price)) * 100)}%
-                    </span>
-                  </div>
-              ) : (
-                <span className="rounded-full bg-[#d7ff53] px-3 sm:px-5 py-1.5 sm:py-3 text-sm sm:text-xl font-black text-black shadow-[0_0_24px_-6px_rgba(215,255,83,0.5)]">
-                  {rupiah(Number(product.price))}
+          {/* Right: Product details */}
+          <div
+            className="flex flex-col justify-center"
+            style={{ animation: "fade-up 600ms cubic-bezier(0.16,1,0.3,1) 120ms both" }}
+          >
+            {/* Category tag */}
+            <div className="mb-4 sm:mb-5 flex items-center gap-2">
+              <span
+                className="inline-flex items-center rounded border px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest"
+                style={{
+                  borderColor: "var(--border-color)",
+                  backgroundColor: "var(--bg-card)",
+                  color: "var(--accent-color)",
+                }}
+              >
+                {product.category || "Merch"}
+              </span>
+              {product.fit && (
+                <span
+                  className="inline-flex items-center rounded border px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest"
+                  style={{
+                    borderColor: "var(--border-color)",
+                    color: "rgba(255,255,255,0.5)",
+                  }}
+                >
+                  Fit: {product.fit}
                 </span>
               )}
-
-            <span className="rounded-full border border-white/10 bg-white/5 px-3 sm:px-5 py-1.5 sm:py-3 text-xs sm:text-sm font-black uppercase text-white sm:backdrop-blur-sm">
-              Stok: {totalStock} pcs
-            </span>
-          </div>
-
-          {product.description && (
-            <p className="mt-8 text-lg leading-relaxed text-white/70">
-              {product.description}
-            </p>
-          )}
-
-          <div className="mt-5 sm:mt-9 grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
-            <div className="group relative overflow-hidden rounded-xl sm:rounded-2xl border border-white/10 bg-white/[0.03] p-3 sm:p-5 sm:backdrop-blur-sm transition-all duration-500 sm:hover:border-white/20 sm:hover:bg-white/[0.05]">
-              <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white/40">
-                Kategori
-              </p>
-              <p className="mt-1.5 sm:mt-3 text-xs sm:text-sm font-black uppercase text-white">
-                {product.category || "Merch"}
-              </p>
             </div>
 
-            <div className="group relative overflow-hidden rounded-xl sm:rounded-2xl border border-white/10 bg-white/[0.03] p-3 sm:p-5 sm:backdrop-blur-sm transition-all duration-500 sm:hover:border-white/20 sm:hover:bg-white/[0.05]">
-              <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white/40">
-                Fit
-              </p>
-              <p className="mt-1.5 sm:mt-3 text-xs sm:text-sm font-black uppercase text-white">
-                {product.fit || "Regular"}
-              </p>
+            {/* Product name */}
+            <h1 className="text-2xl font-bold leading-tight tracking-tight text-white sm:text-4xl lg:text-[2.5rem] lg:leading-[1.1]">
+              {product.name}
+            </h1>
+
+            {/* Price row */}
+            <div className="mt-5 sm:mt-6 flex flex-wrap items-baseline gap-x-3 gap-y-2">
+              {hasDiscount ? (
+                <>
+                  <span className="text-sm font-semibold text-white/35 line-through">
+                    {rupiah(product.base_price!)}
+                  </span>
+                  <span
+                    className="text-2xl font-extrabold tracking-tight sm:text-3xl lg:text-4xl"
+                    style={{ color: "var(--accent-color)" }}
+                  >
+                    {rupiah(product.sale_price!)}
+                  </span>
+                  <span
+                    className="rounded-md px-2 py-0.5 text-[11px] font-bold"
+                    style={{ backgroundColor: "rgba(239,68,68,0.15)", color: "#f87171" }}
+                  >
+                    −{discountPercent}%
+                  </span>
+                </>
+              ) : (
+                <span className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl lg:text-4xl">
+                  {rupiah(effectivePrice)}
+                </span>
+              )}
             </div>
 
-            <div className="group relative overflow-hidden rounded-xl sm:rounded-2xl border border-white/10 bg-white/[0.03] p-3 sm:p-5 sm:backdrop-blur-sm transition-all duration-500 sm:hover:border-white/20 sm:hover:bg-white/[0.05]">
-              <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white/40">
-                Status
-              </p>
-              <p className="mt-1.5 sm:mt-3 text-xs sm:text-sm font-black uppercase text-[#d7ff53]">
-                {normalizeStatus(product.status)}
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-8">
-            {(() => {
-              const sampleVariant = variants[0];
-              return (
-                <AddToCartBox
-                  productId={product.id}
-                  name={product.name}
-                  slug={product.slug}
-                  price={effectivePrice}
-                  image={sortedGalleryImages[0]?.image_url || product.image_url || ""}
-                  option1Label={sampleVariant?.option_1_name || "Warna"}
-                  option2Label={sampleVariant?.option_2_name || "Ukuran"}
-                  variants={variants.map((variant) => {
-                    // Only use the actual variant values, don't fall back to color/size fields indiscriminately
-                    const opt1Value = variant.option_1_value !== null ? variant.option_1_value : null;
-                    const opt2Value = variant.option_2_value !== null ? variant.option_2_value : null;
-
-                    return {
-                      id: variant.id,
-                      option1: opt1Value,
-                      option2: opt2Value,
-                      legacyColor: variant.color || null,
-                      stock: Number(variant.stock || 0),
-                      price: Number(variant.sale_price ?? variant.price ?? effectivePrice),
-                    };
-                  })}
+            {/* Stock + status */}
+            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs sm:text-sm">
+              <div className="flex items-center gap-1.5">
+                <span
+                  className={`h-1.5 w-1.5 rounded-full ${
+                    totalStock > 10
+                      ? "bg-[#d7ff53]"
+                      : totalStock > 0
+                      ? "bg-amber-400"
+                      : "bg-red-400"
+                  }`}
                 />
-              );
-            })()}
+                <span className="font-medium text-white/50">
+                  {totalStock > 0 ? `${totalStock} pcs tersedia` : "Stok habis"}
+                </span>
+              </div>
+              <span className={`font-semibold ${statusColor}`}>
+                {normalizeStatus(product.status)}
+              </span>
+            </div>
+
+            {/* Divider */}
+            <div
+              className="my-6 sm:my-7 h-px w-full"
+              style={{ backgroundColor: "var(--border-color)" }}
+            />
+
+            {/* Description */}
+            {product.description && (
+              <div className="mb-6 sm:mb-8">
+                <p className="text-sm leading-[1.7] text-white/55 sm:text-[0.925rem] sm:leading-[1.7]">
+                  {product.description}
+                </p>
+              </div>
+            )}
+
+            {/* Trust signals */}
+            <div className="mb-6 sm:mb-8 grid grid-cols-3 gap-3 sm:gap-4">
+              {[
+                { icon: Truck, label: "Gratis Ongkir*", sub: "min. Rp 200rb" },
+                { icon: Package, label: "Stok Ready", sub: "Kirim 1–2 hari" },
+                { icon: Shield, label: "100% Original", sub: "Garansi resmi" },
+              ].map(({ icon: Icon, label, sub }, i) => (
+                <div
+                  key={i}
+                  className="flex flex-col items-center gap-1.5 rounded-lg border px-2 py-3 sm:px-3 sm:py-4 text-center"
+                  style={{
+                    borderColor: "var(--border-color)",
+                    backgroundColor: "var(--bg-card)",
+                  }}
+                >
+                  <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-white/40" />
+                  <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-white/80">
+                    {label}
+                  </p>
+                  <p className="text-[9px] sm:text-[10px] text-white/30">{sub}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Add to cart */}
+            <div className="mb-4 sm:mb-6">
+              {(() => {
+                const sampleVariant = variants[0];
+                return (
+                  <AddToCartBox
+                    productId={product.id}
+                    name={product.name}
+                    slug={product.slug}
+                    price={effectivePrice}
+                    image={sortedGalleryImages[0]?.image_url || product.image_url || ""}
+                    option1Label={sampleVariant?.option_1_name || "Warna"}
+                    option2Label={sampleVariant?.option_2_name || "Ukuran"}
+                    variants={variants.map((variant) => {
+                      const opt1Value =
+                        variant.option_1_value !== null ? variant.option_1_value : null;
+                      const opt2Value =
+                        variant.option_2_value !== null ? variant.option_2_value : null;
+                      return {
+                        id: variant.id,
+                        option1: opt1Value,
+                        option2: opt2Value,
+                        legacyColor: variant.color || null,
+                        stock: Number(variant.stock || 0),
+                        price: Number(
+                          variant.sale_price ?? variant.price ?? effectivePrice
+                        ),
+                      };
+                    })}
+                  />
+                );
+              })()}
+            </div>
+
           </div>
         </div>
-      </section>
+      </div>
 
-      {/* Related Products */}
+      {/* ── Related products ───────────────────────────────────── */}
       {relatedProducts.length > 0 && (
-        <section className="py-12">
-          <div className="max-w-7xl mx-auto px-5">
-            <h2 className="text-2xl font-black uppercase tracking-wider text-white mb-8">Produk Terkait</h2>
-            {/* Horizontal scroll container - katalog produk (sama seperti di /products) */}
-            <div className="flex gap-6 overflow-x-auto pb-4 pr-2">
+        <section
+          className="border-t border-white/5"
+          style={{ backgroundColor: "var(--bg-secondary)" }}
+        >
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10 sm:py-14">
+            <div className="mb-6 sm:mb-8 flex items-end justify-between">
+              <div>
+                <p
+                  className="mb-1 text-[10px] font-bold uppercase tracking-widest"
+                  style={{ color: "var(--accent-color)" }}
+                >
+                  Jelajahi
+                </p>
+                <h2 className="text-xl font-bold tracking-tight text-white sm:text-2xl">
+                  Produk Lain
+                </h2>
+              </div>
+              <Link
+                href="/products"
+                className="text-xs font-semibold text-white/40 transition-colors duration-300 hover:text-white/80"
+              >
+                Lihat semua →
+              </Link>
+            </div>
+
+            {/* Desktop: 4-col grid · Mobile: horizontal scroll */}
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
               {relatedProducts.map((p, i) => (
-                <div key={p.id} className="flex-shrink-0 w-72">
+                <div key={p.id} className="min-w-0">
                   <ProductCard product={p as any} index={i} />
                 </div>
               ))}
@@ -364,7 +455,6 @@ export default async function ProductDetailPage({ params }: PageProps) {
           </div>
         </section>
       )}
-
-    </main>
+    </div>
   );
 }

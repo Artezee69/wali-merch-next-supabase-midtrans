@@ -1,0 +1,607 @@
+/* ============================================================
+   Admin Design System — light SaaS + depth (gradients, layered
+   shadows, accent borders)
+   Applied via CSS variables + utility classes under `.wali-admin`.
+   ============================================================ */
+
+.wali-admin {
+  /* surfaces */
+  --ad-bg: #f5f6f9;              /* page background */
+  --ad-surface: #ffffff;         /* cards, topbar */
+  --ad-surface-2: #f9fafb;      /* inset panels, table heads */
+  --ad-border: #e6e8ee;
+  --ad-border-soft: #eef0f4;
+
+  /* text */
+  --ad-text: #16181d;
+  --ad-text-2: #5d6470;
+  --ad-text-3: #98a1ad;
+
+  /* accent */
+  --ad-accent: #4f46e5;         /* indigo-600 */
+  --ad-accent-strong: #4338ca;  /* indigo-700 */
+  --ad-accent-soft: #eef2ff;    /* indigo-50 */
+  --ad-accent-text: #4f46e5;
+  --ad-violet: #7c3aed;         /* violet-600 */
+  --ad-accent-gradient: linear-gradient(135deg, #4f46e5, #7c3aed);
+
+  /* status */
+  --ad-green: #16a34a;
+  --ad-green-soft: #f0fdf4;
+  --ad-amber: #d97706;
+  --ad-amber-soft: #fffbeb;
+  --ad-red: #dc2626;
+  --ad-red-soft: #fef2f2;
+  --ad-blue: #2563eb;
+  --ad-blue-soft: #eff6ff;
+
+  /* shadows — layered: ambient (soft, wide) + key (tight, directional) */
+  --ad-shadow-sm: 0 2px 6px 0 rgba(16, 24, 40, 0.06),
+                  0 1px 2px 0 rgba(79, 70, 229, 0.05);
+  --ad-shadow: 0 8px 20px -6px rgba(16, 24, 40, 0.08),
+               0 2px 4px -1px rgba(79, 70, 229, 0.06);
+  --ad-shadow-lg: 0 24px 48px -12px rgba(16, 24, 40, 0.14),
+                  0 8px 16px -8px rgba(124, 58, 237, 0.08);
+
+  background-color: var(--ad-bg);
+  color: var(--ad-text);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* background pattern — subtle radial dot grid (opt-in) */
+.wali-admin.ad-dotted-bg {
+  background-image: radial-gradient(rgba(79, 70, 229, 0.02) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+.wali-admin.ad-dotted-bg::before {
+  /* optional ambient glow behind content */
+  content: "";
+  position: fixed;
+  inset: 0 -20% auto -20%;
+  height: 420px;
+  background: radial-gradient(60% 100% at 50% 0%, rgba(79, 70, 229, 0.05), transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ---------- font hierarchy ---------- */
+
+.wali-admin h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+}
+.wali-admin h2 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+.wali-admin h3 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.wali-admin {
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.5;
+}
+.wali-admin .ad-caption {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--ad-text-3);
+}
+
+/* ---------- page header ---------- */
+
+.ad-page-header {
+  margin-bottom: 1.25rem;
+}
+.ad-page-header h1,
+.ad-page-header .ad-page-title {
+  display: inline-block;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  background: var(--ad-accent-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+.ad-page-header .ad-page-sub {
+  margin-top: 0.25rem;
+  font-size: 0.8125rem;
+  color: var(--ad-text-2);
+  font-weight: 400;
+}
+
+/* ---------- cards ---------- */
+
+.ad-card {
+  position: relative;
+  background: var(--ad-surface);
+  border: 1px solid var(--ad-border);
+  border-radius: 16px;
+  box-shadow: var(--ad-shadow-sm);
+}
+/* 2px top gradient border via pseudo-element */
+.ad-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 12px;
+  right: 12px;
+  height: 2px;
+  border-radius: 0 0 2px 2px;
+  background: linear-gradient(90deg, #4f46e5, #7c3aed);
+  opacity: 0.55;
+  pointer-events: none;
+}
+/* cards that sit on tinted backgrounds (warn/success) tone the bar */
+.ad-card::before {
+  transition: opacity 0.2s;
+}
+.ad-card:hover::before {
+  opacity: 0.9;
+}
+
+.ad-inset {
+  background: var(--ad-surface-2);
+  border: 1px solid var(--ad-border-soft);
+  border-radius: 10px;
+}
+
+/* section divider — subtle 1px gradient line */
+.ad-divider {
+  height: 1px;
+  border: none;
+  margin: 1.25rem 0;
+  background: linear-gradient(90deg, transparent, var(--ad-border), var(--ad-accent-soft), var(--ad-border), transparent);
+}
+.ad-divider::before {
+  content: "";
+  display: block;
+  height: 0;
+}
+
+/* ---------- KPI / stat tiles ---------- */
+
+.ad-kpi {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1rem 1.1rem;
+  border-radius: 16px;
+  background: var(--ad-surface);
+  border: 1px solid var(--ad-border);
+  border-left: 4px solid var(--ad-kpi-color, var(--ad-accent));
+  box-shadow: var(--ad-shadow-sm);
+  overflow: hidden;
+}
+/* metric type → left accent color */
+.ad-kpi-revenue  { --ad-kpi-color: #4f46e5; }
+.ad-kpi-orders   { --ad-kpi-color: #2563eb; }
+.ad-kpi-customers{ --ad-kpi-color: #7c3aed; }
+.ad-kpi-stock    { --ad-kpi-color: #d97706; }
+.ad-kpi-success  { --ad-kpi-color: #16a34a; }
+
+.ad-kpi-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ad-text-3);
+}
+.ad-kpi-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--ad-text);
+}
+.ad-kpi-trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--ad-text-3);
+}
+.ad-kpi-trend .ad-kpi-arrow {
+  display: inline-flex;
+  width: 1em;
+  height: 1em;
+}
+.ad-kpi-trend.up { color: var(--ad-green); }
+.ad-kpi-trend.down { color: var(--ad-red); }
+/* small icon chip, top-right */
+.ad-kpi-icon {
+  position: absolute;
+  top: 0.85rem;
+  right: 0.9rem;
+  display: flex;
+  width: 2rem;
+  height: 2rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--ad-kpi-color, var(--ad-accent)) 10%, #ffffff);
+  color: var(--ad-kpi-color, var(--ad-accent));
+}
+.ad-kpi-hint {
+  font-size: 0.75rem;
+  color: var(--ad-text-3);
+}
+
+/* ---------- form sections ---------- */
+
+.ad-form-section {
+  position: relative;
+  padding: 1.1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  border-radius: 12px;
+  background: var(--ad-surface);
+  border: 1px solid var(--ad-border-soft);
+}
+.ad-form-section::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.75rem;
+  bottom: 0.75rem;
+  width: 4px;
+  border-radius: 0 4px 4px 0;
+  background: var(--ad-accent-gradient);
+}
+.ad-form-section.ad-form-section-green::before  { background: linear-gradient(180deg, #22c55e, #16a34a); }
+.ad-form-section.ad-form-section-amber::before  { background: linear-gradient(180deg, #f59e0b, #d97706); }
+.ad-form-section.ad-form-section-red::before    { background: linear-gradient(180deg, #ef4444, #dc2626); }
+.ad-form-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.9rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ad-text);
+}
+
+/* ---------- form controls ---------- */
+
+.ad-input {
+  width: 100%;
+  border-radius: 9px;
+  border: 1px solid var(--ad-border);
+  background: var(--ad-surface);
+  padding: 0.55rem 0.8rem;
+  font-size: 0.845rem;
+  font-weight: 500;
+  color: var(--ad-text);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.ad-input::placeholder {
+  color: var(--ad-text-3);
+  font-weight: 400;
+}
+.ad-input:focus {
+  border-color: var(--ad-accent);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.14),
+              0 0 0 1px rgba(124, 58, 237, 0.08);
+}
+.ad-input:disabled {
+  opacity: 0.55;
+}
+select.ad-input {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2398a1ad' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.65rem center;
+  padding-right: 2.1rem;
+}
+.ad-checkbox {
+  accent-color: var(--ad-accent);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+/* ---------- buttons ---------- */
+
+.ad-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border-radius: 9px;
+  font-size: 0.845rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.1s;
+  border: 1px solid transparent;
+}
+.ad-btn:active:not(:disabled) {
+  transform: translateY(0.5px);
+}
+.ad-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ad-btn-primary {
+  background: var(--ad-accent-gradient);
+  color: #fff;
+  padding: 0.55rem 1rem;
+  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.35),
+              0 1px 2px rgba(124, 58, 237, 0.25);
+}
+.ad-btn-primary:hover:not(:disabled) {
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.42),
+              0 2px 4px rgba(124, 58, 237, 0.3);
+  filter: brightness(1.06);
+}
+
+.ad-btn-secondary {
+  background: var(--ad-surface);
+  border-color: var(--ad-border);
+  color: var(--ad-text-2);
+  padding: 0.55rem 1rem;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+}
+.ad-btn-secondary:hover:not(:disabled) {
+  border-color: #cfd4dd;
+  color: var(--ad-text);
+  background: var(--ad-surface-2);
+  box-shadow: var(--ad-shadow-sm);
+}
+
+.ad-btn-danger {
+  background: var(--ad-red);
+  color: #fff;
+  padding: 0.55rem 1rem;
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.25);
+}
+.ad-btn-danger:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+.ad-btn-danger-outline {
+  background: var(--ad-surface);
+  border-color: #fecaca;
+  color: var(--ad-red);
+  padding: 0.55rem 1rem;
+}
+.ad-btn-danger-outline:hover:not(:disabled) {
+  background: var(--ad-red-soft);
+  border-color: var(--ad-red);
+}
+
+/* small / icon button variants */
+.ad-btn-sm {
+  padding: 0.35rem 0.7rem;
+  font-size: 0.75rem;
+  border-radius: 7px;
+}
+.ad-btn-icon {
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+}
+.ad-btn-icon.ad-btn-sm {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+}
+
+/* ---------- badges / pills ---------- */
+
+.ad-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  padding: 0.28rem 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.3;
+  border: 1px solid transparent;
+  min-height: 22px;
+}
+/* icon space: 14px square slot when a pill contains an svg */
+.ad-pill svg,
+.ad-pill .ad-pill-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+.ad-pill-neutral {
+  background: var(--ad-surface-2);
+  color: var(--ad-text-2);
+  border-color: var(--ad-border-soft);
+}
+.ad-pill-green {
+  background: var(--ad-green-soft);
+  color: var(--ad-green);
+  border-color: #bbf7d0;
+  box-shadow: inset 0 0 0 1px rgba(22, 163, 74, 0.06);
+}
+.ad-pill-amber {
+  background: var(--ad-amber-soft);
+  color: var(--ad-amber);
+  border-color: #fde68a;
+}
+.ad-pill-red {
+  background: var(--ad-red-soft);
+  color: var(--ad-red);
+  border-color: #fecaca;
+}
+.ad-pill-blue {
+  background: var(--ad-blue-soft);
+  color: var(--ad-blue);
+  border-color: #bfdbfe;
+}
+.ad-pill-accent {
+  background: var(--ad-accent-soft);
+  color: var(--ad-accent-text);
+  border-color: #c7d2fe;
+}
+
+/* ---------- alerts ---------- */
+
+.ad-alert {
+  border-radius: 10px;
+  padding: 0.7rem 0.9rem;
+  font-size: 0.845rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  border: 1px solid;
+}
+.ad-alert-error {
+  background: var(--ad-red-soft);
+  border-color: #fecaca;
+  color: var(--ad-red);
+}
+.ad-alert-success {
+  background: var(--ad-green-soft);
+  border-color: #bbf7d0;
+  color: var(--ad-green);
+}
+.ad-alert-warn {
+  background: var(--ad-amber-soft);
+  border-color: #fde68a;
+  color: var(--ad-amber);
+}
+.ad-alert-info {
+  background: var(--ad-accent-soft);
+  border-color: #c7d2fe;
+  color: var(--ad-accent-text);
+}
+
+/* ---------- section / field labels ---------- */
+
+.ad-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ad-text-2);
+}
+.ad-hint {
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ad-text-3);
+  font-size: 0.7rem;
+}
+.ad-error-text {
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--ad-red);
+}
+
+/* ---------- table ---------- */
+
+.ad-table th {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: rgba(249, 250, 251, 0.92);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  padding: 0.65rem 0.85rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ad-text-3);
+  text-align: left;
+  border-bottom: 1px solid var(--ad-border);
+}
+.ad-table td {
+  padding: 0.75rem 0.85rem;
+  font-size: 0.845rem;
+  color: var(--ad-text-2);
+  border-left: 2px solid transparent;
+  transition: border-color 0.12s, background 0.12s;
+}
+/* zebra striping */
+.ad-table tbody tr:nth-child(even) {
+  background: var(--ad-surface-2);
+}
+/* row hover: tint + left accent bar on the first cell */
+.ad-table tbody tr:hover {
+  background: var(--ad-accent-soft);
+}
+.ad-table tbody tr:hover td {
+  border-left-color: transparent;
+}
+.ad-table tbody tr:hover td:first-child {
+  border-left: 2px solid var(--ad-accent);
+}
+
+/* variant rows: whole-row hover accent (used by ProductForm variant table) */
+.ad-variant-row {
+  transition: border-color 0.12s;
+}
+.ad-variant-row:hover {
+  border-left: 2px solid var(--ad-accent);
+}
+
+/* ---------- toggle switch ---------- */
+
+.ad-toggle {
+  position: relative;
+  display: inline-block;
+  width: 38px;
+  height: 22px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+  border: none;
+  padding: 0;
+}
+.ad-toggle.on {
+  background: var(--ad-accent-gradient);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+.ad-toggle.off {
+  background: #d4d9e2;
+}
+.ad-toggle::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: #fff;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+.ad-toggle.on::after {
+  transform: translateX(16px);
+}
+
+/* focus ring for interactive elements */
+.wali-admin .ad-btn:focus-visible,
+.wali-admin .ad-input:focus-visible,
+.wali-admin a:focus-visible,
+.wali-admin button:focus-visible {
+  outline: 2px solid var(--ad-accent);
+  outline-offset: 1px;
+}

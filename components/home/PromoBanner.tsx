@@ -21,7 +21,7 @@ export default function PromoBanner({ banner, className }: Props) {
 
   return (
     <div
-      className={`relative overflow-hidden rounded-xl border border-white/5 bg-gray-900 dark:bg-gray-950 ${
+      className={`relative overflow-hidden rounded-2xl border border-white/[0.08] bg-black shadow-2xl shadow-black/40 ${
         className ?? ""
       }`}
     >
@@ -37,16 +37,16 @@ export default function PromoBanner({ banner, className }: Props) {
           alt={banner.title}
           loading="lazy"
           decoding="async"
-          className="absolute inset-0 h-full w-full object-cover sm:transition-transform sm:duration-500 sm:group-hover:scale-105"
+          className="absolute inset-0 h-full w-full object-cover sm:transition-transform sm:duration-500 sm:group-hover:scale-[1.04]"
           draggable={false}
         />
         {banner.title && !banner.hide_overlay && (
-          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent dark:from-gray-950/80 p-4">
-            <p className="text-sm font-black uppercase tracking-wider text-white dark:text-gray-100 sm:text-base">
+          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-5">
+            <p className="text-sm font-black uppercase tracking-wider text-white sm:text-base">
               {banner.title}
             </p>
             {banner.button_text && (
-              <span className="mt-1 inline-block text-[11px] font-bold uppercase tracking-wider text-[#d7ff53]">
+              <span className="mt-1.5 inline-block text-[11px] font-bold uppercase tracking-wider text-[#d7ff53]">
                 {banner.button_text} →
               </span>
             )}

@@ -34,9 +34,7 @@ export default function LoginPage() {
     setRedirectTo(safeRedirectTarget(params.get("redirectTo")));
   }, []);
 
-  // If user is already signed in, send them to the safe target. Skip while
-  // AuthProvider is still bootstrapping the session to avoid a redirect
-  // loop on first render.
+  // If user is already signed in, send them to the safe target.
   useEffect(() => {
     if (authLoading) return;
     if (session && !hasAutoRedirectedRef.current) {
@@ -94,7 +92,6 @@ export default function LoginPage() {
         return;
       }
 
-      // Confirm session is actually live before navigating.
       const { data: { session: freshSession } } = await supabasePublic.auth.getSession();
       if (!freshSession) {
         setError("Sesi tidak terbentuk. Coba lagi.");
@@ -126,106 +123,221 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#0b0b0b] text-white dark:bg-[#0b0b0b] dark:text-gray-100 px-4 py-12">
-      <div className="mx-auto max-w-md space-y-6">
-        <div className="text-center">
-          <h1 className="text-2xl font-black tracking-[0.25em] text-white dark:text-white">WALI</h1>
-          <p className="mt-2 text-sm text-white/60 dark:text-gray-400">Masuk ke akun Anda</p>
+    <main
+      className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-12 sm:px-6"
+      style={{
+        background: "var(--bg-primary)",
+        color: "var(--text-primary)",
+      }}
+    >
+      {/* Ambient glow layers */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-[38%] -z-10 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-[0.06]"
+        style={{ background: "radial-gradient(circle, var(--accent-color) 0%, transparent 65%)" }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute right-[12%] top-[18%] -z-10 h-[220px] w-[220px] rounded-full opacity-[0.03]"
+        style={{ background: "radial-gradient(circle, var(--accent-color) 0%, transparent 60%)" }}
+      />
+
+      <div className="w-full max-w-[400px]">
+        {/* Brand mark */}
+        <div className="mb-10 text-center">
+          <h1
+            className="text-4xl font-black tracking-[0.4em] sm:text-[42px]"
+            style={{ color: "var(--text-primary)" }}
+          >
+            WALI
+          </h1>
+          <p className="mt-3 text-[13px] font-medium tracking-wide" style={{ color: "var(--text-secondary)" }}>
+            Masuk ke akun Anda untuk melanjutkan
+          </p>
         </div>
 
-        <div className="rounded-2xl border border-white/10 dark:border-white/10 bg-white/[0.04] dark:bg-white/[0.04] p-6 md:p-8">
-          {/* Moved back button to bottom */}
+        {/* Glass card */}
+        <div
+          className="rounded-[24px] border p-6 backdrop-blur-2xl sm:p-8"
+          style={{
+            background: "var(--bg-card)",
+            borderColor: "var(--border-color)",
+            boxShadow:
+              "0 0 0 1px rgba(255,255,255,0.03), 0 40px 80px -20px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06)",
+          }}
+        >
+          {/* Error alert */}
           {error && (
-            <div className="mb-4 rounded-xl border border-red-500/30 dark:border-red-500/50 bg-red-500/10 dark:bg-red-900/20 px-4 py-3 text-sm text-red-600 dark:text-red-300">
+            <div
+              className="mb-6 rounded-xl border px-4 py-3 text-[13px] font-medium"
+              style={{
+                background: "color-mix(in srgb, var(--danger-color) 10%, transparent)",
+                borderColor: "color-mix(in srgb, var(--danger-color) 30%, transparent)",
+                color: "var(--danger-color)",
+              }}
+            >
               {error}
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="space-y-4" noValidate>
+          <form onSubmit={handleLogin} className="space-y-6" noValidate>
+            {/* Email */}
             <div>
-              <label htmlFor="email" className="mb-1.5 block text-sm font-semibold text-white/80 dark:text-gray-300">
+              <label
+                htmlFor="login-email"
+                className="mb-2 block text-[11px] font-bold uppercase tracking-[0.1em]"
+                style={{ color: "var(--text-secondary)" }}
+              >
                 Email
               </label>
               <input
-                id="email"
+                id="login-email"
                 type="email"
                 autoComplete="email"
                 value={email}
-                onChange={(e) => { setEmail(e.target.value); setError(""); }}
-                className="w-full rounded-xl border border-white/15 dark:border-white/20 bg-black/40 dark:bg-black/40 px-4 py-3 text-white dark:text-gray-100 placeholder-white/30 dark:placeholder-gray-500 outline-none transition focus:border-[#d7ff53] focus:ring-1 focus:ring-[#d7ff53]/30"
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setError("");
+                }}
                 placeholder="nama@email.com"
                 required
+                className="w-full rounded-2xl border px-5 py-4 text-[15px] outline-none transition-all duration-300 placeholder:opacity-35"
+                style={{
+                  background: "rgba(255,255,255,0.04)",
+                  borderColor: "rgba(255,255,255,0.08)",
+                  color: "var(--text-primary)",
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = "var(--accent-color)";
+                  e.currentTarget.style.boxShadow =
+                    "0 0 0 4px color-mix(in srgb, var(--accent-color) 10%, transparent)";
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
+                  e.currentTarget.style.boxShadow = "none";
+                }}
               />
             </div>
 
+            {/* Password */}
             <div>
-              <label htmlFor="password" className="mb-1.5 block text-sm font-semibold text-white/80 dark:text-gray-300">
-                Kata Sandi
-              </label>
+              <div className="mb-2 flex items-center justify-between">
+                <label
+                  htmlFor="login-password"
+                  className="block text-[11px] font-bold uppercase tracking-[0.1em]"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  Kata Sandi
+                </label>
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  className="text-[12px] font-medium transition-colors hover:opacity-80"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  Lupa sandi?
+                </button>
+              </div>
               <div className="relative">
                 <input
-                  id="password"
+                  id="login-password"
                   type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
                   value={password}
-                  onChange={(e) => { setPassword(e.target.value); validatePassword(); setError(""); }}
-                  className="w-full rounded-xl border border-white/15 dark:border-white/20 bg-black/40 dark:bg-black/40 px-4 py-3 pr-12 text-white dark:text-gray-100 placeholder-white/30 dark:placeholder-gray-500 outline-none transition focus:border-[#d7ff53] focus:ring-1 focus:ring-[#d7ff53]/30"
-                  placeholder="Minimal 8 karakter"
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    validatePassword();
+                    setError("");
+                  }}
+                  placeholder="Masukkan kata sandi"
                   required
+                  className="w-full rounded-2xl border px-5 py-4 pr-14 text-[15px] outline-none transition-all duration-300 placeholder:opacity-35"
+                  style={{
+                    background: "rgba(255,255,255,0.04)",
+                    borderColor: "rgba(255,255,255,0.08)",
+                    color: "var(--text-primary)",
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = "var(--accent-color)";
+                    e.currentTarget.style.boxShadow =
+                      "0 0 0 4px color-mix(in srgb, var(--accent-color) 10%, transparent)";
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
+                    e.currentTarget.style.boxShadow = "none";
+                  }}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 dark:text-gray-400 transition hover:text-[#d7ff53]"
+                  aria-label={showPassword ? "Sembunyikan sandi" : "Tampilkan sandi"}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 transition-colors hover:opacity-70"
+                  style={{ color: "var(--text-secondary)" }}
                 >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
-              {passwordError && <p className="mt-1.5 text-xs text-red-400">{passwordError}</p>}
+              {passwordError && (
+                <p className="mt-2 text-[12px] font-medium" style={{ color: "var(--danger-color)" }}>
+                  {passwordError}
+                </p>
+              )}
             </div>
 
+            {/* CTA */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-xl bg-white dark:bg-white px-4 py-3 text-sm font-black text-black dark:text-gray-900 transition hover:bg-white/90 dark:hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full rounded-2xl py-4 text-[15px] font-bold transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-40"
+              style={{
+                background: "var(--accent-color)",
+                color: "var(--bg-primary)",
+                boxShadow:
+                  "0 12px 32px -8px color-mix(in srgb, var(--accent-color) 45%, transparent), inset 0 1px 0 rgba(255,255,255,0.2)",
+              }}
             >
               {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-black/30 border-t-black" />
-                  Memproses...
+                <span className="inline-flex items-center justify-center gap-2.5">
+                  <span
+                    className="inline-block h-4 w-4 animate-spin rounded-full border-[2.5px]"
+                    style={{
+                      borderColor: "color-mix(in srgb, var(--bg-primary) 30%, transparent)",
+                      borderTopColor: "var(--bg-primary)",
+                    }}
+                  />
+                  Memproses…
                 </span>
               ) : (
                 "Masuk"
               )}
             </button>
-
-            <div className="text-center">
-              <button
-                type="button"
-                onClick={handleForgotPassword}
-                className="text-xs text-white/50 dark:text-gray-400 underline transition hover:text-[#d7ff53]"
-              >
-                Lupa Kata Sandi?
-              </button>
-            </div>
-
-            <div className="mt-6 border-t border-white/10 dark:border-white/10 pt-4">
-              <Link
-                href="/"
-                className="inline-flex items-center gap-2 text-sm text-white/60 dark:text-gray-400 transition hover:text-[#d7ff53]"
-              >
-                <ArrowLeft size={14} />
-                Kembali
-              </Link>
-            </div>
           </form>
 
-          <div className="mt-6 border-t border-white/10 dark:border-white/10 pt-4 text-center text-sm text-white/60 dark:text-gray-400">
-            Belum punya akun?{" "}
-            <Link href="/register" className="font-bold text-[#d7ff53] dark:text-[#d7ff53] underline">
-              Daftar sekarang
+          {/* Register link */}
+          <div className="mt-7 text-center">
+            <span className="text-[13px]" style={{ color: "var(--text-secondary)" }}>
+              Belum punya akun?{" "}
+            </span>
+            <Link
+              href="/register"
+              className="text-[13px] font-bold transition-colors hover:opacity-80"
+              style={{ color: "var(--accent-color)" }}
+            >
+              Daftar
             </Link>
           </div>
+        </div>
+
+        {/* Back to home */}
+        <div className="mt-6 text-center">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-[13px] font-medium transition-colors hover:opacity-70"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            <ArrowLeft size={14} />
+            Kembali ke Beranda
+          </Link>
         </div>
       </div>
     </main>

@@ -2,48 +2,57 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Trash2, Edit, Eye, EyeOff, Calendar, Users, MousePointer, Check, X } from "lucide-react";
+import {
+  Check,
+  Clock,
+  Eye,
+  EyeOff,
+  MousePointer,
+  Pencil,
+  Trash2,
+  Users,
+  X,
+} from "lucide-react";
 import { PopupAd } from "@/lib/adminPopupAds";
+import { EmptyState, Pill, type PillTone } from "@/components/admin/ui";
 
 type Props = {
   initialData: PopupAd[];
 };
 
-const Badge = ({ children, className }: { children: React.ReactNode; className: string }) => (
-  <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${className}`}>
-    {children}
-  </span>
-);
-
 const StatusBadge = ({ active }: { active: boolean }) => (
-  <Badge className={active ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" : "bg-gray-500/20 text-gray-400 border border-gray-500/30"}>
+  <Pill tone={active ? "green" : "neutral"}>
     {active ? (
-      <><Check className="w-3 h-3 mr-1" /> Aktif</>
+      <>
+        <Check className="h-3 w-3" /> Aktif
+      </>
     ) : (
-      <><X className="w-3 h-3 mr-1" /> Nonaktif</>
+      <>
+        <X className="h-3 w-3" /> Nonaktif
+      </>
     )}
-  </Badge>
+  </Pill>
 );
 
 const PositionBadge = ({ position }: { position: string }) => (
-  <Badge className={position === "center" ? "bg-blue-500/20 text-blue-300 border border-blue-500/30" : "bg-violet-500/20 text-violet-300 border border-violet-500/30"}>
-    <MousePointer className="w-3 h-3 mr-1" />
+  <Pill tone={position === "center" ? "blue" : "accent"}>
+    <MousePointer className="h-3 w-3" />
     {position === "center" ? "Modal" : "Card"}
-  </Badge>
+  </Pill>
 );
 
 const AudienceBadge = ({ audience }: { audience: string }) => {
-  const config = {
-    all: { label: "Semua", class: "bg-amber-500/20 text-amber-300 border border-amber-500/30" },
-    logged_in: { label: "Member", class: "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" },
-    guest: { label: "Guest", class: "bg-gray-500/20 text-gray-400 border border-gray-500/30" },
-  }[audience] || { label: audience, class: "bg-gray-500/20 text-gray-400" };
-
+  const config: Record<string, { label: string; tone: PillTone }> = {
+    all: { label: "Semua", tone: "amber" },
+    logged_in: { label: "Member", tone: "green" },
+    guest: { label: "Guest", tone: "neutral" },
+  };
+  const c = config[audience] ?? { label: audience, tone: "neutral" };
   return (
-    <Badge className={config.class}>
-      <Users className="w-3 h-3 mr-1" />
-      {config.label}
-    </Badge>
+    <Pill tone={c.tone}>
+      <Users className="h-3 w-3" />
+      {c.label}
+    </Pill>
   );
 };
 
@@ -72,103 +81,108 @@ export default function PopupAdsList({ initialData }: Props) {
 
   if (items.length === 0) {
     return (
-      <div className="text-center py-16 rounded-2xl border border-white/10 bg-white/5">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
-          <MousePointer className="w-8 h-8 text-gray-500" />
-        </div>
-        <p className="text-gray-400 text-sm">Belum ada popup iklan</p>
-        <p className="text-gray-600 text-xs mt-1">Klik "Tambah Popup" untuk membuat yang pertama</p>
+      <div className="ad-card">
+        <EmptyState
+          icon={<MousePointer size={20} />}
+          title="Belum ada popup iklan"
+          description='Klik "Tambah Popup" untuk membuat yang pertama'
+        />
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       {items.map((ad) => (
         <div
           key={ad.id}
-          className="group relative bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:border-white/20 transition-all duration-300 hover:shadow-lg hover:shadow-black/20"
+          className={`ad-card group overflow-hidden !p-0 border-t-2 ${
+            ad.status ? "border-t-green-500" : "border-t-amber-500"
+          } transition hover:-translate-y-0.5 hover:shadow-lg`}
         >
           {/* Image */}
-          <div className="relative h-32 md:h-40 overflow-hidden">
+          <div className="relative h-36 overflow-hidden md:h-40">
             {ad.image_url ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
               <img
                 src={ad.image_url}
                 alt={ad.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-white/5 to-white/10 flex items-center justify-center">
-                <span className="text-4xl">🎯</span>
+              <div className="flex h-full w-full items-center justify-center bg-[var(--ad-surface-2)]">
+                <MousePointer size={28} className="text-[var(--ad-text-3)]" />
               </div>
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-
-            {/* Position indicator */}
-            <div className="absolute top-3 right-3">
-              <PositionBadge position={ad.position} />
-            </div>
-
-            {/* Status indicator */}
-            <div className="absolute top-3 left-3">
+            <div className="absolute inset-x-0 top-0 flex items-start justify-between p-3">
               <StatusBadge active={ad.status} />
+              <PositionBadge position={ad.position} />
             </div>
           </div>
 
           {/* Content */}
           <div className="p-4">
-            <h3 className="font-bold text-white text-sm mb-2 line-clamp-1">{ad.title}</h3>
+            <h3 className="mb-1 line-clamp-1 text-[14px] font-bold text-[var(--ad-text)]">
+              {ad.title}
+            </h3>
 
             {ad.subtitle && (
-              <p className="text-xs text-[#d7ff53]/80 font-medium mb-2 line-clamp-1">{ad.subtitle}</p>
+              <p className="mb-1.5 line-clamp-1 text-[12px] font-medium text-[var(--ad-accent)]">
+                {ad.subtitle}
+              </p>
             )}
 
-            <p className="text-gray-400 text-xs line-clamp-2 mb-3">{ad.body}</p>
+            <p className="mb-3 line-clamp-2 text-[12px] leading-5 text-[var(--ad-text-2)]">
+              {ad.body}
+            </p>
 
             {/* Meta info */}
-            <div className="flex flex-wrap gap-2 mb-3">
+            <div className="mb-3 flex flex-wrap gap-1.5">
               <AudienceBadge audience={ad.audience} />
               {ad.dismiss_minutes && (
-                <Badge className="bg-white/5 text-gray-400 border border-white/10">
+                <Pill tone="neutral">
+                  <Clock className="h-3 w-3" />
                   {ad.dismiss_minutes}m
-                </Badge>
+                </Pill>
               )}
             </div>
 
             {/* Footer actions */}
-            <div className="flex items-center justify-between pt-3 border-t border-white/10">
-              <span className="text-xs text-gray-500">
+            <div className="flex items-center justify-between border-t border-[var(--ad-border-soft)] pt-3">
+              <span className="text-[11.5px] text-[var(--ad-text-3)]">
                 {ad.button_text || "Kunjungi"} → {ad.button_link || "/"}
               </span>
 
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-0.5">
                 <Link
-                  href={`/admin/popup-ads/${ad.id}/edit`}
-                  className="p-2 rounded-lg hover:bg-blue-500/20 transition-colors text-blue-400 hover:text-blue-300"
+                  href={`/admin/popup-ads/${ad.id}`}
+                  className="ad-btn ad-btn-secondary ad-btn-icon ad-btn-sm !border-transparent"
                   aria-label="Edit popup"
                   title="Edit"
                 >
-                  <Edit size={14} />
+                  <Pencil size={13} />
                 </Link>
                 <button
+                  type="button"
                   onClick={() => toggleStatus(ad)}
-                  className={`p-2 rounded-lg transition-colors ${
+                  className={`ad-btn ad-btn-icon ad-btn-sm !border-transparent ${
                     ad.status
-                      ? "hover:bg-amber-500/20 text-amber-400"
-                      : "hover:bg-emerald-500/20 text-emerald-400"
+                      ? "text-[var(--ad-amber)] hover:!bg-amber-50"
+                      : "text-[var(--ad-green)] hover:!bg-green-50"
                   }`}
                   aria-label={ad.status ? "Nonaktifkan" : "Aktifkan"}
                   title={ad.status ? "Nonaktifkan" : "Aktifkan"}
                 >
-                  {ad.status ? <EyeOff size={14} /> : <Eye size={14} />}
+                  {ad.status ? <EyeOff size={13} /> : <Eye size={13} />}
                 </button>
                 <button
+                  type="button"
                   onClick={() => handleDelete(ad.id)}
-                  className="p-2 rounded-lg hover:bg-red-500/20 transition-colors text-red-400 hover:text-red-300"
+                  className="ad-btn ad-btn-icon ad-btn-sm !border-transparent text-[var(--ad-red)] hover:!bg-red-50"
                   aria-label="Hapus popup"
                   title="Hapus"
                 >
-                  <Trash2 size={14} />
+                  <Trash2 size={13} />
                 </button>
               </div>
             </div>

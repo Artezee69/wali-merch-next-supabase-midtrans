@@ -43,7 +43,7 @@ export default function ProductTrack({ items }: { items: Product[] }) {
     <div className="relative">
       <div
         ref={trackRef}
-        className="flex gap-4 sm:gap-5 md:gap-7 overflow-x-auto px-4 sm:px-5 md:px-10 pb-6 pt-8 touch-pan-x"
+        className="flex snap-x gap-5 overflow-x-auto px-1 pb-6 pt-4 sm:gap-6 md:px-4"
         style={{ scrollbarWidth: "none", cursor: dragging ? "grabbing" : "grab" }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
@@ -55,10 +55,10 @@ export default function ProductTrack({ items }: { items: Product[] }) {
         ))}
       </div>
 
-      {/* Active indicator line at bottom */}
-      <div className="relative mx-5 h-px bg-gray-200 md:mx-10 dark:bg-white/[0.06]">
+      {/* Progress line */}
+      <div className="relative h-px bg-white/[0.08]">
         <div
-          className="absolute inset-y-0 left-0 bg-[#d7ff53]/20 transition-all duration-300"
+          className="absolute inset-y-0 left-0 bg-[#d7ff53] transition-all duration-300"
           style={{
             width: dragging ? "100%" : "0%",
             opacity: dragging ? 1 : 0,
@@ -74,7 +74,6 @@ export default function ProductTrack({ items }: { items: Product[] }) {
 /* ============================================================ */
 
 function ProductCard({ product, index }: { product: Product; index: number }) {
-  const [hovered, setHovered] = useState(false);
   const comingSoon = product.price === 0 || product.category === "Coming Soon";
   const imgSrc = product.image || product.product_images?.[0]?.image_url || "";
   const href = comingSoon ? "/products" : `/products/${product.slug}`;
@@ -82,28 +81,27 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
   return (
     <Link
       href={href}
-      className="shrink-0 group/card"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      className="group/card shrink-0 snap-start"
     >
-      <article className="w-[150px] sm:w-[280px] md:w-[320px] lg:w-[340px]">
+      <article className="w-[150px] sm:w-[280px] md:w-[340px]">
         {/* Image */}
-        <div className="relative aspect-[4/5] overflow-hidden rounded-lg sm:rounded-2xl bg-gray-200 dark:bg-[#111]">
+        <div className="relative aspect-[4/5] overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03] shadow-2xl shadow-black/40 transition-all duration-500 group-hover/card:-translate-y-1.5 group-hover/card:border-[#d7ff53]/25 group-hover/card:shadow-[0_16px_48px_-12px_rgba(215,255,83,0.15)]">
           {imgSrc && (
             <Image
               src={imgSrc}
               alt={product.name}
               fill
+              sizes="(max-width: 640px) 40vw, 340px"
               loading="lazy"
               decoding="async"
-              className="object-cover sm:transition-transform sm:duration-700 sm:ease-out sm:group-hover/card:scale-110"
+              className="object-cover transition-transform duration-700 ease-out group-hover/card:scale-105"
             />
           )}
 
-          {/* Tag — mobile: tiny */}
-          {product.tag && (
-            <div className="absolute left-1.5 top-1.5 z-10 sm:left-3 sm:top-3">
-              <span className="rounded-full border border-gray-300 bg-white/80 px-1.5 py-0.5 text-[7px] sm:px-2.5 sm:py-1 sm:text-[9px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] text-gray-700 backdrop-blur dark:border-white/10 dark:bg-black/60 dark:text-white/60">
+          {/* Tag */}
+          {product.tag && !comingSoon && (
+            <div className="absolute left-3 top-3 z-10 sm:left-4 sm:top-4">
+              <span className="rounded-full border border-white/15 bg-black/70 px-2.5 py-1 text-[8px] font-black uppercase tracking-[0.18em] text-white/90 backdrop-blur-md sm:px-3 sm:py-1.5 sm:text-[10px]">
                 {product.tag}
               </span>
             </div>
@@ -111,8 +109,9 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
 
           {/* Hover CTA — desktop only */}
           {!comingSoon && (
-            <div className="absolute inset-0 z-10 hidden items-end justify-center pb-3 sm:pb-6 opacity-0 sm:flex sm:transition-opacity sm:duration-300 sm:group-hover/card:opacity-100">
-              <span className="rounded-full bg-[#d7ff53] px-4 py-2 sm:px-5 sm:py-2.5 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] text-black shadow-lg">
+            <div className="absolute inset-0 z-10 hidden items-end justify-center pb-5 opacity-0 sm:flex sm:transition-opacity sm:duration-300 sm:group-hover/card:opacity-100">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+              <span className="relative rounded-full bg-[#d7ff53] px-5 py-2.5 text-[11px] font-black uppercase tracking-[0.18em] text-black shadow-[0_8px_24px_rgba(215,255,83,0.4)]">
                 Quick View
               </span>
             </div>
@@ -120,26 +119,26 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
 
           {/* Coming Soon */}
           {comingSoon && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center">
-              <span className="rounded-full border border-gray-300 bg-white/80 px-2 py-0.5 sm:px-4 sm:py-2 text-[7px] sm:text-[10px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] text-gray-700 backdrop-blur dark:border-white/20 dark:bg-black/70 dark:text-white/60">
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/50">
+              <span className="rounded-full border border-white/15 bg-black/80 px-4 py-1.5 text-[9px] font-black uppercase tracking-[0.2em] text-white/70 backdrop-blur-md sm:px-5 sm:py-2 sm:text-[11px]">
                 Coming Soon
               </span>
             </div>
           )}
         </div>
 
-        {/* Info — mobile: compact */}
-        <div className="mt-1.5 sm:mt-3 flex items-start justify-between gap-1.5 sm:gap-2 px-0.5 sm:px-1">
+        {/* Info */}
+        <div className="mt-3.5 flex items-start justify-between gap-2 px-1 sm:mt-4 sm:gap-3">
           <div className="min-w-0 flex-1">
-            <h3 className="truncate text-[11px] sm:text-sm font-bold leading-snug text-gray-900 dark:text-white/90 sm:transition-colors sm:duration-300 sm:group-hover/card:text-[#d7ff53]">
+            <h3 className="truncate text-xs font-bold text-white transition-colors duration-300 group-hover/card:text-[#d7ff53] sm:text-sm">
               {product.name}
             </h3>
-            <p className="mt-0.5 truncate text-[9px] sm:text-[11px] text-gray-500 dark:text-white/35 line-clamp-1">
+            <p className="mt-1 line-clamp-1 text-[10px] text-white/40 sm:text-xs">
               {product.description}
             </p>
           </div>
           {!comingSoon && (
-            <p className="shrink-0 pt-0.5 text-[10px] sm:text-sm font-black text-gray-700 dark:text-white/70">
+            <p className="shrink-0 pt-0.5 text-xs font-black text-white/90 sm:text-sm">
               Rp{(product.price || 0).toLocaleString("id-ID")}
             </p>
           )}

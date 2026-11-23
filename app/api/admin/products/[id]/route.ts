@@ -42,6 +42,13 @@ export async function GET(
     return NextResponse.json({ error: "Produk tidak ditemukan" }, { status: 404 });
   }
 
+  // Sort embedded product_images by sort_order
+  if (Array.isArray((product as any).product_images)) {
+    (product as any).product_images = [...(product as any).product_images].sort(
+      (a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
+    );
+  }
+
   return NextResponse.json(
     { product },
     { headers: { "content-type": "application/json" } }
@@ -344,6 +351,49 @@ export async function PATCH(
     if (updateError) {
       console.error("[API /api/admin/products/:id] PATCH error:", updateError.message);
       return NextResponse.json({ error: "Gagal memperbarui produk", details: updateError.message }, { status: 500 });
+    }
+
+    // === Sync image sort_order ===
+    const rawImages = input.images as Array<Record<string, unknown>> | undefined;
+    if (rawImages && Array.isArray(rawImages)) {
+      for (let i = 0; i < rawImages.length; i++) {
+        const img = rawImages[i];
+        const imgId = img.id as string | undefined;
+        if (imgId) {
+          const { error: imgUpdateErr } = await supabaseAdmin
+            .from("product_images")
+            .update({ sort_order: i, is_primary: i === 0 })
+            .eq("id", imgId);
+
+          if (imgUpdateErr) {
+            console.error("[API /api/admin/products/:id] image sort_order update error:", imgUpdateErr.message);
+            return NextResponse.json(
+              { error: "Gagal menyimpan urutan foto", details: imgUpdateErr.message },
+              { status: 500 }
+            );
+          }
+        }
+      }
+      // Mark images that were deleted
+      const ids = rawImages.map((img) => img.id as string | undefined).filter(Boolean) as string[];
+      if (ids.length > 0) {
+        const { data: oldImages } = await supabaseAdmin
+          .from("product_images")
+          .select("id")
+          .eq("product_id", productId)
+          .not("id", "in", ids);
+        if (oldImages) {
+          for (const oi of oldImages as { id: string }[]) {
+            const { error: deleteErr } = await supabaseAdmin
+              .from("product_images")
+              .delete()
+              .eq("id", oi.id);
+            if (deleteErr) {
+              console.error("[API /api/admin/products/:id] image delete error:", deleteErr.message);
+            }
+          }
+        }
+      }
     }
 
     // === Handle variants ===

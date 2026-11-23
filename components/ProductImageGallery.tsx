@@ -120,6 +120,9 @@ export default function ProductImageGallery({
                 sizes="120px"
                 className="object-cover transition-transform duration-500 group-hover:scale-110"
               />
+              <span className="absolute left-1.5 bottom-1.5 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-[10px] font-bold text-white/80 backdrop-blur-sm">
+                {i + 1}
+              </span>
               {i === activeIdx && (
                 <div className="absolute inset-0 bg-[#d7ff53]/10" />
               )}

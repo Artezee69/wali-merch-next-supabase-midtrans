@@ -4,7 +4,8 @@ import { getAdminContext, isResponse } from "@/lib/adminGuard";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 // POST /api/admin/products/attach-images
-// Body: { product_id, image_ids: string[] }
+// Body: { product_id, image_ids: string[], sort_orders?: number[] }
+// image_ids: daftar ID gambar dalam urutan yang diinginkan (index = sort_order)
 // Attach gambar yang diupload sebelum produk dibuat (image_id dengan product_id = null)
 export async function POST(request: NextRequest) {
   const admin = await getAdminContext();
@@ -37,15 +38,46 @@ export async function POST(request: NextRequest) {
     }
 
     // Update gambar — set product_id
-    const { error } = await supabaseAdmin
+    const { error: attachErr } = await supabaseAdmin
       .from("product_images")
       .update({ product_id: productId })
       .in("id", imageIds)
       .is("product_id", null);
 
-    if (error) {
-      console.error("[API /api/admin/products/attach-images] error:", error.message);
+    if (attachErr) {
+      console.error("[API /api/admin/products/attach-images] attach error:", attachErr.message);
       return NextResponse.json({ error: "Gagal attach gambar" }, { status: 500 });
+    }
+
+    // Sync sort_order berdasarkan urutan image_ids (index = sort_order)
+    // Foto pertama (index 0) = utama
+    for (let i = 0; i < imageIds.length; i++) {
+      const { error: updateErr } = await supabaseAdmin
+        .from("product_images")
+        .update({ sort_order: i, is_primary: i === 0 })
+        .eq("id", imageIds[i])
+        .eq("product_id", productId);
+
+      if (updateErr) {
+        console.error("[API /api/admin/products/attach-images] sort_order sync error:", updateErr.message);
+        return NextResponse.json(
+          { error: "Gagal menyimpan urutan foto", details: updateErr.message },
+          { status: 500 }
+        );
+      }
+    }
+
+    // Hapus gambar lama yang tidak ada di daftar baru (yang tidak pernah dipesan)
+    const { data: oldImages } = await supabaseAdmin
+      .from("product_images")
+      .select("id")
+      .eq("product_id", productId)
+      .not("id", "in", imageIds);
+
+    if (oldImages) {
+      for (const oi of oldImages as { id: string }[]) {
+        await supabaseAdmin.from("product_images").delete().eq("id", oi.id);
+      }
     }
 
     return NextResponse.json({ success: true, attached: imageIds.length });

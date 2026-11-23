@@ -1,9 +1,27 @@
 "use client";
 
 import Link from "next/link";
-import { ShoppingBag, ShieldCheck, Package, ArrowRight } from "lucide-react";
+import { ShoppingBag, ShieldCheck, Package, ArrowRight, Zap, Globe2, BadgeCheck } from "lucide-react";
 import Reveal from "./Reveal";
 import { useT } from "../LocaleProvider";
+
+const trustItems = [
+  {
+    icon: ShoppingBag,
+    title: "Marketplace Eksklusif",
+    desc: "Merchandise resmi WALI langsung dari sumbernya. Drop terbatas, kualitas asli.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "100% Original",
+    desc: "Semua produk berlisensi resmi dari WALI. Tanpa barang palsu, hanya budaya panggung yang nyata.",
+  },
+  {
+    icon: Package,
+    title: "Pengiriman Cepat",
+    desc: "Dipacking 1×24 jam, dikirim via JNE/J&T. Pengiriman ekspres tersedia ke kota-kota besar.",
+  },
+];
 
 export default function CtaSection() {
   const t = useT();
@@ -12,80 +30,97 @@ export default function CtaSection() {
     <section
       id="cta"
       data-section-nav
-      className="relative overflow-hidden border-t border-white/5 px-4 sm:px-6 py-16 sm:py-24 md:px-8 md:py-32 bg-[#0b0b0b]"
+      className="relative overflow-hidden border-t border-white/[0.06] bg-black py-20 sm:py-28 md:py-36"
     >
-      <div className="mx-auto max-w-7xl relative z-10">
-        {/* Simple header */}
-        <Reveal className="text-center mb-16">
-          <h2 className="text-3xl font-black leading-[1.05] tracking-tight text-white md:text-5xl">
+      {/* Radial accent */}
+      <div className="pointer-events-none absolute left-1/2 top-1/2 h-[560px] w-[900px] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(ellipse_at_center,rgba(215,255,83,0.06),transparent_60%)]" />
+
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
+        {/* Header */}
+        <Reveal className="mb-14 text-center sm:mb-16">
+          <h2 className="mx-auto max-w-3xl text-balance text-3xl font-black leading-[1.02] tracking-tight text-white sm:text-4xl md:text-5xl lg:text-6xl">
             {t.home.cta.title}
           </h2>
-          <p className="mt-4 max-w-2xl mx-auto text-sm text-white/70 md:text-base">
+          <p className="mx-auto mt-5 max-w-2xl text-balance text-sm text-white/50 sm:text-base">
             {t.home.cta.subtitle}
           </p>
         </Reveal>
 
-        {/* Main content grid — simple layout, no heavy bg box */}
-        <div className="grid md:grid-cols-2 gap-8 sm:gap-12 items-start">
-          {/* Left: Trust & features list */}
-          <Reveal variant="blur-in" delay={0.1}>
-            <div className="space-y-6">
-              {/* Feature item */}
-              <div className="flex items-start gap-4 p-4 rounded-lg hover:bg-black/30 transition-all duration-300">
-                <ShoppingBag className="h-6 w-6 text-[#d7ff53] flex-shrink-0 mt-0.5" />
-                <div>
-                  <h3 className="font-bold text-white">Marketplace Eksklusif</h3>
-                  <p className="text-sm text-white/65 mt-1">Merchandise resmi WALI langsung dari sumbernya. Drop terbatas, kualitas asli.</p>
-                </div>
-              </div>
-
-              {/* Feature item */}
-              <div className="flex items-start gap-4 p-4 rounded-lg hover:bg-black/30 transition-all duration-300">
-                <ShieldCheck className="h-6 w-6 text-[#d7ff53] flex-shrink-0 mt-0.5" />
-                <div>
-                  <h3 className="font-bold text-white">100% Original</h3>
-                  <p className="text-sm text-white/65 mt-1">Semua produk berlisensi resmi dari WALI. Tanpa barang palsu, hanya budaya panggung yang nyata.</p>
-                </div>
-              </div>
-
-              {/* Feature item */}
-              <div className="flex items-start gap-4 p-4 rounded-lg hover:bg-black/30 transition-all duration-300">
-                <Package className="h-6 w-6 text-[#d7ff53] flex-shrink-0 mt-0.5" />
-                <div>
-                  <h3 className="font-bold text-white">Pengiriman Cepat</h3>
-                  <p className="text-sm text-white/65 mt-1">Terima merchandisemu dengan cepat. Pengiriman ekspres tersedia ke kota-kota besar di Indonesia dan mancanegara.</p>
-                </div>
-              </div>
-            </div>
-          </Reveal>
+        <div className="grid gap-8 md:grid-cols-2 md:items-start md:gap-10 lg:gap-14">
+          {/* Left: trust cards */}
+          <div className="flex flex-col gap-4 sm:gap-5">
+            {trustItems.map((item, i) => {
+              const Icon = item.icon;
+              return (
+                <Reveal key={item.title} variant="blur-in" delay={0.1 + i * 0.08}>
+                  <div className="group flex items-start gap-5 rounded-2xl border border-white/[0.08] bg-white/[0.04] p-5 backdrop-blur-sm transition-all duration-300 hover:border-[#d7ff53]/25 hover:bg-white/[0.06] sm:p-6">
+                    <div className="flex h-12 w-12 flex-none items-center justify-center rounded-xl border border-white/10 bg-black/40 transition-all duration-300 group-hover:border-[#d7ff53]/40 group-hover:bg-[#d7ff53]/10">
+                      <Icon className="h-5 w-5 text-[#d7ff53]" strokeWidth={1.5} />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-black text-white sm:text-base">
+                        {item.title}
+                      </h3>
+                      <p className="mt-1.5 text-xs leading-relaxed text-white/50 sm:text-sm sm:text-white/55">
+                        {item.desc}
+                      </p>
+                    </div>
+                  </div>
+                </Reveal>
+              );
+            })}
+          </div>
 
           {/* Right: CTA buttons */}
-          <Reveal variant="blur-in" delay={0.2}>
-            <div className="space-y-4">
-              {/* Primary CTA button — minimal style */}
+          <Reveal variant="blur-in" delay={0.2} className="md:sticky md:top-24">
+            <div className="flex flex-col gap-5">
+              {/* Primary CTA */}
               <Link
                 href="/products"
-                className="block w-full group relative overflow-hidden rounded-full bg-[#1a1a11] border border-[#d7ff53]/30 px-6 sm:px-8 py-3.5 sm:py-4 text-xs sm:text-sm font-black uppercase tracking-wider text-[#d7ff53] transition-all duration-300 hover:bg-[#d7ff53] hover:text-black hover:shadow-[0_0_30px_rgba(215,255,83,0.4)] active:scale-95"
+                className="group flex w-full items-center justify-between overflow-hidden rounded-2xl bg-[#d7ff53] px-6 py-5 text-sm font-black uppercase tracking-[0.15em] text-black transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_48px_rgba(215,255,83,0.45)] active:scale-[0.98] sm:px-8 sm:py-6 sm:text-base"
               >
-                <span className="relative">{t.home.cta.primary}</span>
-                <ArrowRight className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-2" />
-                {/* Subtle inner line on hover */}
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/[0.1] transform translate-x-full group/static" />
+                <span>{t.home.cta.primary}</span>
+                <ArrowRight className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-1.5" />
               </Link>
 
-              {/* Secondary CTA button */}
+              {/* Secondary */}
               <Link
                 href="/track-order"
-                className="block w-full rounded-full border border-white/20 bg-white/5 px-6 sm:px-8 py-3.5 sm:py-4 text-xs sm:text-sm font-black uppercase tracking-wider text-white/85 backdrop-blur transition-all duration-300 hover:border-white/40 hover:bg-white/10 hover:text-white active:scale-95"
+                className="flex w-full items-center justify-between rounded-2xl border border-white/15 bg-white/[0.04] px-6 py-5 text-sm font-black uppercase tracking-[0.15em] text-white/80 backdrop-blur-sm transition-all duration-300 hover:border-white/30 hover:bg-white/[0.08] hover:text-white active:scale-[0.98] sm:px-8 sm:py-6 sm:text-base"
               >
-                {t.home.cta.secondary}
+                <span>{t.home.cta.secondary}</span>
+                <ArrowRight className="h-5 w-5 text-white/40 transition-all duration-300 group-hover:translate-x-1.5" />
               </Link>
 
-              {/* Stats strip — minimal inline */}
-              <div className="mt-5 sm:mt-6 flex flex-wrap items-center justify-between gap-3 text-[10px] sm:text-xs font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] text-white/40 border-t border-white/5 pt-4">
-                <span>2,400+ Member</span>
-                <span className="border-l border-white/10 px-3">18.000+ Pesanan</span>
-                <span className="border-l border-white/10 px-3">Jangkauan Global</span>
+              {/* Stats strip */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] px-3 py-4 text-center sm:px-4 sm:py-5">
+                  <div className="flex items-center justify-center gap-1.5 text-[#d7ff53]">
+                    <Zap className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  </div>
+                  <p className="mt-2 text-base font-black text-white sm:text-xl">2,400+</p>
+                  <p className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.15em] text-white/40 sm:text-[10px]">
+                    Member
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] px-3 py-4 text-center sm:px-4 sm:py-5">
+                  <div className="flex items-center justify-center gap-1.5 text-[#d7ff53]">
+                    <BadgeCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  </div>
+                  <p className="mt-2 text-base font-black text-white sm:text-xl">18.000+</p>
+                  <p className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.15em] text-white/40 sm:text-[10px]">
+                    Pesanan
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] px-3 py-4 text-center sm:px-4 sm:py-5">
+                  <div className="flex items-center justify-center gap-1.5 text-[#d7ff53]">
+                    <Globe2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  </div>
+                  <p className="mt-2 text-base font-black text-white sm:text-xl">Global</p>
+                  <p className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.15em] text-white/40 sm:text-[10px]">
+                    Jangkauan
+                  </p>
+                </div>
               </div>
             </div>
           </Reveal>

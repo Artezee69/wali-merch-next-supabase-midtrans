@@ -2,24 +2,32 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import {
-  Package,
-  Plus,
-  Search,
-  Copy,
-  Eye,
-  Pencil,
-  Power,
-  Trash2,
   ChevronLeft,
   ChevronRight,
-  X,
+  Copy,
+  Eye,
   Loader2,
+  Package,
+  Pencil,
+  Plus,
+  Power,
+  Search,
+  Trash2,
+  X,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import AdminShell from "@/components/admin/AdminShell";
 import { rupiah } from "@/lib/format";
 import { useToast } from "@/components/Toast";
+import {
+  AdminButton,
+  AdminCard,
+  AdminLink,
+  EmptyState,
+  Pill,
+  type PillTone,
+} from "@/components/admin/ui";
 
 // ===== Types =====
 
@@ -45,12 +53,15 @@ type AdminProduct = {
   created_at: string;
 };
 
-function getStatusBadge(status: AdminProduct["status"], stock: number): { label: string; cls: string } {
-  if (status === "archived") return { label: "Arsip", cls: "bg-white/10 text-white/55 border-white/10" };
-  if (status === "inactive") return { label: "Nonaktif", cls: "bg-red-500/15 text-red-300 border-red-500/30" };
-  if (status === "draft") return { label: "Draft", cls: "bg-yellow-500/15 text-yellow-300 border-yellow-500/30" };
-  if (stock <= 0) return { label: "Stok Habis", cls: "bg-red-500/15 text-red-300 border-red-500/30" };
-  return { label: "Aktif", cls: "bg-[#d7ff53]/15 text-[#d7ff53] border-[#d7ff53]/30" };
+function getStatusBadge(
+  status: AdminProduct["status"],
+  stock: number
+): { label: string; tone: PillTone } {
+  if (status === "archived") return { label: "Arsip", tone: "neutral" };
+  if (status === "inactive") return { label: "Nonaktif", tone: "red" };
+  if (status === "draft") return { label: "Draft", tone: "amber" };
+  if (stock <= 0) return { label: "Stok Habis", tone: "red" };
+  return { label: "Aktif", tone: "green" };
 }
 
 export type AdminProductsClientProps = {
@@ -215,26 +226,20 @@ export default function AdminProductsClient({
 
   async function handleToggleStatus(id: string, currentStatus: string) {
     const newStatus: AdminProduct["status"] = currentStatus === "active" ? "inactive" : "active";
-    console.log("[TOGGLE] Clicked:", { id, currentStatus, newStatus });
     try {
       const res = await fetch(`/api/admin/products/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
       });
-      console.log("[TOGGLE] Response status:", res.status);
       if (!res.ok) {
         const data = await res.json();
-        console.error("[TOGGLE] Error response:", data);
         throw new Error(data.error || "Toggle failed");
       }
-      const data = await res.json();
-      console.log("[TOGGLE] Success:", data);
       addToast(newStatus === "active" ? "Produk diaktifkan" : "Produk dinonaktifkan");
       fetchProducts();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Gagal mengubah status";
-      console.error("[TOGGLE] Caught error:", err);
       addToast(msg, "error");
     }
   }
@@ -281,48 +286,44 @@ export default function AdminProductsClient({
     }
   }
 
+  const filterSelect = "ad-input w-auto min-w-[150px] !rounded-lg !py-1.5 text-[13px]";
+
   return (
-    <AdminShell title="Produk" adminName={adminName} adminEmail={adminEmail}>
+    <AdminShell title="Produk" subtitle="Tambah, edit, dan kelola produk WALI" adminName={adminName} adminEmail={adminEmail}>
       {/* Header */}
-      <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#d7ff53]">
-            Manajemen
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--ad-text-3)]">
+            Admin / Produk
           </p>
-          <h1 className="mt-1 text-2xl font-black uppercase tracking-tight md:text-3xl">
+          <h1
+            className="text-xl font-bold tracking-tight"
+            style={{
+              background: "linear-gradient(135deg, #16181d, #5d6470)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+            }}
+          >
             Produk
           </h1>
-          <p className="mt-1 text-sm text-white/55">
-            Tambah, edit, dan kelola produk WALI.
+          <p className="mt-0.5 text-[13px] text-[var(--ad-text-3)]">
+            Kelola katalog, stok, dan varian toko kamu.
           </p>
         </div>
-        <Link
-          href="/admin/products/new"
-          className="inline-flex shrink-0 items-center gap-2 rounded-full bg-[#d7ff53] px-5 py-3 text-[11px] font-black uppercase tracking-wider text-black transition hover:scale-[1.01] hover:bg-white"
-        >
-          <Plus size={14} />
-          Tambah Produk
-        </Link>
+        <AdminLink href="/admin/products/new">
+          <Plus size={14} /> Tambah Produk
+        </AdminLink>
       </div>
 
       {/* Stats */}
-      <section className="grid grid-cols-3 gap-2 sm:gap-3">
-        <div className="rounded-xl sm:rounded-2xl border border-white/10 bg-white/[0.03] p-3 sm:p-4">
-          <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-white/40">Total</p>
-          <p className="mt-1 sm:mt-1.5 text-lg sm:text-2xl font-black">{stats.total}</p>
-        </div>
-        <div className="rounded-xl sm:rounded-2xl border border-white/10 bg-white/[0.03] p-3 sm:p-4">
-          <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-white/40">Aktif</p>
-          <p className="mt-1 sm:mt-1.5 text-lg sm:text-2xl font-black text-[#d7ff53]">{stats.active}</p>
-        </div>
-        <div className="rounded-xl sm:rounded-2xl border border-white/10 bg-white/[0.03] p-3 sm:p-4">
-          <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-white/40">Stok Habis</p>
-          <p className="mt-1 sm:mt-1.5 text-lg sm:text-2xl font-black text-red-300">{stats.outOfStock}</p>
-        </div>
+      <section className="grid grid-cols-3 gap-3">
+        <StatTile label="Total" value={stats.total} borderAccent="#2563eb" />
+        <StatTile label="Aktif" value={stats.active} tone="green" borderAccent="#16a34a" />
+        <StatTile label="Stok Habis" value={stats.outOfStock} tone="red" borderAccent="#dc2626" />
       </section>
 
       {/* Filters bar */}
-      <section className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+      <AdminCard className="mt-4" style={{ background: "linear-gradient(to right, #ffffff, #f9fafb)" }}>
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -333,19 +334,19 @@ export default function AdminProductsClient({
             <div className="relative flex-1">
               <Search
                 size={14}
-                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/40"
+                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--ad-text-3)]"
               />
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Cari nama, SKU, merek..."
-                className="w-full rounded-full border border-white/10 bg-black/40 py-2.5 pl-10 pr-4 text-sm text-white outline-none placeholder:text-white/35 focus:border-[#d7ff53]"
+                placeholder="Cari nama, SKU, merek…"
+                className="ad-input !rounded-lg pl-9"
               />
               {q && (
                 <button
                   type="button"
                   onClick={() => setQ("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-white/40 transition hover:text-white"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-1 text-[var(--ad-text-3)] transition hover:text-[var(--ad-text)]"
                 >
                   <X size={12} />
                 </button>
@@ -353,20 +354,20 @@ export default function AdminProductsClient({
             </div>
             <button
               type="submit"
-              className="rounded-full bg-white px-4 py-2.5 text-[11px] font-black uppercase tracking-wider text-black transition hover:bg-[#d7ff53]"
+              className="ad-btn ad-btn-secondary ad-btn-sm !rounded-lg"
             >
-              Cari
+              <Search size={13} /> Cari
             </button>
           </div>
 
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-2.5 flex flex-wrap gap-1.5">
             <select
               value={statusFilter}
               onChange={(e) => {
                 setStatusFilter(e.target.value);
                 setPage(1);
               }}
-              className="rounded-full border border-white/10 bg-black/40 px-3 py-1.5 text-[11px] font-black uppercase tracking-wider text-white/65 outline-none focus:border-[#d7ff53]"
+              className={filterSelect}
             >
               <option value="">Semua Status</option>
               <option value="draft">Draft</option>
@@ -381,7 +382,7 @@ export default function AdminProductsClient({
                 setStockFilter(e.target.value);
                 setPage(1);
               }}
-              className="rounded-full border border-white/10 bg-black/40 px-3 py-1.5 text-[11px] font-black uppercase tracking-wider text-white/65 outline-none focus:border-[#d7ff53]"
+              className={filterSelect}
             >
               <option value="">Semua Stok</option>
               <option value="in">Ada Stok</option>
@@ -396,7 +397,7 @@ export default function AdminProductsClient({
                   setCategoryFilter(e.target.value);
                   setPage(1);
                 }}
-                className="rounded-full border border-white/10 bg-black/40 px-3 py-1.5 text-[11px] font-black uppercase tracking-wider text-white/65 outline-none focus:border-[#d7ff53]"
+                className={filterSelect}
               >
                 <option value="">Semua Kategori</option>
                 {categories.map((c) => (
@@ -410,7 +411,7 @@ export default function AdminProductsClient({
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="rounded-full border border-white/10 bg-black/40 px-3 py-1.5 text-[11px] font-black uppercase tracking-wider text-white/65 outline-none focus:border-[#d7ff53]"
+              className={filterSelect}
             >
               <option value="updated_at">Terakhir Diubah</option>
               <option value="created_at">Terbaru</option>
@@ -420,27 +421,25 @@ export default function AdminProductsClient({
             <button
               type="button"
               onClick={() => setSortDir((d) => (d === "desc" ? "asc" : "desc"))}
-              className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-black uppercase tracking-wider text-white/65 transition hover:bg-white/10"
+              title={sortDir === "desc" ? "Urutan menurun" : "Urutan menaik"}
+              className="ad-btn ad-btn-secondary ad-btn-sm !rounded-lg !px-2.5"
             >
               {sortDir === "desc" ? "↓" : "↑"}
             </button>
           </div>
         </form>
-      </section>
+      </AdminCard>
 
       {/* Bulk actions */}
       {selectedIds.size > 0 && (
-        <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl border border-[#d7ff53]/30 bg-[#d7ff53]/5 p-3">
-          <span className="text-xs font-bold text-[#d7ff53]">
-            {selectedIds.size} dipilih
-          </span>
-          <div className="h-4 w-px bg-white/20" />
+        <div className="ad-alert ad-alert-info mt-4 flex-wrap">
+          <Pill tone="accent">{selectedIds.size} dipilih</Pill>
           <select
             value={bulkAction}
             onChange={(e) => setBulkAction(e.target.value)}
-            className="rounded-lg border border-white/10 bg-black/40 px-2 py-1 text-[11px] font-bold text-white/70 outline-none focus:border-[#d7ff53]"
+            className="ad-input w-auto min-w-[130px] !rounded-lg !py-1.5 text-[12px]"
           >
-            <option value="">Pilih aksi</option>
+            <option value="">Pilih aksi…</option>
             <option value="activate">Aktifkan</option>
             <option value="deactivate">Nonaktifkan</option>
             <option value="archive">Arsipkan</option>
@@ -448,80 +447,88 @@ export default function AdminProductsClient({
             <option value="feature">Tandai Unggulan</option>
             <option value="unfeature">Hapus Unggulan</option>
           </select>
-          <button
+          <AdminButton
+            variant="primary"
+            size="sm"
             onClick={handleBulkAction}
             disabled={!bulkAction}
-            className="rounded-full bg-[#d7ff53] px-4 py-1.5 text-[11px] font-black uppercase tracking-wider text-black transition hover:bg-white disabled:opacity-40"
           >
             Terapkan
-          </button>
-          <button
-            onClick={() => setSelectedIds(new Set())}
-            className="rounded-full border border-white/10 px-3 py-1.5 text-[11px] font-bold text-white/60 transition hover:bg-white/10"
-          >
+          </AdminButton>
+          <AdminButton variant="secondary" size="sm" onClick={() => setSelectedIds(new Set())}>
             Batal
-          </button>
+          </AdminButton>
         </div>
       )}
 
       {/* Product table */}
-      <section className="mt-6">
+      <section className="mt-4">
         {loading ? (
-          <div className="flex items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03] py-20">
-            <Loader2 size={24} className="animate-spin text-white/40" />
+          <div className="flex items-center justify-center rounded-xl border border-[var(--ad-border)] bg-white py-20">
+            <Loader2 size={22} className="animate-spin text-[var(--ad-text-3)]" />
           </div>
         ) : products.length === 0 ? (
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-10 text-center">
-            <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-white/5 text-white/50">
-              <Package size={20} />
-            </div>
-            <h3 className="text-base font-black uppercase">Tidak ada produk</h3>
-            <p className="mt-1 text-xs text-white/45">
-              {q || statusFilter || stockFilter || categoryFilter
-                ? "Tidak ada produk yang cocok dengan filter."
-                : "Mulai dengan menambah produk pertama."}
-            </p>
-            {!q && !statusFilter && !stockFilter && !categoryFilter && (
-              <Link
-                href="/admin/products/new"
-                className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#d7ff53] px-5 py-2.5 text-[11px] font-black uppercase tracking-wider text-black transition hover:bg-white"
-              >
-                <Plus size={14} />
-                Tambah Produk
-              </Link>
-            )}
-          </div>
+          <AdminCard>
+            <EmptyState
+              icon={<Package size={20} />}
+              title="Tidak ada produk"
+              description={
+                q || statusFilter || stockFilter || categoryFilter
+                  ? "Tidak ada produk yang cocok dengan filter."
+                  : "Mulai dengan menambah produk pertama."
+              }
+              action={
+                !q && !statusFilter && !stockFilter && !categoryFilter ? (
+                  <AdminLink href="/admin/products/new">
+                    <Plus size={14} /> Tambah Produk
+                  </AdminLink>
+                ) : undefined
+              }
+            />
+          </AdminCard>
         ) : (
-          <div className="overflow-hidden rounded-xl sm:rounded-2xl border border-white/10 bg-white/[0.03]">
-
-            {/* Mobile: card list (table too wide) */}
-            <ul className="divide-y divide-white/5 lg:hidden">
+          <AdminCard padded={false} className="overflow-hidden" style={{ boxShadow: "0 4px 12px rgba(16,24,40,0.06)" }}>
+            {/* Mobile: card list */}
+            <ul className="divide-y divide-[var(--ad-border-soft)] lg:hidden">
               {products.map((p) => {
                 const badge = getStatusBadge(p.status, p.stock);
+                const accentColor =
+                  badge.tone === "green"
+                    ? "var(--ad-green)"
+                    : badge.tone === "red"
+                      ? "var(--ad-red)"
+                      : badge.tone === "amber"
+                        ? "var(--ad-amber)"
+                        : "var(--ad-text-3)";
                 return (
-                  <li key={p.id} className="p-3">
-                    <div className="flex items-start gap-2.5">
-                      <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-black/30">
-                        {p.image_url ? (
-                          <Image src={p.image_url} alt={p.name} fill sizes="40px" className="object-cover" />
-                        ) : (
-                          <div className="flex h-full items-center justify-center text-[8px] font-black text-white/35">N/A</div>
-                        )}
-                      </div>
+                  <li key={p.id} className="p-3.5" style={{ borderTop: `2px solid ${accentColor}` }}>
+                    <div className="flex items-start gap-3">
+                      <ProductThumb url={p.image_url} name={p.name} sizeClass="h-11 w-11" />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-bold text-white">{p.name}</p>
-                        <p className="text-[10px] text-white/40">{p.category || p.brand || "—"}</p>
-                        <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                          <span className={`inline-flex rounded-full border px-2 py-0.5 text-[9px] font-black uppercase ${badge.cls}`}>
-                            {badge.label}
-                          </span>
-                          <span className="text-[10px] text-white/45">
+                        <div className="flex items-center gap-2">
+                          <p className="truncate text-[13.5px] font-semibold text-[var(--ad-text)]">{p.name}</p>
+                          {p.is_featured && <Pill tone="accent">Unggulan</Pill>}
+                        </div>
+                        <p className="mt-0.5 text-[11.5px] text-[var(--ad-text-3)]">
+                          {p.category || p.brand || "Tanpa kategori"}
+                        </p>
+                        <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                          <Pill tone={badge.tone}>{badge.label}</Pill>
+                          <span className="text-[11px] text-[var(--ad-text-3)]">
                             Stok:{" "}
-                            <span className={p.stock === 0 ? "font-bold text-red-300" : p.stock <= 5 ? "font-bold text-yellow-300" : "font-bold text-white/70"}>
+                            <span
+                              className={
+                                p.stock === 0
+                                  ? "font-semibold text-[var(--ad-red)]"
+                                  : p.stock <= 5
+                                    ? "font-semibold text-[var(--ad-amber)]"
+                                    : "font-semibold text-[var(--ad-text-2)]"
+                              }
+                            >
                               {p.stock}
                             </span>
                           </span>
-                          <span className="ml-auto text-xs font-black text-white">
+                          <span className="ml-auto text-[12px] font-bold text-[var(--ad-text)]">
                             {p.sale_price != null && p.base_price != null && p.sale_price < p.base_price
                               ? rupiah(p.sale_price)
                               : p.has_variants
@@ -531,29 +538,44 @@ export default function AdminProductsClient({
                         </div>
                       </div>
                     </div>
-                    {/* Mobile actions: 2 rows, 3 each */}
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      <Link href={`/admin/products/${p.id}`} className="flex items-center gap-1 rounded-lg border border-white/10 px-2 py-1 text-[10px] font-bold text-white/60 active:bg-white/5">
+                    {/* Mobile actions */}
+                    <div className="mt-2.5 flex flex-wrap gap-1.5">
+                      <Link
+                        href={`/admin/products/${p.id}`}
+                        className="ad-btn ad-btn-secondary ad-btn-sm"
+                      >
                         <Pencil size={11} /> Edit
                       </Link>
-                      <button type="button" onClick={() => handleToggleStatus(p.id, p.status)}
-                        className={`flex items-center gap-1 rounded-lg border px-2 py-1 text-[10px] font-bold ${
+                      <button
+                        type="button"
+                        onClick={() => handleToggleStatus(p.id, p.status)}
+                        className={`ad-btn ad-btn-sm ${
                           p.status === "active"
-                            ? "border-white/10 text-white/60 active:bg-white/5"
-                            : "border-[#d7ff53]/30 text-[#d7ff53] active:bg-[#d7ff53]/10"
-                        }`}>
+                            ? "ad-btn-secondary"
+                            : "ad-btn-primary !bg-[var(--ad-green)] !shadow-none"
+                        }`}
+                      >
                         <Power size={11} /> {p.status === "active" ? "Nonaktif" : "Aktif"}
                       </button>
-                      <button type="button" onClick={() => handleDelete(p.id, p.name)}
-                        className="flex items-center gap-1 rounded-lg border border-red-500/20 px-2 py-1 text-[10px] font-bold text-red-300/80 active:bg-red-500/10">
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(p.id, p.name)}
+                        className="ad-btn ad-btn-danger-outline ad-btn-sm"
+                      >
                         <Trash2 size={11} /> Hapus
                       </button>
-                      <Link href={`/products/${p.slug}`} target="_blank"
-                        className="flex items-center gap-1 rounded-lg border border-white/10 px-2 py-1 text-[10px] font-bold text-white/60 active:bg-white/5">
+                      <Link
+                        href={`/products/${p.slug}`}
+                        target="_blank"
+                        className="ad-btn ad-btn-secondary ad-btn-sm"
+                      >
                         <Eye size={11} /> Lihat
                       </Link>
-                      <button type="button" onClick={() => handleDuplicate(p.id)}
-                        className="flex items-center gap-1 rounded-lg border border-white/10 px-2 py-1 text-[10px] font-bold text-white/60 active:bg-white/5">
+                      <button
+                        type="button"
+                        onClick={() => handleDuplicate(p.id)}
+                        className="ad-btn ad-btn-secondary ad-btn-sm"
+                      >
                         <Copy size={11} /> Duplikat
                       </button>
                     </div>
@@ -563,112 +585,145 @@ export default function AdminProductsClient({
             </ul>
 
             {/* Desktop: full table */}
-            <div className="hidden lg:block overflow-x-auto">
-              <table className="w-full text-sm">
+            <div className="hidden lg:block">
+              <table className="ad-table w-full">
                 <thead>
-                  <tr className="border-b border-white/10 text-left text-[10px] font-black uppercase tracking-wider text-white/40">
-                    <th className="px-3 py-3">
+                  <tr className="bg-[var(--ad-surface-2)]">
+                    <th className="w-10">
                       <input
                         type="checkbox"
                         checked={selectedIds.size === products.length && products.length > 0}
                         onChange={toggleSelectAll}
-                        className="h-4 w-4 accent-[#d7ff53]"
+                        className="ad-checkbox"
                       />
                     </th>
-                    <th className="px-3 py-3">Produk</th>
-                    <th className="hidden px-3 py-3 xl:table-cell">SKU</th>
-                    <th className="px-3 py-3">Kategori</th>
-                    <th className="px-3 py-3">Harga</th>
-                    <th className="hidden px-3 py-3 xl:table-cell">Varian</th>
-                    <th className="px-3 py-3 text-center">Stok</th>
-                    <th className="px-3 py-3">Status</th>
-                    <th className="hidden px-3 py-3 xl:table-cell">Diubah</th>
-                    <th className="px-3 py-3 text-right">Aksi</th>
+                    <th>Produk</th>
+                    <th className="hidden xl:table-cell">SKU</th>
+                    <th>Kategori</th>
+                    <th>Harga</th>
+                    <th className="hidden text-center xl:table-cell">Varian</th>
+                    <th className="text-center">Stok</th>
+                    <th>Status</th>
+                    <th className="hidden xl:table-cell">Diubah</th>
+                    <th className="text-right">Aksi</th>
                   </tr>
                 </thead>
                 <tbody>
                   {products.map((p) => {
                     const badge = getStatusBadge(p.status, p.stock);
                     return (
-                      <tr
-                        key={p.id}
-                        className="border-b border-white/5 last:border-0 transition hover:bg-white/[0.02]"
-                      >
-                        <td className="px-3 py-3">
+                      <tr key={p.id}>
+                        <td>
                           <input
                             type="checkbox"
                             checked={selectedIds.has(p.id)}
                             onChange={() => toggleSelect(p.id)}
-                            className="h-4 w-4 accent-[#d7ff53]"
+                            className="ad-checkbox"
                           />
                         </td>
-                        <td className="px-3 py-3">
+                        <td>
                           <div className="flex items-center gap-3">
-                            <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-black/30">
-                              {p.image_url ? (
-                                <Image src={p.image_url} alt={p.name} fill sizes="40px" className="object-cover" />
-                              ) : (
-                                <div className="flex h-full items-center justify-center text-[8px] font-black text-white/35">N/A</div>
-                              )}
-                            </div>
+                            <ProductThumb url={p.image_url} name={p.name} sizeClass="h-10 w-10" />
                             <div className="min-w-0">
-                              <p className="truncate font-bold text-white" title={p.name}>{p.name}</p>
-                              <p className="truncate text-[11px] text-white/45">{p.brand || p.category || "Tanpa kategori"}</p>
+                              <p className="truncate font-semibold text-[var(--ad-text)]" title={p.name}>
+                                {p.name}
+                              </p>
+                              <p className="truncate text-[11.5px] text-[var(--ad-text-3)]">
+                                {p.brand || p.category || "Tanpa kategori"}
+                              </p>
                             </div>
                           </div>
                         </td>
-                        <td className="hidden px-3 py-3 text-[11px] font-mono text-white/60 xl:table-cell">{p.sku || "—"}</td>
-                        <td className="px-3 py-3 text-[11px] text-white/60">{p.category || "—"}</td>
-                        <td className="px-3 py-3">
+                        <td className="hidden font-mono text-[11.5px] xl:table-cell">
+                          {p.sku || "—"}
+                        </td>
+                        <td>{p.category || "—"}</td>
+                        <td>
                           {p.sale_price !== null && p.base_price !== null && p.sale_price < p.base_price ? (
                             <div className="flex flex-col items-start gap-0.5">
-                              <span className="text-[11px] font-bold text-gray-400 line-through">{rupiah(p.base_price)}</span>
-                              <span className="text-xs font-black text-[#d7ff53]">{rupiah(p.sale_price)}</span>
+                              <span className="text-[11px] font-medium text-[var(--ad-text-3)] line-through">
+                                {rupiah(p.base_price)}
+                              </span>
+                              <span className="text-[13px] font-bold text-[var(--ad-accent)]">
+                                {rupiah(p.sale_price)}
+                              </span>
                             </div>
                           ) : (
-                            <span className="font-bold text-white">
+                            <span className="font-semibold text-[var(--ad-text)]">
                               {p.has_variants
                                 ? `${rupiah(p.min_price)} – ${rupiah(p.max_price)}`
                                 : rupiah(p.base_price || p.min_price)}
                             </span>
                           )}
                         </td>
-                        <td className="hidden px-3 py-3 text-center text-white/70 xl:table-cell">{p.variant_count}</td>
-                        <td className="px-3 py-3 text-center">
-                          <span className={p.stock === 0 ? "font-black text-red-300" : p.stock <= 5 ? "font-bold text-yellow-300" : "font-bold text-white/85"}>
+                        <td className="hidden text-center xl:table-cell">{p.variant_count}</td>
+                        <td className="text-center">
+                          <span
+                            className={
+                              p.stock === 0
+                                ? "font-bold text-[var(--ad-red)]"
+                                : p.stock <= 5
+                                  ? "font-bold text-[var(--ad-amber)]"
+                                  : "font-semibold text-[var(--ad-text)]"
+                            }
+                          >
                             {p.stock}
                           </span>
                         </td>
-                        <td className="px-3 py-3">
-                          <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide ${badge.cls}`}>
-                            {badge.label}
-                          </span>
+                        <td>
+                          <Pill tone={badge.tone}>{badge.label}</Pill>
                         </td>
-                        <td className="hidden px-3 py-3 text-[11px] text-white/55 xl:table-cell">
-                          {new Date(p.updated_at).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" })}
+                        <td className="hidden text-[11.5px] xl:table-cell">
+                          {new Date(p.updated_at).toLocaleDateString("id-ID", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          })}
                         </td>
-                        <td className="px-3 py-3">
-                          <div className="flex items-center justify-end gap-1.5">
-                            <Link href={`/products/${p.slug}`} target="_blank" className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-white/60 transition hover:bg-white/5 hover:text-white" title="Lihat">
-                              <Eye size={13} />
+                        <td>
+                          <div className="flex items-center justify-end gap-1">
+                            <Link
+                              href={`/products/${p.slug}`}
+                              target="_blank"
+                              className="ad-btn ad-btn-secondary ad-btn-icon ad-btn-sm !border-transparent"
+                              title="Lihat"
+                            >
+                              <Eye size={14} />
                             </Link>
-                            <Link href={`/admin/products/${p.id}`} className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-white/60 transition hover:bg-white/5 hover:text-white" title="Edit">
-                              <Pencil size={13} />
+                            <Link
+                              href={`/admin/products/${p.id}`}
+                              className="ad-btn ad-btn-secondary ad-btn-icon ad-btn-sm !border-transparent"
+                              title="Edit"
+                            >
+                              <Pencil size={14} />
                             </Link>
-                            <button type="button" onClick={() => handleDuplicate(p.id)} className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-white/60 transition hover:bg-white/5 hover:text-white" title="Duplikasi">
-                              <Copy size={13} />
+                            <button
+                              type="button"
+                              onClick={() => handleDuplicate(p.id)}
+                              className="ad-btn ad-btn-secondary ad-btn-icon ad-btn-sm !border-transparent"
+                              title="Duplikasi"
+                            >
+                              <Copy size={14} />
                             </button>
-                            <button type="button" onClick={() => handleToggleStatus(p.id, p.status)}
-                              className={`flex h-8 w-8 items-center justify-center rounded-lg border transition hover:bg-white/5 ${
+                            <button
+                              type="button"
+                              onClick={() => handleToggleStatus(p.id, p.status)}
+                              className={`ad-btn ad-btn-icon ad-btn-sm !border-transparent ${
                                 p.status === "active"
-                                  ? "border-white/10 text-white/60 hover:text-white"
-                                  : "border-[#d7ff53]/20 text-[#d7ff53]/80 hover:text-[#d7ff53]"
+                                  ? "text-[var(--ad-text-2)]"
+                                  : "text-[var(--ad-green)]"
                               }`}
-                              title={p.status === "active" ? "Nonaktifkan" : "Aktifkan"}>
-                              <Power size={13} />
+                              title={p.status === "active" ? "Nonaktifkan" : "Aktifkan"}
+                            >
+                              <Power size={14} />
                             </button>
-                            <button type="button" onClick={() => handleDelete(p.id, p.name)} className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-500/20 text-red-300/80 transition hover:bg-red-500/10 hover:text-red-300" title="Hapus">
-                              <Trash2 size={13} />
+                            <button
+                              type="button"
+                              onClick={() => handleDelete(p.id, p.name)}
+                              className="ad-btn ad-btn-icon ad-btn-sm !border-transparent text-[var(--ad-red)]"
+                              title="Hapus"
+                            >
+                              <Trash2 size={14} />
                             </button>
                           </div>
                         </td>
@@ -678,12 +733,12 @@ export default function AdminProductsClient({
                 </tbody>
               </table>
             </div>
-          </div>
+          </AdminCard>
         )}
 
         {!loading && products.length > 0 && (
-          <div className="mt-4 flex items-center justify-between">
-            <p className="text-xs text-white/40">
+          <div className="mt-3.5 flex items-center justify-between">
+            <p className="text-[12px] text-[var(--ad-text-3)]">
               Menampilkan {(page - 1) * perPage + 1}–
               {Math.min(page * perPage, total)} dari {total} produk
             </p>
@@ -691,7 +746,7 @@ export default function AdminProductsClient({
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page <= 1}
-                className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-white/60 transition disabled:opacity-30 hover:bg-white/5"
+                className="ad-btn ad-btn-secondary ad-btn-icon ad-btn-sm"
               >
                 <ChevronLeft size={14} />
               </button>
@@ -710,10 +765,8 @@ export default function AdminProductsClient({
                   <button
                     key={pageNum}
                     onClick={() => setPage(pageNum)}
-                    className={`flex h-8 w-8 items-center justify-center rounded-lg text-xs font-bold transition ${
-                      page === pageNum
-                        ? "bg-[#d7ff53] text-black"
-                        : "border border-white/10 text-white/60 hover:bg-white/5"
+                    className={`ad-btn ad-btn-icon ad-btn-sm ${
+                      page === pageNum ? "ad-btn-primary !shadow-none" : "ad-btn-secondary"
                     }`}
                   >
                     {pageNum}
@@ -723,7 +776,7 @@ export default function AdminProductsClient({
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page >= totalPages}
-                className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-white/60 transition disabled:opacity-30 hover:bg-white/5"
+                className="ad-btn ad-btn-secondary ad-btn-icon ad-btn-sm"
               >
                 <ChevronRight size={14} />
               </button>
@@ -732,5 +785,63 @@ export default function AdminProductsClient({
         )}
       </section>
     </AdminShell>
+  );
+}
+
+/* ============== Small helpers ============== */
+
+function StatTile({
+  label,
+  value,
+  tone = "default",
+  borderAccent,
+}: {
+  label: string;
+  value: number;
+  tone?: "default" | "green" | "red";
+  borderAccent?: string;
+}) {
+  const color =
+    tone === "green"
+      ? "text-[var(--ad-green)]"
+      : tone === "red"
+        ? "text-[var(--ad-red)]"
+        : "text-[var(--ad-text)]";
+  return (
+    <AdminCard
+      className="!p-3.5"
+      style={
+        borderAccent
+          ? { borderLeft: `4px solid ${borderAccent}` }
+          : undefined
+      }
+    >
+      <p className="text-[10.5px] font-semibold uppercase tracking-wide text-[var(--ad-text-3)]">
+        {label}
+      </p>
+      <p className={`mt-1 text-[22px] font-bold leading-none ${color}`}>{value}</p>
+    </AdminCard>
+  );
+}
+
+function ProductThumb({
+  url,
+  name,
+  sizeClass,
+}: {
+  url: string | null;
+  name: string;
+  sizeClass: string;
+}) {
+  return (
+    <div className={`relative shrink-0 overflow-hidden rounded-lg border border-[var(--ad-border)] bg-[var(--ad-surface-2)] ${sizeClass}`}>
+      {url ? (
+        <Image src={url} alt={name} fill sizes="44px" className="object-cover" />
+      ) : (
+        <div className="flex h-full items-center justify-center text-[9px] font-bold text-[var(--ad-text-3)]">
+          N/A
+        </div>
+      )}
+    </div>
   );
 }

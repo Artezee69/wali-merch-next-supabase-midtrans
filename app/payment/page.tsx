@@ -58,10 +58,18 @@ export default function PaymentPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center bg-gray-900">
+        <div
+          className="flex min-h-screen items-center justify-center"
+          style={{ background: "var(--bg-primary)" }}
+        >
           <div className="text-center">
-            <span className="inline-block h-8 w-8 animate-spin rounded-full border-2 border-[#d7ff53] border-t-transparent" />
-            <p className="mt-3 text-sm font-bold uppercase tracking-widest text-white/50">Memuat...</p>
+            <span
+              className="inline-block h-8 w-8 animate-spin rounded-full border-2 border-t-transparent"
+              style={{ borderColor: "var(--accent-color)", borderTopColor: "transparent" }}
+            />
+            <p className="mt-3 text-sm font-bold uppercase tracking-widest" style={{ color: "var(--text-secondary)" }}>
+              Memuat...
+            </p>
           </div>
         </div>
       }
@@ -307,18 +315,10 @@ function PaymentPageContent() {
   /* ── Render ──────────────────────────────────────────── */
 
   return (
-    <main className="relative min-h-screen overflow-x-hidden bg-gray-900 text-gray-100 dark:bg-[#060606] dark:text-white">
-      {/* Cinematic global background */}
-      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute left-1/2 top-0 h-[120vh] w-[140vw] -translate-x-1/2 bg-[radial-gradient(ellipse_at_center_top,_rgba(215,255,83,0.10),_transparent_55%)]" />
-        <div className="absolute -left-40 top-1/3 h-[36rem] w-[36rem] rounded-full bg-[#1a1a1a]/20 blur-[140px] animate-aurora-2" />
-        <div className="absolute -right-40 bottom-1/4 h-[36rem] w-[36rem] rounded-full bg-[#1a1a1a]/10 blur-[140px] animate-aurora-1" />
-        <div className="absolute left-1/2 top-2/3 h-[28rem] w-[28rem] -translate-x-1/2 rounded-full bg-[#d7ff53]/10 blur-[160px] animate-aurora-3" />
-        <div className="absolute inset-0 bg-grid-fade [background-size:56px_56px] opacity-[0.22]" />
-        <div className="absolute inset-0 bg-noise opacity-[0.06] mix-blend-overlay" />
-        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-[linear-gradient(to_top,#060606_5%,transparent_70%)]" />
-      </div>
-
+    <main
+      className="relative min-h-screen overflow-x-hidden"
+      style={{ background: "var(--bg-primary)", color: "var(--text-primary)" }}
+    >
       <Navbar activeKey="cart" />
 
       <PageHeader
@@ -886,15 +886,22 @@ function InfoRow({
 
 function LoadingCard() {
   return (
-    <div className="group relative animate-blur-in overflow-hidden rounded-[2rem] border border-gray-700 dark:border-white/10 bg-gray-200 dark:bg-white/[0.04] p-6 text-center backdrop-blur-md sm:p-8 md:rounded-[2.5rem] md:p-14">
-      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_50%_0%,rgba(215,255,83,0.18),transparent_60%)] opacity-60" />
-      <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full border border-gray-700 dark:border-white/10 bg-gradient-to-br from-gray-300 dark:from-white/10 to-gray-100 dark:to-white/0 text-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] sm:mb-6 sm:h-20 sm:w-20 sm:text-3xl animate-float-y">
+    <div
+      className="group relative animate-blur-in overflow-hidden rounded-[2rem] p-6 text-center backdrop-blur-md sm:p-8 md:rounded-[2.5rem] md:p-14"
+      style={{
+        border: "1px solid var(--border-color)",
+        background: "var(--bg-card)",
+      }}
+    >
+      <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full text-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] sm:mb-6 sm:h-20 sm:w-20 sm:text-3xl animate-float-y"
+        style={{ border: "1px solid var(--border-color)", background: "linear-gradient(135deg, var(--bg-card), transparent)" }}
+      >
         ⏳
       </div>
-      <h2 className="text-2xl font-black uppercase text-gray-800 dark:text-white sm:text-3xl md:text-5xl">
+      <h2 className="text-2xl font-black uppercase sm:text-3xl md:text-5xl" style={{ color: "var(--text-primary)" }}>
         Memuat Order
       </h2>
-      <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-gray-600 dark:text-gray-300 sm:mt-4 sm:text-base sm:leading-8">
+      <p className="mx-auto mt-3 max-w-xl text-sm leading-7 sm:mt-4 sm:text-base sm:leading-8" style={{ color: "var(--text-secondary)" }}>
         Sedang mengambil data pesanan kamu...
       </p>
     </div>
@@ -944,7 +951,10 @@ function ErrorCard({
 function GatewayMaintenancePopup({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 px-4 backdrop-blur-md animate-fade-in">
-      <div className="w-full max-w-md overflow-hidden rounded-t-3xl border border-white/10 bg-gray-900 dark:bg-black shadow-2xl sm:rounded-[2rem] animate-blur-in">
+      <div
+        className="w-full max-w-md overflow-hidden rounded-t-3xl shadow-2xl sm:rounded-[2rem] animate-blur-in"
+        style={{ border: "1px solid var(--border-color)", background: "var(--bg-secondary)" }}
+      >
         <div className="relative border-b border-white/10 bg-white/[0.04] p-5 sm:p-6">
           <div className="pointer-events-none absolute inset-0 -z-0 bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.10),transparent_50%)]" />
           <p className="relative inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.25em] text-amber-400 sm:text-xs sm:tracking-[0.3em]">
@@ -994,7 +1004,10 @@ function SuccessModal({
 
   return (
     <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/80 px-4 backdrop-blur-md animate-fade-in">
-      <div className="w-full max-w-lg overflow-hidden rounded-t-3xl border border-[#d7ff53]/20 bg-gray-900 dark:bg-black shadow-2xl sm:rounded-[2rem] animate-blur-in">
+      <div
+        className="w-full max-w-lg overflow-hidden rounded-t-3xl shadow-2xl sm:rounded-[2rem] animate-blur-in"
+        style={{ border: "1px solid var(--accent-color)", background: "var(--bg-secondary)" }}
+      >
         {/* Top accent */}
         <div className="relative border-b border-white/10 bg-white/[0.04] p-5 sm:p-6">
           <div className="pointer-events-none absolute inset-0 -z-0 bg-[radial-gradient(circle_at_top,_rgba(215,255,83,0.15),transparent_50%)]" />

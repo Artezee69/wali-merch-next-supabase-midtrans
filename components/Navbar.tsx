@@ -3,23 +3,18 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, ReactNode, useCallback, useRef } from "react";
-import { Menu, X, User, LogOut, ChevronDown, Home, ShoppingBag, Truck, ShoppingCart, Search, Package, LogIn, UserPlus } from "lucide-react";
+import {
+  Menu, X, User, LogOut, ChevronDown, Home, ShoppingBag,
+  Truck, ShoppingCart, Search, Package, LogIn,
+} from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
 import { useHomepageSettings, resolveHeaderSettings, type HeaderSettings } from "@/hooks/useHomepageSettings";
 
 type NavKey =
-  | "home"
-  | "products"
-  | "track-order"
-  | "cart"
-  | "checkout"
-  | "order-detail"
-  | "payment"
-  | "admin"
-  | "admin-products"
-  | "admin-orders";
+  | "home" | "products" | "track-order" | "cart" | "checkout"
+  | "order-detail" | "payment" | "admin" | "admin-products" | "admin-orders";
 
 type NavbarProps = {
   variant?: "customer" | "admin";
@@ -36,9 +31,9 @@ type NavItem = {
 
 function buildCustomerNav(header: HeaderSettings): NavItem[] {
   return [
-    { href: "/", label: header.menuLabels.home, icon: <Home size={18} /> },
-    { href: "/products", label: header.menuLabels.products, icon: <ShoppingBag size={18} /> },
-    { href: "/track-order", label: header.menuLabels.trackOrder, icon: <Truck size={18} /> },
+    { href: "/", label: header.menuLabels.home, icon: <Home size={16} /> },
+    { href: "/products", label: header.menuLabels.products, icon: <ShoppingBag size={16} /> },
+    { href: "/track-order", label: header.menuLabels.trackOrder, icon: <Truck size={16} /> },
   ];
 }
 
@@ -61,7 +56,6 @@ function isItemActive(item: NavItem, activeKey: NavKey | undefined, pathname: st
   return pathname === item.href || pathname.startsWith(item.href + "/");
 }
 
-// Default avatar with initials
 function getInitials(name: string) {
   return name
     .split(" ")
@@ -71,31 +65,34 @@ function getInitials(name: string) {
     .slice(0, 2) || "?";
 }
 
-// Resolves the customer name to display. Order:
-//   1. profiles.full_name (authoritative — set by trigger or upsert)
-//   2. auth.user_metadata.full_name (passed at signUp)
-//   3. email local-part (e.g. "ada" of "ada@x.com")
 function resolveDisplayName(
   profile: { full_name?: string | null } | null | undefined,
   user: { email?: string | null; user_metadata?: Record<string, unknown> | null } | null | undefined
 ): string {
   const fromProfile = profile?.full_name?.trim();
   if (fromProfile) return fromProfile;
-
   const fromMeta = (user?.user_metadata?.full_name as string | undefined)?.trim();
   if (fromMeta) return fromMeta;
-
   const email = user?.email ?? "";
   const local = email.includes("@") ? email.split("@")[0] : email;
   return local || "Akun";
 }
 
-// --- Mobile bottom nav items (Shopee-style) ---
+// ─── CSS-variable style helpers ──────────────────────────────────────────────
+const s = {
+  bgPrimary:  { backgroundColor: "var(--bg-primary)" },
+  bgSecondary:{ backgroundColor: "var(--bg-secondary)" },
+  border:     { borderColor: "var(--border-color)" },
+  textPrimary:{ color: "var(--text-primary)" },
+  textSecond: { color: "var(--text-secondary)" },
+  accent:     { color: "var(--accent-color)" },
+};
+
+// ─── Mobile bottom nav items (Shopee-style) ──────────────────────────────────
 type MobileNavItem = {
   href: string;
   label: string;
   icon: ReactNode;
-  activeColor?: string;
 };
 
 export default function Navbar({
@@ -107,7 +104,7 @@ export default function Navbar({
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
-  const { session, user, signOut, profile, profileLoading } = useAuth();
+  const { user, signOut, profile, profileLoading } = useAuth();
   const { settings } = useHomepageSettings();
   const headerSettings = resolveHeaderSettings(settings?.header);
   const customerNav = buildCustomerNav(headerSettings);
@@ -117,20 +114,16 @@ export default function Navbar({
   const displayName = resolveDisplayName(profile, user);
   const initials = getInitials(displayName);
 
-  useEffect(() => {
-    setOpen(false);
-  }, [pathname]);
+  useEffect(() => setOpen(false), [pathname]);
 
-  // Close mobile menu — keep for admin variant only (admin still uses hamburger)
+  // Lock body scroll when admin drawer is open
   useEffect(() => {
     if (open && variant === "admin") {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
     }
-    return () => {
-      document.body.style.overflow = "";
-    };
+    return () => { document.body.style.overflow = ""; };
   }, [open, variant]);
 
   // Close profile dropdown on outside click
@@ -156,41 +149,66 @@ export default function Navbar({
 
   const items = variant === "admin" ? adminNav : customerNav;
   const brandHref = variant === "admin" ? "/admin" : "/";
+  const isMobileNav = variant === "customer";
 
-  // Mobile bottom nav items (Shopee-style)
+  // ─── Mobile bottom nav (Shopee-style) ──────────────────────────────────────
   const mobileNavItems: MobileNavItem[] =
-    variant === "admin"
-      ? []
-      : [
+    isMobileNav
+      ? [
           { href: "/", label: headerSettings.menuLabels.home, icon: <Home size={22} /> },
           { href: "/products", label: headerSettings.menuLabels.products, icon: <ShoppingBag size={22} /> },
-          { href: "/cart", label: headerSettings.menuLabels.cart, icon: <ShoppingCart size={22} /> },
+          {
+            href: "/cart",
+            label: headerSettings.menuLabels.cart,
+            icon: <ShoppingCart size={22} />,
+          },
           user
             ? { href: "/account", label: "Akun", icon: <User size={22} /> }
             : { href: "/login", label: "Masuk", icon: <LogIn size={22} /> },
-        ];
+        ]
+      : [];
 
-  // Customer nav CTA (auth buttons)
+  // ─── Cart item count ────────────────────────────────────────────────────────
   const { itemCount } = useCart();
+
+  // ─── Customer CTA (right side, desktop) ────────────────────────────────────
   const customerCta = (
-    <div className="flex items-center gap-3">
-      {/* Cart icon — only icon, right before account */}
-      <Link href="/cart" className="relative mr-1 text-gray-600 dark:text-white hover:text-green-600 dark:hover:text-[#d7ff53] transition">
-        <ShoppingCart size={22} />
+    <div className="flex items-center gap-2">
+      {/* Cart icon */}
+      <Link
+        href="/cart"
+        className="relative flex h-9 w-9 items-center justify-center rounded-full transition"
+        style={{ backgroundColor: "rgba(255,255,255,0.06)", color: "var(--text-secondary)" }}
+        aria-label="Keranjang"
+      >
+        <ShoppingCart size={20} />
         {itemCount > 0 && (
-          <span className="absolute -top-2 -right-2 flex h-5 min-w-5 px-1 items-center justify-center rounded-full bg-green-600 dark:bg-[#d7ff53] text-[10px] font-bold text-white dark:text-gray-800">
+          <span
+            className="absolute top-0 right-0 flex h-4.5 min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-black"
+            style={{ backgroundColor: "var(--accent-color)", color: "var(--bg-primary)" }}
+          >
             {itemCount}
           </span>
         )}
       </Link>
+
+      {/* Auth / profile */}
       {user && !profileLoading ? (
         <div className="relative" ref={profileRef}>
           <button
             type="button"
             onClick={() => setProfileOpen((p) => !p)}
-            className="flex items-center gap-2 rounded-xl border border-gray-300 bg-gray-100 dark:border-white/20 dark:bg-gray-800/30 px-2.5 py-1.5 transition hover:border-gray-400 hover:bg-gray-200 dark:hover:border-green-600 dark:hover:bg-gray-700/30"
+            className="flex items-center gap-2 rounded-full px-3 py-1.5 transition"
+            style={{
+              backgroundColor: "rgba(255,255,255,0.06)",
+              border: "1px solid var(--border-color)",
+              color: "var(--text-primary)",
+            }}
           >
-            <div className="relative h-7 w-7 shrink-0 overflow-hidden rounded-full bg-white/10 dark:bg-gray-600/30 light:bg-gray-300 dark:light:bg-gray-600/30">
+            <div
+              className="relative h-7 w-7 shrink-0 overflow-hidden rounded-full"
+              style={{ backgroundColor: "rgba(255,255,255,0.12)" }}
+            >
               {profile?.profile_image_url ? (
                 <Image
                   src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars${profile.profile_image_url}`}
@@ -202,53 +220,67 @@ export default function Navbar({
                   }}
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-[10px] font-black text-white/60 dark:text-gray-400 light:text-gray-600 dark:light:text-white/60">
+                <div
+                  className="flex h-full w-full items-center justify-center text-[10px] font-black"
+                  style={{ color: "var(--text-secondary)" }}
+                >
                   {initials}
                 </div>
               )}
             </div>
-            <span className="hidden text-sm font-semibold text-gray-700 md:inline-block dark:text-white light:text-gray-700 dark:light:text-white">
+            <span className="hidden text-sm font-semibold md:inline-block" style={s.textPrimary}>
               {displayName}
             </span>
-            <ChevronDown size={14} className="hidden text-gray-500 dark:text-white md:block light:text-gray-500 dark:light:text-white" />
+            <ChevronDown size={14} className="hidden md:block" style={s.textSecond} />
           </button>
 
           {/* Profile dropdown */}
           {profileOpen && (
             <div
-              className="absolute right-0 top-full mt-2 w-56 rounded-2xl p-2 shadow-xl z-20 light:bg-white dark:light:bg-gray-800/90"
+              className="absolute right-0 top-full mt-2 w-56 rounded-2xl p-2 shadow-2xl z-20"
               style={{
                 backgroundColor: "var(--bg-secondary)",
-                borderColor: "var(--border-color)",
-                borderWidth: "1px",
-                borderStyle: "solid",
+                border: "1px solid var(--border-color)",
               }}
             >
-              <div className="px-3 py-2 border-b border-gray-300 dark:border-white/10 light:border-gray-300">
-                <p className="truncate text-sm font-bold" style={{ color: "var(--text-primary) light:text-gray-900 dark:light:text-gray-400" }}>{displayName}</p>
-                <p className="truncate text-[11px]" style={{ color: "var(--text-secondary) light:text-gray-600 dark:light:text-gray-400" }}>{user.email}</p>
+              {/* Header */}
+              <div className="px-3 py-2.5" style={{ borderBottom: "1px solid var(--border-color)" }}>
+                <p className="truncate text-sm font-bold" style={s.textPrimary}>{displayName}</p>
+                <p className="truncate text-[11px]" style={s.textSecond}>{user.email}</p>
               </div>
+              {/* Profil */}
               <button
                 type="button"
                 onClick={goToAccount}
-                className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm transition hover:bg-gray-100 dark:hover:bg-gray-700/30 light:bg-gray-100"
-                style={{ color: "var(--text-secondary) light:text-gray-700 dark:light:text-gray-400" }}>
+                className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm transition"
+                style={s.textSecond}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.05)")}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+              >
                 <User size={15} />
                 Profil Saya
               </button>
+              {/* Pesanan */}
               <button
                 type="button"
                 onClick={() => { setProfileOpen(false); router.push("/account/orders"); }}
-                className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm transition hover:bg-gray-100 dark:hover:bg-gray-700/30 light:bg-gray-100"
-                style={{ color: "var(--text-secondary) light:text-gray-700 dark:light:text-gray-400" }}>
+                className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm transition"
+                style={s.textSecond}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.05)")}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+              >
                 <Package size={15} />
                 Pesanan Saya
               </button>
+              {/* Keluar */}
               <button
                 type="button"
                 onClick={handleSignOut}
-                className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm transition hover:bg-red-100 dark:hover:bg-red-900/20 light:bg-gray-100"
-                style={{ color: "var(--danger-color) light:text-red-600 dark:light:text-red-400", backgroundColor: "transparent" }}>
+                className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm transition"
+                style={{ color: "var(--danger-color)" }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(239,68,68,0.08)")}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+              >
                 <LogOut size={15} />
                 Keluar
               </button>
@@ -260,7 +292,12 @@ export default function Navbar({
           {headerSettings.showLogin && (
             <Link
               href="/login"
-              className="rounded-xl border border-green-600 dark:border-white/20 bg-gray-100 dark:bg-transparent px-4 py-2 text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-white light:text-gray-700 transition hover:border-green-600 dark:hover:border-[#d7ff53] hover:bg-gray-200 dark:hover:bg-[#d7ff53]/10 light:bg-gray-100 dark:light:bg-transparent"
+              className="rounded-full px-4 py-2 text-xs font-bold uppercase tracking-wider transition"
+              style={{
+                border: "1px solid var(--border-color)",
+                color: "var(--text-primary)",
+                backgroundColor: "rgba(255,255,255,0.04)",
+              }}
             >
               {headerSettings.loginLabel}
             </Link>
@@ -268,7 +305,11 @@ export default function Navbar({
           {headerSettings.showRegister && (
             <Link
               href="/register"
-              className="rounded-xl bg-green-600 dark:bg-[#d7ff53] px-4 py-2 text-xs font-bold uppercase tracking-wider text-white dark:text-gray-800 light:text-white transition hover:bg-green-700 dark:hover:bg-[#b8e633] hover:text-black"
+              className="rounded-full px-4 py-2 text-xs font-bold uppercase tracking-wider transition"
+              style={{
+                backgroundColor: "var(--accent-color)",
+                color: "var(--bg-primary)",
+              }}
             >
               {headerSettings.registerLabel}
             </Link>
@@ -278,159 +319,198 @@ export default function Navbar({
     </div>
   );
 
-  const isMobileNav = variant === "customer";
+  // ════════════════════════════════════════════════════════════════════════════
+  //  MOBILE HEADER (customer) — sticky top, compact brand + search
+  // ════════════════════════════════════════════════════════════════════════════
+  const mobileHeader = (
+    <div className="md:hidden" style={{ backgroundColor: "var(--bg-primary)" }}>
+      {/* Row 1: Brand */}
+      <div
+        className="flex items-center justify-between px-4 py-2.5"
+        style={{ borderBottom: "1px solid var(--border-color)" }}
+      >
+        <Link href={brandHref} className="flex items-center gap-2">
+          {headerSettings.logoUrl ? (
+            <img src={headerSettings.logoUrl} alt={headerSettings.logoText} className="h-7 w-auto" />
+          ) : (
+            <span
+              className="text-[13px] font-black uppercase tracking-[0.2em]"
+              style={s.textPrimary}
+            >
+              {headerSettings.logoText}
+            </span>
+          )}
+        </Link>
+        {/* Cart shortcut in mobile header */}
+        <Link
+          href="/cart"
+          className="relative flex h-8 w-8 items-center justify-center rounded-full transition active:scale-95"
+          style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "var(--text-primary)" }}
+          aria-label="Keranjang"
+        >
+          <ShoppingCart size={17} />
+          {itemCount > 0 && (
+            <span
+              className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[9px] font-black"
+              style={{ backgroundColor: "var(--accent-color)", color: "var(--bg-primary)" }}
+            >
+              {itemCount}
+            </span>
+          )}
+        </Link>
+      </div>
 
-  return (
-    <div className="sticky top-0 z-50 bg-black shadow-lg transition-all duration-300 border-b border-white/10 sm:bg-black/95 sm:backdrop-blur-xl">
+      {/* Row 2: Search bar */}
+      <div className="px-3 py-2.5">
+        <form
+          action="/products"
+          method="GET"
+          className="flex items-center gap-2 rounded-full px-3.5 py-2.5 transition focus-within:ring-2"
+          style={{
+            backgroundColor: "rgba(255,255,255,0.07)",
+            border: "1px solid var(--border-color)",
+            // focus ring via CSS var
+          }}
+        >
+          <Search size={16} className="shrink-0" style={s.textSecond} />
+          <input
+            type="text"
+            name="q"
+            placeholder="Cari merchandise…"
+            aria-label="Cari produk"
+            className="w-full bg-transparent text-sm focus:outline-none"
+            style={{ color: "var(--text-primary)" }}
+          />
+        </form>
+      </div>
+    </div>
+  );
 
-      {/* ============ MOBILE: Shopee-style header (md:hidden) ============ */}
-      {isMobileNav && (
-        <div className="md:hidden">
-          {/* --- Row 1: Brand + Icons --- */}
-          <div className="flex items-center justify-between px-3 py-2">
-            <Link href={brandHref} className="shrink-0 flex items-center">
-              {headerSettings.logoUrl ? (
-                <img
-                  src={headerSettings.logoUrl}
-                  alt={headerSettings.logoText}
-                  className="h-8 w-auto"
-                />
-              ) : (
-                <span className="text-sm font-black uppercase tracking-[0.2em] text-white">
-                  {headerSettings.logoText}
-                </span>
-              )}
-            </Link>
-            <div className="flex items-center gap-1">
-              {/* Cart */}
+  // ════════════════════════════════════════════════════════════════════════════
+  //  MOBILE BOTTOM NAV (customer) — fixed, Shopee-style, 4 tabs
+  // ════════════════════════════════════════════════════════════════════════════
+  const mobileBottomNav = (
+    <>
+      {/* Fixed bottom nav */}
+      <nav
+        className="fixed bottom-0 left-0 right-0 z-40 md:hidden"
+        style={{
+          backgroundColor: "var(--bg-secondary)",
+          borderTop: "1px solid var(--border-color)",
+          boxShadow: "0 -4px 24px rgba(0,0,0,0.4)",
+          paddingBottom: "env(safe-area-inset-bottom, 0px)",
+        }}
+      >
+        <div className="flex items-stretch">
+          {mobileNavItems.map((item, idx) => {
+            const active =
+              item.href === "/"
+                ? pathname === "/"
+                : pathname === item.href || pathname.startsWith(item.href + "/");
+            const isCart = item.href === "/cart";
+            return (
               <Link
-                href="/cart"
-                className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-white active:bg-white/10 transition"
-                aria-label="Keranjang"
+                key={idx}
+                href={item.href}
+                className="flex flex-1 flex-col items-center gap-0.5 py-2.5 transition"
+                style={{ color: active ? "var(--accent-color)" : "var(--text-secondary)" }}
               >
-                <ShoppingCart size={18} />
-                {itemCount > 0 && (
-                  <span className="absolute top-0.5 right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#d7ff53] px-1 text-[9px] font-black text-black">
-                    {itemCount}
-                  </span>
-                )}
-              </Link>
-              {/* User */}
-              {user ? (
-                <Link
-                  href="/account"
-                  className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-white active:bg-white/10 transition"
-                  aria-label="Akun"
-                >
-                  <User size={18} />
-                  {profile?.profile_image_url && (
-                    <span className="absolute inset-0.5 overflow-hidden rounded-full">
-                      <Image
-                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars${profile.profile_image_url}`}
-                        alt="Avatar"
-                        fill
-                        className="object-cover rounded-full"
-                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                      />
+                {/* Cart gets a badge */}
+                <span className="relative">
+                  {item.icon}
+                  {isCart && itemCount > 0 && (
+                    <span
+                      className="absolute -top-1 -right-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[9px] font-black"
+                      style={{
+                        backgroundColor: "var(--accent-color)",
+                        color: "var(--bg-primary)",
+                      }}
+                    >
+                      {itemCount}
                     </span>
                   )}
-                </Link>
-              ) : (
-                <Link
-                  href="/login"
-                  className="flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-white active:bg-white/10 transition"
-                  aria-label="Masuk"
-                >
-                  <LogIn size={18} />
-                </Link>
-              )}
-            </div>
-          </div>
-
-          {/* --- Row 2: Search bar --- */}
-          <div className="px-3 pb-2">
-            <form
-              action="/products"
-              method="GET"
-              className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3.5 py-2"
-            >
-              <Search size={16} className="shrink-0 text-white/40" />
-              <input
-                type="text"
-                name="q"
-                placeholder="Cari merchandise..."
-                aria-label="Cari produk"
-                className="w-full bg-transparent text-sm text-white placeholder:text-white/35 focus:outline-none"
-              />
-            </form>
-          </div>
-
-          {/* --- Row 3: Quick nav strip --- */}
-          <nav className="flex items-center gap-1 overflow-x-auto px-3 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {customerNav.map((item) => {
-              const active = isItemActive(item, activeKey, pathname);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition ${
-                    active
-                      ? "bg-[#d7ff53] text-black"
-                      : "bg-white/5 text-white/60 active:bg-white/10"
-                  }`}
-                >
-                  {item.icon && <span className="shrink-0 scale-90">{item.icon}</span>}
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
+                </span>
+                <span className="text-[10px] font-semibold">{item.label}</span>
+              </Link>
+            );
+          })}
         </div>
-      )}
+      </nav>
 
-      {/* ============ DESKTOP: Standard header (hidden on mobile for customer nav) ============ */}
-      <header className={`border-b border-transparent ${isMobileNav ? "hidden md:block" : ""}`}>
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-2.5 sm:gap-3 sm:py-4 md:px-8">
+      {/* Spacer: prevents page content from hiding under the fixed bottom nav */}
+      <div className="h-[64px] md:hidden" />
+    </>
+  );
+
+  // ════════════════════════════════════════════════════════════════════════════
+  //  RENDER
+  // ════════════════════════════════════════════════════════════════════════════
+  return (
+    <div
+      className="sticky top-0 z-50"
+      style={{
+        backgroundColor: "var(--bg-primary)",
+        boxShadow: "0 2px 24px rgba(0,0,0,0.25)",
+        borderBottom: "1px solid var(--border-color)",
+      }}
+    >
+      {/* Customer mobile: compact header with brand + search */}
+      {isMobileNav && mobileHeader}
+
+      {/* Customer desktop / Admin: full desktop header */}
+      <div className={`${isMobileNav ? "hidden md:block" : ""}`}>
+        <div
+          className="flex max-w-7xl items-center justify-between gap-4 px-4 py-2.5 sm:px-6 sm:py-3.5 md:px-8"
+          style={{ backgroundColor: "var(--bg-primary)" }}
+        >
           {/* Brand */}
-          <Link href={brandHref} className="shrink-0 flex items-center gap-2">
+          <Link href={brandHref} className="group flex shrink-0 items-center gap-2.5">
             {headerSettings.logoUrl ? (
               <img
                 src={headerSettings.logoUrl}
                 alt={headerSettings.logoText}
-                className="h-8 sm:h-9 w-auto transition-transform duration-500 group-hover:scale-105"
+                className="h-8 sm:h-9 w-auto transition-transform duration-300 group-hover:scale-105"
               />
             ) : (
-              <>
-                <div className="text-sm sm:text-base font-black uppercase tracking-[0.2em] sm:tracking-[0.22em] text-gray-900 dark:text-white transition-colors duration-300 group-hover:text-green-600 dark:group-hover:text-[#d7ff53] animate-pulse-light">
+              <div>
+                <div
+                  className="text-sm sm:text-base font-black uppercase tracking-[0.2em] transition-colors duration-300 group-hover:opacity-80"
+                  style={s.textPrimary}
+                >
                   {headerSettings.logoText}
                 </div>
                 {headerSettings.showSubtitle && (
-                  <div className="hidden sm:block text-[9px] font-bold uppercase tracking-[0.35em] text-white/40">
+                  <div
+                    className="hidden sm:block text-[9px] font-bold uppercase tracking-[0.35em]"
+                    style={{ color: "var(--text-secondary)" }}
+                  >
                     {headerSettings.logoSubtitle}
                   </div>
                 )}
-              </>
+              </div>
             )}
           </Link>
 
           {/* Center nav links */}
-          <nav className="hidden items-center gap-8 text-sm font-semibold text-gray-700 dark:text-white light:text-gray-700 md:flex">
+          <nav className="hidden items-center gap-6 text-sm font-semibold md:flex">
             {items.map((item) => {
               const active = isItemActive(item, activeKey, pathname);
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`relative flex items-center gap-1.5 text-gray-700 dark:text-white light:text-gray-700 transition hover:text-green-600 dark:hover:text-[#d7ff53] ${
-                    active ? "text-green-600 dark:text-[#d7ff53] font-bold" : ""
-                  }`}
+                  className="relative flex items-center gap-1.5 transition-all duration-200"
+                  style={{
+                    color: active ? "var(--accent-color)" : "var(--text-primary)",
+                    fontWeight: active ? 700 : 500,
+                  }}
                 >
                   {item.icon}
                   <span>{item.label}</span>
                   {active && (
                     <span
-                      className="absolute -bottom-[14px] left-1/2 h-[3px] w-5 -translate-x-1/2 rounded-full bg-green-600 dark:bg-[#d7ff53]"
-                      style={{ boxShadow: "0 0 8px rgba(16,185,129,0.6) dark:shadow-[0_0_8px_rgba(215,255,83,0.6)]" }}
+                      className="absolute -bottom-[14px] left-1/2 h-[2px] w-5 -translate-x-1/2 rounded-full"
+                      style={{ backgroundColor: "var(--accent-color)" }}
                     />
                   )}
                 </Link>
@@ -438,7 +518,7 @@ export default function Navbar({
             })}
           </nav>
 
-          {/* Right side CTA */}
+          {/* Right CTA */}
           <div className="hidden shrink-0 md:flex">{desktopCta || customerCta}</div>
 
           {/* Admin hamburger (mobile) */}
@@ -448,37 +528,80 @@ export default function Navbar({
               onClick={() => setOpen((prev) => !prev)}
               aria-label={open ? "Tutup menu" : "Buka menu"}
               aria-expanded={open}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white transition-all duration-200 hover:bg-white/10 hover:border-[#d7ff53]/30 active:scale-95 md:hidden"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition active:scale-95 md:hidden"
+              style={{
+                backgroundColor: "rgba(255,255,255,0.08)",
+                border: "1px solid var(--border-color)",
+                color: "var(--text-primary)",
+              }}
             >
-              {open ? <X size={18} className="text-[#d7ff53]" /> : <Menu size={18} className="text-white" />}
+              {open ? <X size={18} style={s.accent} /> : <Menu size={18} />}
             </button>
           )}
         </div>
-      </header>
 
-      {/* Admin mobile drawer (customer mobile uses Shopee-style header instead) */}
+        {/* Desktop sub-search (customer only) */}
+        {isMobileNav && (
+          <div
+            className="border-t px-6 py-2 sm:px-6 md:px-8"
+            style={{ borderColor: "var(--border-color)" }}
+          >
+            <form action="/products" method="GET" className="mx-auto flex max-w-md items-center">
+              <div
+                className="flex w-full items-center gap-2.5 rounded-full px-4 py-2.5 transition focus-within:ring-2"
+                style={{
+                  backgroundColor: "rgba(255,255,255,0.06)",
+                  border: "1px solid var(--border-color)",
+                }}
+              >
+                <Search size={16} className="shrink-0" style={s.textSecond} />
+                <input
+                  type="text"
+                  name="q"
+                  placeholder="Cari produk…"
+                  aria-label="Cari produk"
+                  className="w-full bg-transparent text-sm focus:outline-none"
+                  style={{ color: "var(--text-primary)" }}
+                />
+              </div>
+            </form>
+          </div>
+        )}
+      </div>
+
+      {/* Admin mobile drawer */}
       {variant === "admin" && open && (
         <div
-          className="animate-slide-down-spring border-t border-white/10 bg-black md:bg-black/95 md:backdrop-blur-xl md:hidden overflow-y-auto"
-          style={{ transformOrigin: "top", maxHeight: "75dvh" }}
+          className="border-t md:hidden overflow-y-auto"
+          style={{
+            backgroundColor: "var(--bg-secondary)",
+            borderTopColor: "var(--border-color)",
+            transformOrigin: "top",
+            maxHeight: "75dvh",
+          }}
         >
           <nav className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-4">
             {items.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 rounded-2xl px-4 py-4 text-sm font-black uppercase tracking-wider transition ${
-                  isItemActive(item, activeKey, pathname)
-                    ? "bg-[#d7ff53] text-black font-black"
-                    : "text-white/80 hover:text-white hover:bg-white/5"
-                }`}
+                className="flex items-center gap-3 rounded-2xl px-4 py-4 text-sm font-black uppercase tracking-wider transition"
+                style={{
+                  backgroundColor: isItemActive(item, activeKey, pathname) ? "var(--accent-color)" : "transparent",
+                  color: isItemActive(item, activeKey, pathname)
+                    ? "var(--bg-primary)"
+                    : "var(--text-primary)",
+                }}
               >
-                {item.icon && <span className="shrink-0">{item.icon}</span>}
+                {item.icon}
                 {item.label}
               </Link>
             ))}
             {mobileExtras && (
-              <div className="mt-3 grid gap-2 border-t border-white/10 pt-4">
+              <div
+                className="mt-3 grid gap-2 pt-4"
+                style={{ borderTop: "1px solid var(--border-color)" }}
+              >
                 {mobileExtras}
               </div>
             )}
@@ -486,25 +609,8 @@ export default function Navbar({
         </div>
       )}
 
-      {/* Sub-header search bar — desktop only */}
-    <div className="hidden bg-transparent sm:block">
-      <form
-        action="/products"
-        method="GET"
-        className="mx-auto flex max-w-md items-center justify-center gap-2 px-4 py-2.5 md:px-8"
-      >
-        <div className="flex w-full items-center gap-2 rounded-full border border-gray-300 bg-gray-100 px-4 py-2 transition focus-within:border-gray-500 focus-within:bg-white dark:border-white/10 dark:bg-white/5 dark:focus-within:border-white/30 dark:focus-within:bg-white/10">
-          <Search size={16} className="shrink-0 text-gray-500 dark:text-white/40" />
-          <input
-            type="text"
-            name="q"
-            placeholder="Cari produk..."
-            aria-label="Cari produk"
-            className="w-full bg-transparent text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none dark:text-white dark:placeholder:text-white/30"
-          />
-        </div>
-      </form>
+      {/* Customer mobile: fixed bottom nav (Shopee-style) */}
+      {isMobileNav && mobileBottomNav}
     </div>
-  </div>
   );
 }

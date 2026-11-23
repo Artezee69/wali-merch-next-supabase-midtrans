@@ -1,14 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Save,
-  Loader2,
+  AlertTriangle,
   ChevronDown,
-  ChevronUp,
-  AlertCircle,
+  Loader2,
   RotateCcw,
+  Save,
 } from "lucide-react";
 import { useToast } from "@/components/Toast";
 import type {
@@ -19,6 +18,12 @@ import {
   DEFAULT_GENERAL,
   DEFAULT_LATEST_DROP,
 } from "@/lib/storeSettings";
+import {
+  AdminButton,
+  Field,
+  Pill,
+  Toggle,
+} from "@/components/admin/ui";
 
 type Group = "store_general" | "homepage_latest_drop" | "bank";
 
@@ -45,6 +50,8 @@ const TABS: { key: Group; label: string }[] = [
   { key: "homepage_latest_drop", label: "Latest Drop" },
   { key: "bank", label: "Pembayaran" },
 ];
+
+const inp = "ad-input";
 
 export default function SettingsFormClient({ initial, products, initialTab }: Props) {
   const router = useRouter();
@@ -117,9 +124,9 @@ export default function SettingsFormClient({ initial, products, initialTab }: Pr
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Tabs */}
-      <div className="flex flex-wrap gap-1 rounded-2xl border border-white/10 bg-white/[0.03] p-1.5">
+      <div className="flex flex-wrap border-b border-[var(--ad-border)]">
         {TABS.map((t) => {
           const isDirty =
             JSON.stringify(saved[t.key]) !== JSON.stringify(draft[t.key]);
@@ -129,17 +136,23 @@ export default function SettingsFormClient({ initial, products, initialTab }: Pr
               key={t.key}
               type="button"
               onClick={() => setActiveTab(t.key)}
-              className={`relative flex items-center gap-2 rounded-xl px-3.5 py-2 text-[11px] font-black uppercase tracking-wider transition ${
+              className={`relative -mb-px flex items-center gap-2 px-4 py-2.5 text-[12px] font-semibold transition ${
+                active ? "text-[var(--ad-accent)]" : "text-[var(--ad-text-2)] hover:text-[var(--ad-text)]"
+              } ${active ? "" : "border-b-2 border-transparent"}`}
+              style={
                 active
-                  ? "bg-[#d7ff53] text-black"
-                  : "text-white/60 hover:bg-white/5 hover:text-white"
-              }`}
+                  ? {
+                      borderBottom: "2px solid",
+                      borderImage: "linear-gradient(90deg, #4f46e5, #7c3aed) 1",
+                    }
+                  : undefined
+              }
             >
               {t.label}
               {isDirty && (
                 <span
                   className={`h-1.5 w-1.5 rounded-full ${
-                    active ? "bg-black" : "bg-yellow-400"
+                    active ? "bg-white" : "bg-[var(--ad-amber)]"
                   }`}
                 />
               )}
@@ -150,11 +163,9 @@ export default function SettingsFormClient({ initial, products, initialTab }: Pr
 
       {/* Unsaved banner */}
       {dirty && (
-        <div className="flex flex-col gap-2 rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-3 text-xs text-yellow-200 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-2">
-            <AlertCircle size={14} />
-            Ada perubahan yang belum disimpan.
-          </div>
+        <div className="ad-alert ad-alert-warn flex-wrap">
+          <AlertTriangle size={15} className="mt-0.5 shrink-0" />
+          <div className="flex-1">Ada perubahan yang belum disimpan.</div>
           <button
             type="button"
             onClick={() => {
@@ -164,7 +175,7 @@ export default function SettingsFormClient({ initial, products, initialTab }: Pr
                 }
               });
             }}
-            className="inline-flex items-center gap-1.5 rounded-full border border-yellow-500/30 px-3 py-1 text-[10px] font-black uppercase tracking-wider hover:bg-yellow-500/10"
+            className="inline-flex items-center gap-1.5 rounded-full border border-[#fde68a] px-3 py-1 text-[11px] font-semibold transition hover:bg-amber-50"
           >
             <RotateCcw size={11} /> Reset semua
           </button>
@@ -172,51 +183,74 @@ export default function SettingsFormClient({ initial, products, initialTab }: Pr
       )}
 
       {/* Tab content */}
-      <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4 md:p-6">
-        {activeTab === "store_general" && (
-          <GeneralSection
-            value={draft.store_general}
-            saved={saved.store_general}
-            onChange={(v) => setGroup("store_general", v)}
-            onSave={() => saveGroup("store_general")}
-            onReset={() => resetGroup("store_general")}
-            saving={saving === "store_general"}
-          />
-        )}
+      {activeTab === "store_general" && (
+        <GeneralSection
+          value={draft.store_general}
+          saved={saved.store_general}
+          onChange={(v) => setGroup("store_general", v)}
+          onSave={() => saveGroup("store_general")}
+          onReset={() => resetGroup("store_general")}
+          saving={saving === "store_general"}
+        />
+      )}
 
-        {activeTab === "homepage_latest_drop" && (
-          <LatestDropSection
-            value={draft.homepage_latest_drop}
-            onChange={(v) => setGroup("homepage_latest_drop", v)}
-            onSave={() => saveGroup("homepage_latest_drop")}
-            onReset={() => resetGroup("homepage_latest_drop")}
-            saving={saving === "homepage_latest_drop"}
-            isDirty={
-              JSON.stringify(saved.homepage_latest_drop) !==
-              JSON.stringify(draft.homepage_latest_drop)
-            }
-            products={products}
-            open={openAccordion}
-            setOpen={setOpenAccordion}
-          />
-        )}
+      {activeTab === "homepage_latest_drop" && (
+        <LatestDropSection
+          value={draft.homepage_latest_drop}
+          onChange={(v) => setGroup("homepage_latest_drop", v)}
+          onSave={() => saveGroup("homepage_latest_drop")}
+          onReset={() => resetGroup("homepage_latest_drop")}
+          saving={saving === "homepage_latest_drop"}
+          isDirty={
+            JSON.stringify(saved.homepage_latest_drop) !==
+            JSON.stringify(draft.homepage_latest_drop)
+          }
+          products={products}
+          open={openAccordion}
+          setOpen={setOpenAccordion}
+        />
+      )}
 
-        {activeTab === "bank" && (
-          <BankSection
-            value={draft.bank}
-            saved={saved.bank}
-            onChange={(v) => setGroup("bank", v)}
-            onSave={() => saveGroup("bank")}
-            onReset={() => resetGroup("bank")}
-            saving={saving === "bank"}
-          />
-        )}
-      </div>
+      {activeTab === "bank" && (
+        <BankSection
+          value={draft.bank}
+          saved={saved.bank}
+          onChange={(v) => setGroup("bank", v)}
+          onSave={() => saveGroup("bank")}
+          onReset={() => resetGroup("bank")}
+          saving={saving === "bank"}
+        />
+      )}
     </div>
   );
 }
 
 // ============== Reusable bits ==============
+
+function SectionCard({
+  title,
+  badge,
+  accent = "#2563eb",
+  children,
+}: {
+  title: string;
+  badge?: string;
+  accent?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className="ad-card mb-4"
+      style={{ borderLeft: `4px solid ${accent}` }}
+    >
+      <div className="flex items-center gap-2 border-b border-[var(--ad-border-soft)] px-4 py-3">
+        {badge && <Pill tone="accent">{badge}</Pill>}
+        <h3 className="text-[13px] font-semibold text-[var(--ad-text)]">{title}</h3>
+      </div>
+      <div className="p-4 sm:p-5">{children}</div>
+    </div>
+  );
+}
 
 function SectionActions({
   onSave,
@@ -232,136 +266,24 @@ function SectionActions({
   saveLabel?: string;
 }) {
   return (
-    <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-      <button
-        type="button"
+    <div
+      className={
+        isDirty
+          ? "sticky bottom-0 z-10 flex flex-col gap-2 rounded-lg border border-[var(--ad-border)] bg-white/95 p-3 shadow-[0_-4px_16px_rgba(16,24,40,0.08)] backdrop-blur sm:flex-row sm:items-center sm:justify-end"
+          : "flex flex-col gap-2 pt-2 sm:flex-row sm:items-center sm:justify-end"
+      }
+    >
+      <AdminButton
+        variant="secondary"
         onClick={onReset}
         disabled={saving || !isDirty}
-        className="inline-flex items-center justify-center gap-1.5 rounded-full border border-white/15 px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white/60 transition hover:border-white/30 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
       >
         <RotateCcw size={12} /> Reset
-      </button>
-      <button
-        type="button"
-        onClick={onSave}
-        disabled={saving || !isDirty}
-        className="inline-flex items-center justify-center gap-2 rounded-full bg-[#d7ff53] px-6 py-2.5 text-xs font-black uppercase tracking-wider text-black transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
-      >
+      </AdminButton>
+      <AdminButton variant="primary" onClick={onSave} disabled={saving || !isDirty}>
         {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
         {saveLabel}
-      </button>
-    </div>
-  );
-}
-
-function Field({
-  label,
-  hint,
-  required,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  required?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-white/40">
-        {label}
-        {required && <span className="text-red-400"> *</span>}
-      </label>
-      {children}
-      {hint && <p className="mt-1 text-[11px] text-white/35">{hint}</p>}
-    </div>
-  );
-}
-
-const inputClass =
-  "w-full rounded-xl border border-white/10 bg-black/40 px-4 py-2.5 text-sm font-semibold text-white outline-none placeholder:text-white/30 focus:border-[#d7ff53]";
-
-function Toggle({
-  value,
-  onChange,
-  label,
-  hint,
-}: {
-  value: boolean;
-  onChange: (v: boolean) => void;
-  label?: string;
-  hint?: string;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/30 px-3 py-2.5">
-      <div className="min-w-0">
-        {label && (
-          <p className="text-[11px] font-black uppercase tracking-wider text-white/70">
-            {label}
-          </p>
-        )}
-        {hint && <p className="text-[10px] text-white/40">{hint}</p>}
-      </div>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={value}
-        onClick={() => onChange(!value)}
-        className={`relative h-6 w-11 shrink-0 rounded-full border transition ${
-          value
-            ? "border-[#d7ff53] bg-[#d7ff53]"
-            : "border-white/15 bg-white/5"
-        }`}
-      >
-        <span
-          className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all ${
-            value ? "left-5 bg-black" : "left-1"
-          }`}
-        />
-      </button>
-    </div>
-  );
-}
-
-function Accordion({
-  id,
-  open,
-  setOpen,
-  title,
-  badge,
-  children,
-}: {
-  id: string;
-  open: Record<string, boolean>;
-  setOpen: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
-  title: string;
-  badge?: string;
-  children: React.ReactNode;
-}) {
-  const isOpen = open[id] ?? true;
-  return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.02]">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => ({ ...o, [id]: !isOpen }))}
-        className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left md:px-5"
-      >
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#d7ff53]">
-            {badge ?? "Section"}
-          </span>
-          <span className="text-sm font-black uppercase tracking-tight text-white/85">
-            {title}
-          </span>
-        </div>
-        {isOpen ? (
-          <ChevronUp size={16} className="text-white/50" />
-        ) : (
-          <ChevronDown size={16} className="text-white/50" />
-        )}
-      </button>
-      {isOpen && (
-        <div className="border-t border-white/10 p-4 md:p-5">{children}</div>
-      )}
+      </AdminButton>
     </div>
   );
 }
@@ -385,46 +307,27 @@ function GeneralSection({
 }) {
   const isDirty = JSON.stringify(value) !== JSON.stringify(saved);
   return (
-    <div className="space-y-4">
-      <div className="mb-2">
-        <h2 className="text-base font-black uppercase tracking-tight text-white">
-          Identitas Toko
-        </h2>
-        <p className="text-[11px] text-white/45">
-          Identitas toko, kontak, dan kebijakan. Field ini juga dipakai sebagai
-          fallback untuk alamat/email/WhatsApp di footer.
-        </p>
-      </div>
-
-      <Accordion
-        id="general_identity"
-        open={{ general_identity: true }}
-        setOpen={() => {}}
-        title="Identitas & Kontak"
-        badge="1"
-      >
+    <div>
+      <SectionCard title="Identitas & Kontak" badge="1" accent="#2563eb">
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Nama Toko" required hint="Ditampilkan di title, footer, dan struk.">
             <input
-              className={inputClass}
+              className={inp}
               value={value.storeName}
               onChange={(e) => onChange({ ...value, storeName: e.target.value })}
             />
           </Field>
           <Field label="Email Toko" hint="Email customer service publik.">
             <input
-              className={inputClass}
+              className={inp}
               type="email"
               value={value.storeEmail}
               onChange={(e) => onChange({ ...value, storeEmail: e.target.value })}
             />
           </Field>
-          <Field
-            label="Nomor WhatsApp Admin"
-            hint="Format internasional (cth: +6285134894580)."
-          >
+          <Field label="Nomor WhatsApp Admin" hint="Format internasional (cth: +6285134894580).">
             <input
-              className={inputClass}
+              className={inp}
               value={value.storeWhatsapp}
               onChange={(e) =>
                 onChange({ ...value, storeWhatsapp: e.target.value })
@@ -433,7 +336,7 @@ function GeneralSection({
           </Field>
           <Field label="Alamat Toko" hint="Ditampilkan di footer dan invoice.">
             <textarea
-              className={inputClass + " resize-none"}
+              className={inp + " resize-none"}
               rows={2}
               value={value.storeAddress}
               onChange={(e) =>
@@ -441,12 +344,9 @@ function GeneralSection({
               }
             />
           </Field>
-          <Field
-            label="Batas Stok Rendah"
-            hint="Varian dengan stok di bawah angka ini akan diperingatkan."
-          >
+          <Field label="Batas Stok Rendah" hint="Varian dengan stok di bawah angka ini akan diperingatkan.">
             <input
-              className={inputClass}
+              className={inp}
               type="number"
               min={0}
               max={999}
@@ -460,19 +360,13 @@ function GeneralSection({
             />
           </Field>
         </div>
-      </Accordion>
+      </SectionCard>
 
-      <Accordion
-        id="general_policies"
-        open={{ general_policies: true }}
-        setOpen={() => {}}
-        title="Kebijakan"
-        badge="2"
-      >
+      <SectionCard title="Kebijakan" badge="2" accent="#d97706">
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Kebijakan Privasi">
             <textarea
-              className={inputClass + " resize-y"}
+              className={inp + " resize-y"}
               rows={6}
               value={value.privacyPolicy}
               onChange={(e) =>
@@ -482,7 +376,7 @@ function GeneralSection({
           </Field>
           <Field label="Syarat Layanan">
             <textarea
-              className={inputClass + " resize-y"}
+              className={inp + " resize-y"}
               rows={6}
               value={value.termsOfService}
               onChange={(e) =>
@@ -491,7 +385,7 @@ function GeneralSection({
             />
           </Field>
         </div>
-      </Accordion>
+      </SectionCard>
 
       <SectionActions
         onSave={onSave}
@@ -524,14 +418,15 @@ function LatestDropSection({
   open: Record<string, boolean>;
   setOpen: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
 }) {
+  const isOpen = (id: string) => open[id] ?? true;
   return (
-    <div className="space-y-4">
-      <div className="mb-2 flex items-center justify-between">
+    <div>
+      <div className="mb-4 flex items-center justify-between gap-3">
         <div>
-          <h2 className="text-base font-black uppercase tracking-tight text-white">
+          <h2 className="text-[15px] font-bold text-[var(--ad-text)]">
             Latest Drop
           </h2>
-          <p className="text-[11px] text-white/45">
+          <p className="text-[12px] text-[var(--ad-text-3)]">
             Section produk di bawah hero.
           </p>
         </div>
@@ -542,163 +437,191 @@ function LatestDropSection({
         />
       </div>
 
-      <Accordion
-        id="latest_drop_main"
-        open={open}
-        setOpen={setOpen}
-        title="Konten Utama"
-        badge="1"
-      >
-        <div className="grid gap-4 md:grid-cols-2">
-          <Field label="Judul">
-            <input
-              className={inputClass}
-              value={value.title}
-              onChange={(e) => onChange({ ...value, title: e.target.value })}
-            />
-          </Field>
-          <Field label="Deskripsi">
-            <input
-              className={inputClass}
-              value={value.description}
-              onChange={(e) =>
-                onChange({ ...value, description: e.target.value })
-              }
-            />
-          </Field>
-          <Field label="Teks Tombol">
-            <input
-              className={inputClass}
-              value={value.ctaLabel}
-              onChange={(e) =>
-                onChange({ ...value, ctaLabel: e.target.value })
-              }
-            />
-          </Field>
-          <Field label="URL Tombol">
-            <input
-              className={inputClass}
-              value={value.ctaUrl}
-              onChange={(e) => onChange({ ...value, ctaUrl: e.target.value })}
-            />
-          </Field>
-          <Field label="Jumlah Produk" hint="Maks 12.">
-            <input
-              className={inputClass}
-              type="number"
-              min={1}
-              max={12}
-              value={value.limit}
-              onChange={(e) =>
-                onChange({
-                  ...value,
-                  limit: Math.max(1, Math.min(12, Number(e.target.value) || 1)),
-                })
-              }
-            />
-          </Field>
-          <Field label="Warna Background" hint="Hex. Mis. #0b0b0b">
-            <input
-              className={inputClass}
-              value={value.backgroundColor}
-              onChange={(e) =>
-                onChange({ ...value, backgroundColor: e.target.value })
-              }
-            />
-          </Field>
-        </div>
-      </Accordion>
-
-      <Accordion
-        id="latest_drop_mode"
-        open={open}
-        setOpen={setOpen}
-        title="Mode Produk"
-        badge="2"
-      >
-        <Field label="Sumber Produk">
-          <div className="grid gap-2 sm:grid-cols-2">
-            <button
-              type="button"
-              onClick={() => onChange({ ...value, mode: "auto" })}
-              className={`rounded-xl border px-4 py-3 text-left text-xs font-semibold transition ${
-                value.mode === "auto"
-                  ? "border-[#d7ff53] bg-[#d7ff53]/10 text-white"
-                  : "border-white/10 bg-black/30 text-white/60 hover:border-white/30"
-              }`}
-            >
-              <div className="text-[10px] font-black uppercase tracking-widest text-[#d7ff53]">
-                Otomatis
-              </div>
-              <p className="mt-1 text-[11px] text-white/50">
-                Tampilkan produk terbaru dari database.
-              </p>
-            </button>
-            <button
-              type="button"
-              onClick={() => onChange({ ...value, mode: "manual" })}
-              className={`rounded-xl border px-4 py-3 text-left text-xs font-semibold transition ${
-                value.mode === "manual"
-                  ? "border-[#d7ff53] bg-[#d7ff53]/10 text-white"
-                  : "border-white/10 bg-black/30 text-white/60 hover:border-white/30"
-              }`}
-            >
-              <div className="text-[10px] font-black uppercase tracking-widest text-[#d7ff53]">
-                Manual
-              </div>
-              <p className="mt-1 text-[11px] text-white/50">
-                Pilih produk sendiri sesuai urutan.
-              </p>
-            </button>
+      <div className="ad-card mb-4" style={{ borderLeft: "4px solid #7c3aed" }}>
+        <button
+          type="button"
+          onClick={() => setOpen((o) => ({ ...o, latest_drop_main: !isOpen("latest_drop_main") }))}
+          className="flex w-full items-center justify-between px-4 py-3 text-left transition hover:bg-[var(--ad-surface-2)]"
+        >
+          <div className="flex items-center gap-2">
+            <Pill tone="accent">1</Pill>
+            <span className="text-[13px] font-semibold text-[var(--ad-text)]">
+              Konten Utama
+            </span>
           </div>
-        </Field>
-
-        {value.mode === "manual" && (
-          <div className="mt-4">
-            <Field
-              label="Produk Pilihan"
-              hint="Pilih dari daftar. Urutan = urutan tampil."
-            >
-              <div className="max-h-64 space-y-1.5 overflow-y-auto rounded-xl border border-white/10 bg-black/30 p-2">
-                {products.length === 0 && (
-                  <p className="p-2 text-[11px] text-white/40">
-                    Belum ada produk di database.
-                  </p>
-                )}
-                {products.map((p) => {
-                  const selected = value.manualProductIds.includes(p.id);
-                  return (
-                    <label
-                      key={p.id}
-                      className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-xs transition ${
-                        selected
-                          ? "border-[#d7ff53] bg-[#d7ff53]/10"
-                          : "border-white/10 bg-black/20 hover:border-white/30"
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selected}
-                        onChange={(e) => {
-                          const set = new Set(value.manualProductIds);
-                          if (e.target.checked) set.add(p.id);
-                          else set.delete(p.id);
-                          onChange({
-                            ...value,
-                            manualProductIds: Array.from(set),
-                          });
-                        }}
-                        className="h-3.5 w-3.5"
-                      />
-                      <span className="font-semibold">{p.name}</span>
-                    </label>
-                  );
-                })}
-              </div>
-            </Field>
+          <ChevronDown
+            size={14}
+            className={`text-[var(--ad-text-3)] transition-transform ${isOpen("latest_drop_main") ? "rotate-180" : ""}`}
+          />
+        </button>
+        {isOpen("latest_drop_main") && (
+          <div className="border-t border-[var(--ad-border-soft)] p-4 sm:p-5">
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="Judul">
+                <input
+                  className={inp}
+                  value={value.title}
+                  onChange={(e) => onChange({ ...value, title: e.target.value })}
+                />
+              </Field>
+              <Field label="Deskripsi">
+                <input
+                  className={inp}
+                  value={value.description}
+                  onChange={(e) =>
+                    onChange({ ...value, description: e.target.value })
+                  }
+                />
+              </Field>
+              <Field label="Teks Tombol">
+                <input
+                  className={inp}
+                  value={value.ctaLabel}
+                  onChange={(e) =>
+                    onChange({ ...value, ctaLabel: e.target.value })
+                  }
+                />
+              </Field>
+              <Field label="URL Tombol">
+                <input
+                  className={inp}
+                  value={value.ctaUrl}
+                  onChange={(e) => onChange({ ...value, ctaUrl: e.target.value })}
+                />
+              </Field>
+              <Field label="Jumlah Produk" hint="Maks 12.">
+                <input
+                  className={inp}
+                  type="number"
+                  min={1}
+                  max={12}
+                  value={value.limit}
+                  onChange={(e) =>
+                    onChange({
+                      ...value,
+                      limit: Math.max(1, Math.min(12, Number(e.target.value) || 1)),
+                    })
+                  }
+                />
+              </Field>
+              <Field label="Warna Background" hint="Hex. Mis. #0b0b0b">
+                <input
+                  className={inp}
+                  value={value.backgroundColor}
+                  onChange={(e) =>
+                    onChange({ ...value, backgroundColor: e.target.value })
+                  }
+                />
+              </Field>
+            </div>
           </div>
         )}
-      </Accordion>
+      </div>
+
+      <div className="ad-card mb-4" style={{ borderLeft: "4px solid #0891b2" }}>
+        <button
+          type="button"
+          onClick={() => setOpen((o) => ({ ...o, latest_drop_mode: !isOpen("latest_drop_mode") }))}
+          className="flex w-full items-center justify-between px-4 py-3 text-left transition hover:bg-[var(--ad-surface-2)]"
+        >
+          <div className="flex items-center gap-2">
+            <Pill tone="accent">2</Pill>
+            <span className="text-[13px] font-semibold text-[var(--ad-text)]">
+              Mode Produk
+            </span>
+          </div>
+          <ChevronDown
+            size={14}
+            className={`text-[var(--ad-text-3)] transition-transform ${isOpen("latest_drop_mode") ? "rotate-180" : ""}`}
+          />
+        </button>
+        {isOpen("latest_drop_mode") && (
+          <div className="border-t border-[var(--ad-border-soft)] p-4 sm:p-5">
+            <Field label="Sumber Produk">
+              <div className="grid gap-2 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => onChange({ ...value, mode: "auto" })}
+                  className={`rounded-xl border p-3.5 text-left transition ${
+                    value.mode === "auto"
+                      ? "border-[var(--ad-accent)] bg-[var(--ad-accent-soft)]"
+                      : "border-[var(--ad-border)] bg-white hover:bg-[var(--ad-surface-2)]"
+                  }`}
+                >
+                  <div className="text-[11px] font-bold uppercase tracking-wide text-[var(--ad-accent)]">
+                    Otomatis
+                  </div>
+                  <p className="mt-1 text-[12px] text-[var(--ad-text-3)]">
+                    Tampilkan produk terbaru dari database.
+                  </p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onChange({ ...value, mode: "manual" })}
+                  className={`rounded-xl border p-3.5 text-left transition ${
+                    value.mode === "manual"
+                      ? "border-[var(--ad-accent)] bg-[var(--ad-accent-soft)]"
+                      : "border-[var(--ad-border)] bg-white hover:bg-[var(--ad-surface-2)]"
+                  }`}
+                >
+                  <div className="text-[11px] font-bold uppercase tracking-wide text-[var(--ad-accent)]">
+                    Manual
+                  </div>
+                  <p className="mt-1 text-[12px] text-[var(--ad-text-3)]">
+                    Pilih produk sendiri sesuai urutan.
+                  </p>
+                </button>
+              </div>
+            </Field>
+
+            {value.mode === "manual" && (
+              <div className="mt-4">
+                <Field
+                  label="Produk Pilihan"
+                  hint="Pilih dari daftar. Urutan = urutan tampil."
+                >
+                  <div className="ad-inset max-h-64 space-y-1.5 overflow-y-auto p-2">
+                    {products.length === 0 && (
+                      <p className="p-2 text-[12px] text-[var(--ad-text-3)]">
+                        Belum ada produk di database.
+                      </p>
+                    )}
+                    {products.map((p) => {
+                      const selected = value.manualProductIds.includes(p.id);
+                      return (
+                        <label
+                          key={p.id}
+                          className={`flex cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2 text-[12.5px] transition ${
+                            selected
+                              ? "border-[var(--ad-accent)] bg-[var(--ad-accent-soft)] text-[var(--ad-text)]"
+                              : "border-[var(--ad-border)] bg-white text-[var(--ad-text-2)] hover:border-[#cfd4dd]"
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selected}
+                            onChange={(e) => {
+                              const set = new Set(value.manualProductIds);
+                              if (e.target.checked) set.add(p.id);
+                              else set.delete(p.id);
+                              onChange({
+                                ...value,
+                                manualProductIds: Array.from(set),
+                              });
+                            }}
+                            className="ad-checkbox"
+                          />
+                          <span className="font-semibold">{p.name}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </Field>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       <SectionActions
         onSave={onSave}
@@ -727,58 +650,51 @@ function BankSection({
 }) {
   const isDirty = JSON.stringify(value) !== JSON.stringify(saved);
   return (
-    <div className="space-y-4">
-      <div className="mb-2">
-        <h2 className="text-base font-black uppercase tracking-tight text-white">
-          Pembayaran Manual
-        </h2>
-        <p className="text-[11px] text-white/45">
+    <div>
+      <SectionCard title="Pembayaran Manual" accent="#16a34a">
+        <p className="mb-4 text-[12.5px] leading-5 text-[var(--ad-text-3)]">
           Info rekening untuk pembayaran transfer bank. Customer akan melihat
           data ini di halaman pembayaran.
         </p>
-      </div>
-
-      <div className="space-y-4">
-        <Field
-          label="Nama Bank"
-          required
-          hint="Contoh: BCA, BRI, Mandiri, BNI."
-        >
-          <input
-            className={inputClass}
-            value={value.bankName}
-            placeholder="BCA"
-            onChange={(e) => onChange({ ...value, bankName: e.target.value })}
-          />
-        </Field>
-        <Field
-          label="Nomor Rekening"
-          required
-          hint="Tampilkan ke customer saat pembayaran manual."
-        >
-          <input
-            className={inputClass}
-            value={value.bankAccountNumber}
-            placeholder="0000000000"
-            onChange={(e) =>
-              onChange({ ...value, bankAccountNumber: e.target.value })
-            }
-          />
-        </Field>
-        <Field
-          label="Nama Pemilik Rekening"
-          hint="Nama yang terdaftar di bank."
-        >
-          <input
-            className={inputClass}
-            value={value.bankAccountHolder}
-            placeholder="WALI Merch"
-            onChange={(e) =>
-              onChange({ ...value, bankAccountHolder: e.target.value })
-            }
-          />
-        </Field>
-      </div>
+        <div className="space-y-4">
+          <Field
+            label="Nama Bank"
+            required
+            hint="Contoh: BCA, BRI, Mandiri, BNI."
+          >
+            <input
+              className={inp}
+              value={value.bankName}
+              placeholder="BCA"
+              onChange={(e) => onChange({ ...value, bankName: e.target.value })}
+            />
+          </Field>
+          <Field
+            label="Nomor Rekening"
+            required
+            hint="Tampilkan ke customer saat pembayaran manual."
+          >
+            <input
+              className={inp}
+              value={value.bankAccountNumber}
+              placeholder="0000000000"
+              onChange={(e) =>
+                onChange({ ...value, bankAccountNumber: e.target.value })
+              }
+            />
+          </Field>
+          <Field label="Nama Pemilik Rekening" hint="Nama yang terdaftar di bank.">
+            <input
+              className={inp}
+              value={value.bankAccountHolder}
+              placeholder="WALI Merch"
+              onChange={(e) =>
+                onChange({ ...value, bankAccountHolder: e.target.value })
+              }
+            />
+          </Field>
+        </div>
+      </SectionCard>
 
       <SectionActions
         onSave={onSave}

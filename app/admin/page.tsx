@@ -5,11 +5,11 @@ import {
   Users,
   AlertTriangle,
   TrendingUp,
-  CheckCircle2,
   Clock,
   Truck,
-  XCircle,
+  CheckCircle2,
   Banknote,
+  Plus,
 } from "lucide-react";
 import { requireAdmin } from "@/lib/adminAuth";
 import AdminShell from "@/components/admin/AdminShell";
@@ -17,6 +17,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { getStoreSettings } from "@/lib/storeSettings";
 import { formatRupiah } from "@/lib/adminFormat";
 import DashboardOrderRow from "@/components/admin/DashboardOrderRow";
+import { EmptyState, Pill, AdminLink, type PillTone } from "@/components/admin/ui";
 
 export const dynamic = "force-dynamic";
 
@@ -102,7 +103,7 @@ async function loadDashboard(): Promise<{
     supabase
       .from("products")
       .select(
-        "id, name, slug, is_active, product_images(url, position), product_variants(id, size, stock)"
+        "id, name, slug, is_active, product_images(image_url, sort_order), product_variants(id, size, stock)"
       )
       .order("created_at", { ascending: false })
       .limit(ALERT_FETCH_LIMIT),
@@ -110,7 +111,7 @@ async function loadDashboard(): Promise<{
 
   const productsOutOfStock = await supabase
     .from("products")
-    .select("id, name, slug, is_active, product_variants(id, stock), product_images(url, position)")
+    .select("id, name, slug, is_active, product_variants(id, stock), product_images(image_url, sort_order)")
     .eq("is_active", true);
 
   const outOfStockCount =
@@ -147,7 +148,7 @@ async function loadDashboard(): Promise<{
       const image =
         (p.product_images ?? [])
           .slice()
-          .sort((a: any, b: any) => (a.position ?? 0) - (b.position ?? 0))[0]?.url ?? null;
+          .sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0))[0]?.image_url ?? null;
       return {
         id: p.id,
         name: p.name,
@@ -202,31 +203,53 @@ function StatCard({
   value,
   hint,
   tone = "default",
+  accent,
+  trending,
 }: {
   icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>;
   label: string;
   value: string;
   hint?: string;
   tone?: "default" | "warn" | "success";
+  accent?: string;
+  trending?: boolean;
 }) {
   const toneClasses =
     tone === "warn"
-      ? "border-amber-500/30 bg-amber-500/5 text-amber-300"
+      ? "border-[#fde68a] bg-[var(--ad-amber-soft)]"
       : tone === "success"
-      ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-300"
-      : "border-white/10 bg-white/[0.04] text-white";
+      ? "border-[#bbf7d0] bg-[var(--ad-green-soft)]"
+      : "";
+  const iconBg =
+    tone === "warn"
+      ? "bg-[#fef3c7] text-[var(--ad-amber)]"
+      : tone === "success"
+      ? "bg-[#dcfce7] text-[var(--ad-green)]"
+      : "bg-[var(--ad-accent-soft)] text-[var(--ad-accent)]";
   return (
-    <div className={`rounded-xl sm:rounded-2xl border p-3 sm:p-5 ${toneClasses}`}>
-      <div className="mb-2 sm:mb-3 flex items-center gap-1.5 sm:gap-2">
-        <div className="flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-lg sm:rounded-xl border border-white/10 bg-white/5">
-          <Icon size={14} strokeWidth={2.2} className="text-[#d7ff53]" />
+    <div
+      className={`ad-card relative p-3.5 sm:p-5 ${toneClasses}`}
+      style={accent ? { borderLeft: `4px solid ${accent}` } : undefined}
+    >
+      <div className="mb-2.5 flex items-center gap-2 sm:mb-3.5">
+        <div className={`flex h-8 w-8 items-center justify-center rounded-lg sm:h-9 sm:w-9 ${iconBg}`}>
+          <Icon size={15} strokeWidth={2.2} />
         </div>
-        <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider sm:tracking-widest text-white/60">
+        <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--ad-text-3)] sm:text-[10.5px]">
           {label}
         </span>
       </div>
-      <div className="text-lg sm:text-3xl font-black tracking-tight">{value}</div>
-      {hint && <div className="mt-0.5 sm:mt-1 text-[10px] sm:text-[11px] text-white/50">{hint}</div>}
+      <div className="flex items-center gap-1.5 text-xl font-bold tracking-tight text-[var(--ad-text)] sm:text-[26px]">
+        {value}
+        {trending && (
+          <TrendingUp
+            size={16}
+            strokeWidth={2.4}
+            className="shrink-0 text-[var(--ad-green)]"
+          />
+        )}
+      </div>
+      {hint && <div className="mt-1 text-[11px] text-[var(--ad-text-3)]">{hint}</div>}
     </div>
   );
 }
@@ -242,7 +265,31 @@ export default async function AdminDashboardPage() {
       adminName={adminName}
       adminEmail={adminEmail}
     >
-      <div className="space-y-6">
+      <div className="space-y-5">
+        {/* Hero */}
+        <section
+          className="flex flex-col gap-3.5 rounded-xl border border-[var(--ad-border-soft)] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5"
+          style={{ background: "linear-gradient(135deg, #eef2ff 0%, #f5f3ff 100%)" }}
+        >
+          <div>
+            <h1 className="text-[17px] font-bold tracking-tight text-[var(--ad-text)] sm:text-[20px]">
+              Halo, {adminName.split("@")[0]}
+            </h1>
+            <p className="mt-0.5 text-[12.5px] text-[var(--ad-text-2)]">
+              {new Date().toLocaleDateString("id-ID", {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              })}
+            </p>
+          </div>
+          <AdminLink href="/admin/products/new" className="shrink-0">
+            <Plus size={15} strokeWidth={2.4} className="shrink-0" />
+            Tambah Produk
+          </AdminLink>
+        </section>
+
         {/* Hero metrics */}
         <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatCard
@@ -250,23 +297,31 @@ export default async function AdminDashboardPage() {
             label="Total Produk"
             value={String(counts.totalProducts)}
             hint={`${counts.activeProducts} aktif`}
+            accent="#2563eb"
+            trending
           />
           <StatCard
             icon={ShoppingCart}
             label="Total Pesanan"
             value={String(counts.totalOrders)}
             hint={`${counts.pendingPayment} menunggu bayar`}
+            accent="#16a34a"
+            trending
           />
           <StatCard
             icon={Users}
             label="Total Customer"
             value={String(counts.totalCustomers)}
+            accent="#7c3aed"
+            trending
           />
           <StatCard
             icon={Banknote}
             label="Pendapatan (Paid)"
             value={formatRupiah(counts.revenue)}
             tone="success"
+            accent="#d97706"
+            trending
           />
         </section>
 
@@ -276,66 +331,70 @@ export default async function AdminDashboardPage() {
             label="Menunggu Pembayaran"
             value={String(counts.pendingPayment)}
             tone={counts.pendingPayment > 0 ? "warn" : "default"}
+            accent="#d97706"
           />
           <StatCard
             icon={AlertTriangle}
             label="Perlu Diproses"
             value={String(counts.needProcess)}
+            accent="#2563eb"
           />
           <StatCard
             icon={Truck}
             label="Sedang Dikirim"
             value={String(counts.shipped)}
+            accent="#16a34a"
           />
           <StatCard
             icon={CheckCircle2}
             label="Selesai"
             value={String(counts.completed)}
             tone="success"
+            accent="#7c3aed"
           />
         </section>
 
-        <section className="grid gap-6 lg:grid-cols-3">
+        <section className="grid gap-5 lg:grid-cols-3">
           {/* Recent orders */}
-          <div className="rounded-2xl border border-white/10 bg-white/[0.04] lg:col-span-2">
-            <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+          <div className="ad-card overflow-hidden lg:col-span-2">
+            <div className="flex items-center justify-between border-b border-[var(--ad-border-soft)] px-4 py-3.5 sm:px-5">
               <div>
-                <h2 className="text-sm font-black uppercase tracking-widest text-white/80">
+                <h2 className="text-[14px] font-bold text-[var(--ad-text)]">
                   Pesanan Terbaru
                 </h2>
-                <p className="mt-0.5 text-xs text-white/50">
+                <p className="mt-0.5 text-[11.5px] text-[var(--ad-text-3)]">
                   {recentOrders.length} pesanan terakhir
                 </p>
               </div>
               <Link
                 href="/admin/orders"
-                className="text-xs font-bold text-[#d7ff53] hover:underline"
+                className="text-[12px] font-semibold text-[var(--ad-accent)] hover:underline"
               >
                 Lihat semua →
               </Link>
             </div>
             {recentOrders.length === 0 ? (
               <EmptyState
-                icon={ShoppingCart}
+                icon={<ShoppingCart size={20} />}
                 title="Belum ada pesanan"
                 description="Pesanan yang masuk akan tampil di sini."
               />
             ) : (
               <>
                 {/* Mobile: card list */}
-                <ul className="divide-y divide-white/5 lg:hidden">
+                <ul className="divide-y divide-[var(--ad-border-soft)] lg:hidden">
                   {recentOrders.map((o) => (
-                    <li key={o.id} className="px-4 py-3">
-                      <div className="flex items-start justify-between gap-2">
+                    <li key={o.id} className="px-4 py-3.5">
+                      <div className="flex items-start justify-between gap-2.5">
                         <div className="min-w-0">
-                          <p className="truncate font-mono text-[11px] font-bold text-white/50">
+                          <p className="truncate font-mono text-[11px] font-bold text-[var(--ad-text-3)]">
                             {o.order_code || o.id.slice(0, 8)}
                           </p>
-                          <p className="mt-0.5 truncate text-sm font-bold text-white">
+                          <p className="mt-0.5 truncate text-[13.5px] font-semibold text-[var(--ad-text)]">
                             {o.customer_name || o.customer_phone || "—"}
                           </p>
                         </div>
-                        <p className="shrink-0 text-sm font-black text-[#d7ff53]">
+                        <p className="shrink-0 text-[13px] font-bold text-[var(--ad-text)]">
                           {formatRupiah(o.total_amount)}
                         </p>
                       </div>
@@ -344,7 +403,7 @@ export default async function AdminDashboardPage() {
                         <StatusBadge status={o.payment_status} />
                         <Link
                           href="/admin/orders"
-                          className="ml-auto rounded-full border border-white/10 px-2.5 py-0.5 text-[10px] font-bold text-white/50 active:bg-white/5"
+                          className="ml-auto ad-btn ad-btn-secondary ad-btn-sm !rounded-full"
                         >
                           Buka →
                         </Link>
@@ -353,17 +412,17 @@ export default async function AdminDashboardPage() {
                   ))}
                 </ul>
                 {/* Desktop: full table */}
-                <div className="hidden lg:block overflow-x-auto">
-                  <table className="w-full text-left">
+                <div className="hidden overflow-x-auto lg:block">
+                  <table className="ad-table w-full">
                     <thead>
-                      <tr className="border-b border-white/5 text-[10px] font-black uppercase tracking-widest text-white/40">
-                        <th className="px-5 py-3">ID</th>
-                        <th className="px-5 py-3">Customer</th>
-                        <th className="px-5 py-3">Total</th>
-                        <th className="px-5 py-3">Pembayaran</th>
-                        <th className="px-5 py-3">Pesanan</th>
-                        <th className="px-5 py-3">Tanggal</th>
-                        <th className="px-5 py-3 text-right">Aksi</th>
+                      <tr className="bg-[var(--ad-surface-2)]">
+                        <th>Id</th>
+                        <th>Customer</th>
+                        <th>Total</th>
+                        <th>Pembayaran</th>
+                        <th>Pesanan</th>
+                        <th>Tanggal</th>
+                        <th className="text-right">Aksi</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -378,35 +437,35 @@ export default async function AdminDashboardPage() {
           </div>
 
           {/* Stock alerts */}
-          <div className="rounded-2xl border border-white/10 bg-white/[0.04]">
-            <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+          <div className="ad-card overflow-hidden">
+            <div className="flex items-center justify-between border-b border-[var(--ad-border-soft)] px-4 py-3.5 sm:px-5">
               <div>
-                <h2 className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-white/80">
-                  <AlertTriangle size={14} strokeWidth={2.5} className="text-amber-400" />
+                <h2 className="flex items-center gap-2 text-[14px] font-bold text-[var(--ad-text)]">
+                  <AlertTriangle size={15} strokeWidth={2.2} className="text-[var(--ad-amber)]" />
                   Peringatan Stok
                 </h2>
-                <p className="mt-0.5 text-xs text-white/50">
+                <p className="mt-0.5 text-[11.5px] text-[var(--ad-text-3)]">
                   Batas rendah: {lowStockThreshold} pcs
                 </p>
               </div>
               <Link
                 href="/admin/products"
-                className="text-xs font-bold text-[#d7ff53] hover:underline"
+                className="text-[12px] font-semibold text-[var(--ad-accent)] hover:underline"
               >
                 Kelola →
               </Link>
             </div>
             {stockAlerts.length === 0 ? (
               <EmptyState
-                icon={TrendingUp}
+                icon={<TrendingUp size={20} />}
                 title="Stok aman"
                 description="Tidak ada produk dengan stok rendah."
               />
             ) : (
-              <ul className="divide-y divide-white/5">
+              <ul className="divide-y divide-[var(--ad-border-soft)]">
                 {stockAlerts.map((p) => (
-                  <li key={p.id} className="flex items-center gap-3 px-5 py-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-white/10 bg-white/5">
+                  <li key={p.id} className="flex items-center gap-3 px-4 py-3 sm:px-5">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-[var(--ad-border)] bg-[var(--ad-surface-2)]">
                       {p.image ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
@@ -415,17 +474,17 @@ export default async function AdminDashboardPage() {
                           className="h-full w-full object-cover"
                         />
                       ) : (
-                        <Package size={14} className="text-white/40" />
+                        <Package size={14} className="text-[var(--ad-text-3)]" />
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
                       <Link
                         href={`/admin/products/${p.id}`}
-                        className="block truncate text-sm font-bold text-white hover:text-[#d7ff53]"
+                        className="block truncate text-[13px] font-semibold text-[var(--ad-text)] hover:text-[var(--ad-accent)]"
                       >
                         {p.name}
                       </Link>
-                      <div className="mt-0.5 flex items-center gap-2 text-[11px] text-white/50">
+                      <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11px] text-[var(--ad-text-3)]">
                         <span>
                           {p.hasNoVariants
                             ? "Tanpa varian"
@@ -435,16 +494,16 @@ export default async function AdminDashboardPage() {
                         <span
                           className={
                             p.totalStock <= 0
-                              ? "font-bold text-red-300"
+                              ? "font-bold text-[var(--ad-red)]"
                               : p.totalStock <= lowStockThreshold
-                              ? "font-bold text-amber-300"
-                              : "text-white/60"
+                              ? "font-bold text-[var(--ad-amber)]"
+                              : "text-[var(--ad-text-2)]"
                           }
                         >
                           {p.totalStock} pcs
                         </span>
                         {!p.is_active && (
-                          <span className="rounded-full border border-white/10 px-1.5 py-0.5 text-[9px] font-bold uppercase text-white/60">
+                          <span className="ad-pill ad-pill-neutral">
                             Nonaktif
                           </span>
                         )}
@@ -461,44 +520,20 @@ export default async function AdminDashboardPage() {
   );
 }
 
-const DASH_STATUS_STYLES: Record<string, { label: string; cls: string }> = {
-  waiting_payment: { label: "Menunggu Bayar", cls: "border-amber-500/30 bg-amber-500/10 text-amber-300" },
-  processing:      { label: "Diproses",      cls: "border-sky-500/30 bg-sky-500/10 text-sky-300" },
-  shipped:         { label: "Dikirim",        cls: "border-cyan-500/30 bg-cyan-500/10 text-cyan-300" },
-  completed:       { label: "Selesai",        cls: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300" },
-  cancelled:       { label: "Dibatalkan",     cls: "border-red-500/30 bg-red-500/10 text-red-300" },
-  pending:         { label: "Pending",        cls: "border-amber-500/30 bg-amber-500/10 text-amber-300" },
-  paid:            { label: "Lunas",          cls: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300" },
-  failed:          { label: "Gagal",          cls: "border-red-500/30 bg-red-500/10 text-red-300" },
-  expired:         { label: "Kadaluarsa",     cls: "border-white/15 bg-white/5 text-white/50" },
-  refunded:        { label: "Refund",         cls: "border-sky-500/30 bg-sky-500/10 text-sky-300" },
+const DASH_STATUS_STYLES: Record<string, { label: string; tone: PillTone }> = {
+  waiting_payment: { label: "Menunggu Bayar", tone: "amber" },
+  processing:      { label: "Diproses",      tone: "blue" },
+  shipped:         { label: "Dikirim",       tone: "blue" },
+  completed:       { label: "Selesai",       tone: "green" },
+  cancelled:       { label: "Dibatalkan",    tone: "red" },
+  pending:         { label: "Pending",       tone: "amber" },
+  paid:            { label: "Lunas",         tone: "green" },
+  failed:          { label: "Gagal",         tone: "red" },
+  expired:         { label: "Kadaluarsa",    tone: "neutral" },
+  refunded:        { label: "Refund",        tone: "blue" },
 };
 
 function StatusBadge({ status }: { status: string }) {
-  const s = DASH_STATUS_STYLES[status] ?? { label: status, cls: "border-white/15 bg-white/5 text-white/50" };
-  return (
-    <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase ${s.cls}`}>
-      {s.label}
-    </span>
-  );
-}
-
-function EmptyState({
-  icon: Icon,
-  title,
-  description,
-}: {
-  icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="flex flex-col items-center justify-center px-6 py-12 text-center">
-      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/50">
-        <Icon size={18} strokeWidth={2.2} />
-      </div>
-      <p className="text-sm font-bold text-white/80">{title}</p>
-      <p className="mt-1 max-w-xs text-xs text-white/50">{description}</p>
-    </div>
-  );
+  const s = DASH_STATUS_STYLES[status] ?? { label: status, tone: "neutral" as PillTone };
+  return <Pill tone={s.tone}>{s.label}</Pill>;
 }

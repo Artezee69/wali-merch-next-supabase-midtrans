@@ -22,7 +22,7 @@ export default async function NewPopupPage() {
     <AdminShell title="Tambah Popup" subtitle="Buat popup iklan baru" adminName={adminName} adminEmail={adminEmail}>
       <Link
         href="/admin/popup-ads"
-        className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-[#d7ff53] transition-colors mb-6"
+        className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-[var(--ad-text-2)] transition hover:text-[var(--ad-accent)] mb-5"
       >
         ← Kembali ke Daftar Popup
       </Link>

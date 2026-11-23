@@ -75,11 +75,26 @@ export default async function ProductsPage({
   const initialQuery = params?.q || "";
   const initialCategory = params?.category || "All";
 
-  const { data: productsData } = await supabaseAdmin
-    .from("products")
-    .select("*, product_images(*), product_variants(*)")
-    .eq("is_active", true)
-    .order("created_at", { ascending: false });
+  let productsData;
+  let productsError;
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("products")
+      .select("*, product_images(order=sort_order.asc), product_variants(order=created_at.asc)")
+      .eq("is_active", true)
+      .order("created_at", { ascending: false });
+    productsData = data;
+    productsError = error;
+  } catch {
+    // Fallback: if created_at column doesn't exist yet (migration 029 not applied)
+    const { data, error } = await supabaseAdmin
+      .from("products")
+      .select("*, product_images(order=sort_order.asc), product_variants(*)")
+      .eq("is_active", true)
+      .order("created_at", { ascending: false });
+    productsData = data;
+    productsError = error;
+  }
 
   // Fetch order_items to calculate sold quantities
   const { data: orderItems } = await supabaseAdmin
@@ -96,9 +111,12 @@ export default async function ProductsPage({
     });
   }
 
-  // Enrich products with soldCount
+  // Enrich products with soldCount and sort images by sort_order
   const products = (productsData ?? []).map((p: any) => ({
     ...p,
+    product_images: [...(p.product_images || [])].sort(
+      (a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
+    ),
     soldCount: soldByProduct[p.id] || 0,
     rating: null, // Placeholder - ratings will be added when reviews table exists
   })) as Product[];
@@ -115,16 +133,14 @@ export default async function ProductsPage({
   ];
 
   return (
-    <main className="min-h-screen bg-black text-white dark:bg-black dark:text-white">
+    <main style={{ background: "var(--bg-primary)" }}>
       <Navbar />
-
       <ProductsExplorer
         products={products}
         categories={categories}
         initialCategory={initialCategory}
         initialQuery={initialQuery}
       />
-
       <Footer />
     </main>
   );

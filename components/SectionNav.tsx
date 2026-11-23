@@ -10,7 +10,6 @@ const SECTIONS: SectionInfo[] = [
   { id: "home-hero", label: "hero" },
   { id: "section-marquee", label: "marquee" },
   { id: "section-products", label: "products" },
-  { id: "why-wali", label: "why" },
   { id: "how-to-order", label: "how" },
   { id: "cta", label: "cta" },
   { id: "faq", label: "faq" },
@@ -76,7 +75,7 @@ export default function SectionNav() {
           disabled={activeIdx <= 0}
           aria-label={t.sectionNav.prev}
           title={t.sectionNav.prev}
-          className="group relative grid h-9 w-9 sm:h-10 sm:w-10 place-items-center rounded-full border border-white/10 bg-black/80 sm:bg-black/60 sm:backdrop-blur-xl text-white/70 transition hover:border-[#d7ff53]/40 hover:bg-[#d7ff53]/10 hover:text-[#d7ff53] disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:border-white/10 disabled:hover:bg-black/80 disabled:hover:text-white/70 md:h-12 md:w-12"
+          className="group relative grid h-9 w-9 sm:h-10 sm:w-10 place-items-center rounded-full border border-white/10 bg-black/85 text-white/70 backdrop-blur-xl transition hover:border-[#d7ff53]/50 hover:bg-[#d7ff53] hover:text-black hover:shadow-[0_0_24px_rgba(215,255,83,0.35)] disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:border-white/10 disabled:hover:bg-black/85 disabled:hover:text-white/70 md:h-12 md:w-12"
         >
           <ChevronUp strokeWidth={2.5} className="h-4 w-4 sm:h-[18px] sm:w-[18px] transition group-hover:-translate-y-0.5" />
         </button>
@@ -87,7 +86,7 @@ export default function SectionNav() {
           disabled={activeIdx >= SECTIONS.length - 1}
           aria-label={t.sectionNav.next}
           title={t.sectionNav.next}
-          className="group relative grid h-9 w-9 sm:h-10 sm:w-10 place-items-center rounded-full border border-white/10 bg-black/80 sm:bg-black/60 sm:backdrop-blur-xl text-white/70 transition hover:border-[#d7ff53]/40 hover:bg-[#d7ff53]/10 hover:text-[#d7ff53] disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:border-white/10 disabled:hover:bg-black/80 disabled:hover:text-white/70 md:h-12 md:w-12"
+          className="group relative grid h-9 w-9 sm:h-10 sm:w-10 place-items-center rounded-full border border-white/10 bg-black/85 text-white/70 backdrop-blur-xl transition hover:border-[#d7ff53] hover:bg-[#d7ff53] hover:text-black hover:shadow-[0_0_24px_rgba(215,255,83,0.35)] disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:border-white/10 disabled:hover:bg-black/85 disabled:hover:text-white/70 md:h-12 md:w-12"
         >
           <ChevronDown strokeWidth={2.5} className="h-4 w-4 sm:h-[18px] sm:w-[18px] transition group-hover:translate-y-0.5" />
         </button>

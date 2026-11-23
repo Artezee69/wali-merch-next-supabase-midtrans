@@ -1,21 +1,31 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition, useRef } from "react";
 import { useFormStatus } from "react-dom";
 import {
-  ImageIcon,
+  CalendarClock,
+  Eye,
+  Image as ImageIcon,
+  Loader2,
+  MapPin,
+  Type,
   Upload,
   X,
-  Loader2,
-  AlertTriangle,
-  Eye,
 } from "lucide-react";
 import {
   createBanner,
   updateBanner,
   type BannerFormState,
 } from "@/app/admin/banners/actions";
+import {
+  AdminButton,
+  Alert,
+  Field,
+  Pill,
+  Section,
+} from "@/components/admin/ui";
 
 type BannerInitial = {
   id?: number;
@@ -41,7 +51,6 @@ function toDateTimeLocal(iso: string | null): string {
   if (!iso) return "";
   try {
     const d = new Date(iso);
-    // Convert to local datetime-local format
     const offset = d.getTimezoneOffset();
     const local = new Date(d.getTime() - offset * 60000);
     return local.toISOString().slice(0, 16);
@@ -50,17 +59,15 @@ function toDateTimeLocal(iso: string | null): string {
   }
 }
 
+const inp = "ad-input";
+
 function SubmitButton({ mode }: { mode: "create" | "edit" }) {
   const { pending } = useFormStatus();
   return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="inline-flex items-center gap-2 rounded-xl bg-[#d7ff53] px-5 py-2.5 text-xs font-black uppercase tracking-wider text-black transition hover:bg-[#c7ef33] disabled:opacity-60"
-    >
-      {pending && <Loader2 size={14} className="animate-spin" strokeWidth={2.5} />}
-      {pending ? "Menyimpan..." : mode === "create" ? "Buat Banner" : "Simpan Perubahan"}
-    </button>
+    <AdminButton variant="primary" disabled={pending}>
+      {pending && <Loader2 size={13} className="animate-spin" />}
+      {pending ? "Menyimpan…" : mode === "create" ? "Buat Banner" : "Simpan Perubahan"}
+    </AdminButton>
   );
 }
 
@@ -140,24 +147,24 @@ export default function BannerForm({ mode, initial }: Props) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {(state && !state.ok) && (
-        <div className="flex items-start gap-2 rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm font-bold text-red-300">
-          <AlertTriangle size={16} className="mt-0.5 shrink-0" strokeWidth={2.4} />
-          <span>{state.error}</span>
-        </div>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <nav className="flex items-center gap-1.5 text-[12px] font-medium text-[var(--ad-text-3)]">
+        <Link href="/admin" className="hover:text-[var(--ad-text)]">Admin</Link>
+        <span>/</span>
+        <Link href="/admin/banners" className="hover:text-[var(--ad-text)]">Banner</Link>
+        <span>/</span>
+        <span className="text-[var(--ad-text)]">{mode === "create" ? "Tambah Baru" : "Edit"}</span>
+      </nav>
+
+      {state && !state.ok && (
+        <Alert tone="error" onClose={() => setState(null)}>
+          {state.error}
+        </Alert>
       )}
 
-      <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-        <h2 className="text-sm font-black uppercase tracking-wider text-white/80">
-          Gambar Banner
-        </h2>
-        <p className="mt-1 text-xs text-white/50">
-          Format: PNG, JPG, WebP, SVG, atau GIF. Maksimal 5MB.
-        </p>
-
-        <div className="mt-4 grid gap-4 sm:grid-cols-[1fr_300px]">
-          <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/40">
+      <Section title="Gambar Banner" icon={<ImageIcon size={14} />} open onToggle={() => {}} accent="#2563eb">
+        <div className="grid gap-4 sm:grid-cols-[1fr_300px]">
+          <div className="overflow-hidden rounded-xl border border-[var(--ad-border)] bg-[var(--ad-surface-2)]">
             {imageUrl ? (
               <div className="relative">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -169,53 +176,49 @@ export default function BannerForm({ mode, initial }: Props) {
                 <button
                   type="button"
                   onClick={handleRemoveImage}
-                  className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full border border-red-500/30 bg-red-500/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-red-300 transition hover:border-red-500/60 hover:bg-red-500/20"
+                  className="ad-btn ad-btn-danger ad-btn-sm absolute right-2.5 top-2.5 shadow"
                 >
-                  <X size={12} strokeWidth={2.5} />
-                  Hapus
+                  <X size={11} /> Hapus
                 </button>
               </div>
             ) : (
-              <div className="flex aspect-[16/9] flex-col items-center justify-center text-white/40">
-                <ImageIcon size={32} strokeWidth={1.5} />
-                <p className="mt-2 text-xs font-bold uppercase tracking-wider">
+              <div className="flex aspect-[16/9] flex-col items-center justify-center text-[var(--ad-text-3)]">
+                <ImageIcon size={28} strokeWidth={1.5} />
+                <p className="mt-2 text-[11px] font-semibold uppercase tracking-wide">
                   Belum ada gambar
                 </p>
               </div>
             )}
           </div>
 
-          <div className="flex flex-col gap-3">
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileChosen}
-              disabled={uploading}
-              className="block w-full text-xs text-white/55 file:mr-3 file:rounded-full file:border-0 file:bg-white/[0.06] file:px-4 file:py-2 file:text-xs file:font-black file:uppercase file:tracking-wider file:text-white hover:file:bg-white/[0.12]"
-            />
-            <p className="text-[11px] text-white/45">
-              Gambar lama di storage akan otomatis terhapus saat kamu upload
-              gambar baru dan simpan.
+          <div className="flex flex-col gap-2.5">
+            <label className="ad-btn ad-btn-secondary w-fit cursor-pointer">
+              <Upload size={13} />
+              {uploading ? "Mengupload…" : "Pilih Gambar"}
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileChosen}
+                disabled={uploading}
+                className="hidden"
+              />
+            </label>
+            <p className="text-[11.5px] leading-5 text-[var(--ad-text-3)]">
+              Format: PNG, JPG, WebP, SVG, atau GIF. Maksimal 5MB. Gambar lama
+              di storage otomatis terhapus saat upload gambar baru.
             </p>
-            {uploading && (
-              <div className="inline-flex items-center gap-2 text-xs text-white/65">
-                <Loader2 size={12} className="animate-spin" strokeWidth={2.5} />
-                Mengupload...
-              </div>
-            )}
             {uploadError && (
-              <p className="text-xs font-bold text-red-300">{uploadError}</p>
+              <p className="text-[12px] font-semibold text-[var(--ad-red)]">{uploadError}</p>
             )}
             {imageUrl && (
               <a
                 href={imageUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1 self-start text-[11px] font-bold text-[#d7ff53] hover:underline"
+                className="inline-flex items-center gap-1 text-[12px] font-semibold text-[var(--ad-accent)] hover:underline"
               >
-                <Eye size={11} strokeWidth={2.5} />
-                Lihat gambar asli
+                <Eye size={12} /> Lihat gambar asli
               </a>
             )}
           </div>
@@ -224,20 +227,17 @@ export default function BannerForm({ mode, initial }: Props) {
         {/* Hidden values so server action can read uploaded path/url */}
         <input type="hidden" name="image_url" value={imageUrl} />
         <input type="hidden" name="storage_path" value={storagePath} />
-      </section>
+      </Section>
 
-      <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-        <h2 className="text-sm font-black uppercase tracking-wider text-white/80">
-          Konten Banner
-        </h2>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+      <Section title="Konten Banner" icon={<Type size={14} />} open onToggle={() => {}} accent="#7c3aed">
+        <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Nama Banner" required>
             <input
               name="title"
               required
               defaultValue={initial?.title ?? ""}
               maxLength={200}
-              className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-2.5 text-sm text-white outline-none focus:border-[#d7ff53]"
+              className={inp}
             />
           </Field>
           <Field label="Subtitle">
@@ -245,7 +245,7 @@ export default function BannerForm({ mode, initial }: Props) {
               name="subtitle"
               defaultValue={initial?.subtitle ?? ""}
               maxLength={400}
-              className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-2.5 text-sm text-white outline-none focus:border-[#d7ff53]"
+              className={inp}
             />
           </Field>
           <Field label="Teks Tombol (CTA)">
@@ -254,7 +254,7 @@ export default function BannerForm({ mode, initial }: Props) {
               defaultValue={initial?.button_text ?? ""}
               maxLength={60}
               placeholder="Contoh: Lihat Koleksi"
-              className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-2.5 text-sm text-white outline-none placeholder:text-white/30 focus:border-[#d7ff53]"
+              className={inp}
             />
           </Field>
           <Field label="Link Tujuan CTA">
@@ -263,24 +263,21 @@ export default function BannerForm({ mode, initial }: Props) {
               type="url"
               defaultValue={initial?.button_link ?? ""}
               maxLength={500}
-              placeholder="https://..."
-              className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-2.5 text-sm text-white outline-none placeholder:text-white/30 focus:border-[#d7ff53]"
+              placeholder="https://…"
+              className={inp}
             />
           </Field>
         </div>
-      </section>
+      </Section>
 
-      <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-        <h2 className="text-sm font-black uppercase tracking-wider text-white/80">
-          Penempatan & Jadwal
-        </h2>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+      <Section title="Penempatan & Jadwal" icon={<CalendarClock size={14} />} open onToggle={() => {}} accent="#d97706">
+        <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Posisi" required>
             <select
               name="position"
               required
               defaultValue={initial?.position ?? "hero"}
-              className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-2.5 text-sm text-white outline-none focus:border-[#d7ff53]"
+              className={inp}
             >
               <option value="hero">Hero Slider</option>
               <option value="right_top">Promo Top (kanan atas)</option>
@@ -294,73 +291,51 @@ export default function BannerForm({ mode, initial }: Props) {
               min={0}
               max={9999}
               defaultValue={initial?.sort_order ?? 0}
-              className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-2.5 text-sm text-white outline-none focus:border-[#d7ff53]"
+              className={inp}
             />
           </Field>
           <Field label="Status Aktif">
-            <label className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/40 px-4 py-2.5">
+            <label className="ad-inset flex items-center gap-2.5 px-3 py-2.5">
               <input
                 name="status"
                 type="checkbox"
                 defaultChecked={initial?.status ?? true}
-                className="h-4 w-4 accent-[#d7ff53]"
+                className="ad-checkbox"
               />
-              <span className="text-sm text-white/75">Tampilkan di homepage</span>
+              <span className="text-[13px] font-medium text-[var(--ad-text-2)]">
+                Tampilkan di homepage
+              </span>
             </label>
           </Field>
           <div />
-          <Field label="Tanggal Mulai (opsional)">
+          <Field label="Tanggal Mulai" hint="Opsional">
             <input
               name="start_date"
               type="datetime-local"
               defaultValue={initialStartDate}
-              className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-2.5 text-sm text-white outline-none focus:border-[#d7ff53]"
+              className={`${inp} [color-scheme:light]`}
             />
           </Field>
-          <Field label="Tanggal Selesai (opsional)">
+          <Field label="Tanggal Selesai" hint="Opsional">
             <input
               name="end_date"
               type="datetime-local"
               defaultValue={initialEndDate}
-              className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-2.5 text-sm text-white outline-none focus:border-[#d7ff53]"
+              className={`${inp} [color-scheme:light]`}
             />
           </Field>
         </div>
-      </section>
+      </Section>
 
-      <div className="flex items-center justify-end gap-2">
-        <button
-          type="button"
-          onClick={() => router.push("/admin/banners")}
-          className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-xs font-black uppercase tracking-wider text-white/70 transition hover:border-white/30 hover:text-white"
-        >
+      <div className="sticky bottom-0 z-10 -mx-1 mt-2 flex items-center justify-end gap-2 border-t border-[var(--ad-border)] bg-white/95 p-3 backdrop-blur">
+        <AdminButton variant="secondary" onClick={() => router.push("/admin/banners")}>
           Batal
-        </button>
+        </AdminButton>
         <SubmitButton mode={mode} />
       </div>
       {pending && (
-        <p className="text-center text-xs text-white/45">Memproses...</p>
+        <p className="text-center text-[12px] text-[var(--ad-text-3)]">Memproses…</p>
       )}
     </form>
-  );
-}
-
-function Field({
-  label,
-  required,
-  children,
-}: {
-  label: string;
-  required?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className="block">
-      <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-white/60">
-        {label}
-        {required && <span className="ml-1 text-red-400">*</span>}
-      </span>
-      {children}
-    </label>
   );
 }

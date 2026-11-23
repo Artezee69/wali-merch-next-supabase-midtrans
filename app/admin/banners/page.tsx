@@ -1,10 +1,9 @@
-import Link from "next/link";
-import { ImageIcon, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { requireAdmin } from "@/lib/adminAuth";
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { getSupabaseAdmin, supabaseAdmin } from "@/lib/supabaseAdmin";
 import AdminShell from "@/components/admin/AdminShell";
 import BannersListClient from "@/components/admin/BannersListClient";
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { AdminLink } from "@/components/admin/ui";
 
 export const dynamic = "force-dynamic";
 
@@ -93,26 +92,28 @@ export default async function AdminBannersPage({
       adminName={adminName}
       adminEmail={adminEmail}
     >
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--ad-text-3)]">
+        Admin / Banner
+      </p>
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#d7ff53]">
-            Marketing
-          </p>
-          <h1 className="mt-1 flex items-center gap-2 text-2xl font-black uppercase tracking-tight md:text-3xl">
-            <ImageIcon size={22} strokeWidth={2.4} />
+          <h1
+            className="text-xl font-bold tracking-tight"
+            style={{
+              background: "linear-gradient(135deg, #16181d, #5d6470)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+            }}
+          >
             Banner
           </h1>
-          <p className="mt-1 text-sm text-white/55">
+          <p className="mt-0.5 text-[13px] text-[var(--ad-text-3)]">
             Total {total} banner terdaftar.
           </p>
         </div>
-        <Link
-          href="/admin/banners/new"
-          className="inline-flex items-center gap-2 self-start rounded-xl bg-[#d7ff53] px-4 py-2.5 text-xs font-black uppercase tracking-wider text-black transition hover:bg-[#c7ef33]"
-        >
-          <Plus size={14} strokeWidth={2.5} />
-          Tambah Banner
-        </Link>
+        <AdminLink href="/admin/banners/new" className="self-start sm:self-auto">
+          <Plus size={14} /> Tambah Banner
+        </AdminLink>
       </div>
 
       <BannersListClient

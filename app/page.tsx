@@ -32,7 +32,7 @@ type ShowProduct = {
 async function fetchLatestDropProducts(limit: number) {
   const { data: products, error } = await supabaseAdmin
     .from("products")
-    .select("*, product_images(*), product_variants(*)")
+    .select("*, product_images(image_url, sort_order), product_variants(*)")
     .eq("is_active", true)
     .order("created_at", { ascending: false })
     .limit(limit);
@@ -50,8 +50,10 @@ async function fetchLatestDropProducts(limit: number) {
       category: String(row.category) || undefined,
       slug: String(row.slug),
       description: String(row.short_description ?? row.description ?? ""),
-      product_images: (row.product_images as Array<{ image_url: string }>)?.length
-        ? (row.product_images as Array<{ image_url: string }>)
+      product_images: (row.product_images as Array<{ image_url: string; sort_order?: number }>)?.length
+        ? [...(row.product_images as Array<{ image_url: string; sort_order?: number }>)].sort(
+            (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
+          )
         : undefined,
       product_variants: (row.product_variants as Array<{ size?: string; stock?: number }>)?.length
         ? (row.product_variants as Array<{ size?: string; stock?: number }>)
@@ -69,7 +71,7 @@ async function fetchManualLatestDropProducts(ids: string[]) {
 
   const { data: products, error } = await supabaseAdmin
     .from("products")
-    .select("*, product_images(*), product_variants(*)")
+    .select("*, product_images(image_url, sort_order), product_variants(*)")
     .in("id", ids);
 
   if (error || !products) return [];
@@ -88,8 +90,10 @@ async function fetchManualLatestDropProducts(ids: string[]) {
       category: String(row.category) || undefined,
       slug: String(row.slug),
       description: String(row.short_description ?? row.description ?? ""),
-      product_images: (row.product_images as Array<{ image_url: string }>)?.length
-        ? (row.product_images as Array<{ image_url: string }>)
+      product_images: (row.product_images as Array<{ image_url: string; sort_order?: number }>)?.length
+        ? [...(row.product_images as Array<{ image_url: string; sort_order?: number }>)].sort(
+            (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
+          )
         : undefined,
       product_variants: (row.product_variants as Array<{ size?: string; stock?: number }>)?.length
         ? (row.product_variants as Array<{ size?: string; stock?: number }>)
@@ -138,46 +142,63 @@ export default async function HomePage() {
   }
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen bg-black text-white antialiased">
       <Navbar />
 
+      {/* ════════════════ HERO ════════════════ */}
       {heroBanners.length > 0 && (
-        <section className="px-4 sm:px-6 pt-6 sm:pt-8">
+        <section
+          id="home-hero"
+          data-section-nav
+          className="px-4 pt-5 sm:px-6 md:px-8 sm:pt-6"
+        >
           <div
-            className={`max-w-[1320px] mx-auto ${
+            className={`mx-auto max-w-7xl ${
               hasPromos
-                ? "grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] items-start gap-4 sm:gap-6 rounded-xl overflow-hidden"
+                ? "grid grid-cols-1 gap-5 lg:grid-cols-[1.7fr_1fr] lg:items-stretch"
                 : ""
             }`}
           >
-            <HeroCarousel banners={heroBanners} fillHeight={hasPromos} className={hasPromos ? "h-[320px] sm:h-[420px] lg:h-[520px]" : ""} />
-{(() => {
-  // Render promos jika data tersedia, atau fallback placeholder jika tidak ada
-  const renderPlaceholder = () => (
-    <div className="h-[160px] sm:h-[200px] lg:h-[248px] rounded-xl border border-white/5 dark:border-white/10 bg-white/5 dark:bg-white/5 overflow-hidden flex items-center justify-center text-white/30 text-xs sm:text-sm">
-      <span className="px-4 text-center">[BANNER Iklan Placeholder]</span>
-    </div>
-  );
+            <div className={hasPromos ? "overflow-hidden rounded-2xl" : ""}>
+              <HeroCarousel
+                banners={heroBanners}
+                fillHeight={hasPromos}
+                className={hasPromos ? "h-[320px] sm:h-[440px] lg:h-[560px]" : ""}
+              />
+            </div>
 
-  return (
-    <div className="flex flex-col gap-4 sm:gap-6 h-full">
-      {promoTopBanner ? (
-        <PromoBanner banner={promoTopBanner} className="h-[160px] sm:h-[200px] lg:h-[248px]" />
-      ) : renderPlaceholder()}
-      {promoBottomBanner ? (
-        <PromoBanner banner={promoBottomBanner} className="h-[160px] sm:h-[200px] lg:h-[248px]" />
-      ) : renderPlaceholder()}
-    </div>
-  );
-})()}
+            {hasPromos && (
+              <div className="flex flex-col gap-5">
+                {promoTopBanner ? (
+                  <PromoBanner
+                    banner={promoTopBanner}
+                    className="h-[150px] sm:h-[200px] lg:h-1/2"
+                  />
+                ) : (
+                  <AdPlaceholder />
+                )}
+                {promoBottomBanner ? (
+                  <PromoBanner
+                    banner={promoBottomBanner}
+                    className="h-[150px] sm:h-[200px] lg:h-1/2"
+                  />
+                ) : (
+                  <AdPlaceholder />
+                )}
+              </div>
+            )}
           </div>
         </section>
       )}
 
+      {/* ════════════════ MARQUEE ════════════════ */}
       {home.sections.marquee && home.marqueeSection.enabled && (
-        <Marquee items={home.marqueeSection.texts} />
+        <div id="section-marquee" data-section-nav>
+          <Marquee items={home.marqueeSection.texts} />
+        </div>
       )}
 
+      {/* ════════════════ LATEST DROP ════════════════ */}
       {home.latestDrop.enabled && latestDropProducts.length > 0 && (
         <ProductShowcase
           products={latestDropProducts}
@@ -188,14 +209,17 @@ export default async function HomePage() {
         />
       )}
 
+      {/* ════════════════ HOW TO ORDER ════════════════ */}
       {home.sections.howToOrder && home.howToOrderSection.enabled && (
         <HowToOrder />
       )}
 
+      {/* ════════════════ CTA ════════════════ */}
       {home.sections.cta && home.ctaSection.enabled && (
         <CtaSection />
       )}
 
+      {/* ════════════════ FAQ ════════════════ */}
       {home.sections.faq && home.faqSection.enabled && (
         <Faq />
       )}
@@ -204,7 +228,7 @@ export default async function HomePage() {
 
       <SectionNav />
 
-      {/* SEO meta — read by app/layout.tsx via cookies? fallback below */}
+      {/* SEO meta */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -217,5 +241,19 @@ export default async function HomePage() {
         }}
       />
     </main>
+  );
+}
+
+/**
+ * Neutral placeholder for an empty ad slot — quiet, unobtrusive,
+ * clearly reads "iklan" without competing with the hero.
+ */
+function AdPlaceholder() {
+  return (
+    <div className="flex h-[150px] items-center justify-center rounded-2xl border border-white/[0.06] bg-white/[0.02] sm:h-[200px] lg:h-1/2">
+      <span className="text-[10px] font-black uppercase tracking-[0.35em] text-white/20">
+        Iklan
+      </span>
+    </div>
   );
 }

@@ -1,7 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import HeadingRotator from "./ProductShowcase/HeadingRotator";
 import ProductTrack from "./ProductShowcase/ProductTrack";
+import Reveal from "./Reveal";
 
 type Product = {
   id: string;
@@ -78,7 +78,7 @@ export default function ProductShowcase({
   description,
   ctaLabel = "Lihat semua",
   ctaUrl = "/products",
-  backgroundColor = "#0b0b0b",
+  backgroundColor = "#000000",
 }: {
   products?: Product[];
   title?: string;
@@ -94,50 +94,49 @@ export default function ProductShowcase({
   return (
     <section
       id="section-products"
-      className="relative pt-20 pb-28 md:pt-28 md:pb-36"
+      data-section-nav
+      className="relative overflow-hidden py-20 sm:py-28 md:py-36"
+      style={{ backgroundColor: backgroundColor || "#000000" }}
     >
-      {/* Light/dark adaptive background. Dark mode uses admin-set color, light mode uses white. */}
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `:root.dark #section-products { background-color: ${backgroundColor}; }
-:root:not(.dark) #section-products { background-color: #ffffff; }`,
-        }}
-      />
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-white to-transparent dark:from-[#0b0b0b]" />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-white to-transparent dark:from-[#0b0b0b]" />
+      {/* Subtle radial accent behind the header */}
+      <div className="pointer-events-none absolute left-1/2 top-0 h-[420px] w-[720px] -translate-x-1/2 bg-[radial-gradient(ellipse_at_top,rgba(215,255,83,0.07),transparent_65%)]" />
 
       <style
         dangerouslySetInnerHTML={{
           __html: `
         @keyframes heading-pop {
-          from { opacity: 0; transform: translateY(24px) scale(0.96); filter: blur(4px); }
-          to   { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+          from { opacity: 0; transform: translateY(24px) scale(0.96); }
+          to   { opacity: 1; transform: translateY(0) scale(1); }
         }
       `,
         }}
       />
 
-      <div className="mx-auto max-w-7xl px-4 md:px-8">
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
         {/* — Section header — */}
-        <div className="mb-8 md:mb-12">
+        <Reveal className="mb-12 md:mb-16">
           {description && (
-            <p className="text-[11px] text-gray-500 md:text-sm dark:text-white/40">{description}</p>
+            <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.2em] text-white/40 md:text-xs">
+              {description}
+            </p>
           )}
           <HeadingRotator />
-        </div>
+        </Reveal>
 
         {/* — Scrollable track — */}
-        <ProductTrack items={items} />
+        <Reveal variant="blur-in" delay={0.15}>
+          <ProductTrack items={items} />
+        </Reveal>
 
         {/* — View All CTA — */}
-        <div className="mt-8 flex justify-center md:mt-10">
+        <Reveal variant="blur-in" delay={0.25} className="mt-12 md:mt-14 text-center">
           <Link
             href={ctaUrl}
-            className="rounded-full border border-gray-300 bg-gray-100 px-6 py-3 text-[11px] font-bold uppercase tracking-[0.2em] text-gray-700 backdrop-blur transition-all duration-300 hover:border-[#d7ff53]/60 hover:bg-[#d7ff53]/10 hover:text-[#d7ff53] dark:border-white/10 dark:bg-white/[0.03] dark:text-white/60 dark:hover:border-[#d7ff53]/40 dark:hover:bg-[#d7ff53]/10 dark:hover:text-[#d7ff53]"
+            className="inline-flex items-center rounded-full border border-white/15 bg-white/[0.04] px-8 py-4 text-xs font-black uppercase tracking-[0.25em] text-white/80 backdrop-blur-sm transition-all duration-300 hover:border-[#d7ff53]/60 hover:bg-[#d7ff53]/10 hover:text-[#d7ff53] active:scale-95"
           >
             {ctaLabel}
           </Link>
-        </div>
+        </Reveal>
       </div>
     </section>
   );
