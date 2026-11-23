@@ -33,8 +33,8 @@ async function fetchLatestDropProducts(limit: number) {
   const { data: products, error } = await supabaseAdmin
     .from("products")
     .select("*, product_images(image_url, sort_order), product_variants(*)")
-    .eq("is_active", true)
-    .order("created_at", { ascending: false })
+    .eq("status", "active")
+    .order("updated_at", { ascending: false })
     .limit(limit);
 
   if (error || !products) return [];

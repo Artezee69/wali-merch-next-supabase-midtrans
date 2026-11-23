@@ -83,29 +83,22 @@ export default async function ProductsPage({
       .from("products")
       .select("*, product_images, product_variants")
       .eq("status", "active")
-      .order("created_at", { ascending: false });
-    if (error) {
-      productsError = error.message;
-      // Fallback 1: use is_active if status column not available
-      const fb1 = await supabaseAdmin
-        .from("products")
-        .select("*, product_images, product_variants")
-        .eq("is_active", true);
-      productsData = fb1.data;
-      if (fb1.error) productsError = fb1.error.message;
-      // Fallback 2: no filter at all (last resort)
-      if (!productsData) {
-        const fb2 = await supabaseAdmin
-          .from("products")
-          .select("*, product_images, product_variants");
-        productsData = fb2.data;
-        if (fb2.error) productsError = fb2.error.message;
-      }
-    } else {
-      productsData = data;
-    }
+      .order("updated_at", { ascending: false });
+    productsData = data;
+    productsError = error ? error.message : null;
   } catch (err) {
     productsError = err instanceof Error ? err.message : String(err);
+  }
+
+  if (!productsData) {
+    // Fallback: try without status filter (in case column doesn't exist)
+    try {
+      const fb = await supabaseAdmin
+        .from("products")
+        .select("*, product_images, product_variants");
+      productsData = fb.data;
+      productsError = fb.error ? fb.error.message : null;
+    } catch {}
   }
 
   if (productsError) {
