@@ -165,6 +165,12 @@ export default async function HomePage() {
     }
   }
 
+  // — Featured products (always shown when they exist, independent of latestDrop settings) —
+  let featuredProducts: ShowProduct[] = [];
+  if (latestDropProducts.length === 0) {
+    featuredProducts = await fetchLatestDropProducts(6);
+  }
+
   return (
     <main className="min-h-screen bg-black text-white antialiased">
       <Navbar />
@@ -232,10 +238,10 @@ export default async function HomePage() {
         </div>
       )}
 
-      {/* ════════════════ LATEST DROP ════════════════ */}
-      {home.latestDrop.enabled && latestDropProducts.length > 0 && (
+      {/* ════════════════ LATEST DROP / FEATURED ════════════════ */}
+      {((home.latestDrop.enabled && latestDropProducts.length > 0) || featuredProducts.length > 0) && (
         <ProductShowcase
-          products={latestDropProducts}
+          products={latestDropProducts.length > 0 ? latestDropProducts : featuredProducts}
           description={home.latestDrop.description}
           ctaLabel={home.latestDrop.ctaLabel}
           ctaUrl={home.latestDrop.ctaUrl}
