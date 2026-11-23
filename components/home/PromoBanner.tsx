@@ -41,12 +41,12 @@ export default function PromoBanner({ banner, className }: Props) {
           draggable={false}
         />
         {banner.title && !banner.hide_overlay && (
-          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-5">
-            <p className="text-sm font-black uppercase tracking-wider text-white sm:text-base">
+          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/50 to-transparent p-3 sm:p-5">
+            <p className="text-[0.75rem] font-black uppercase tracking-wider text-white sm:text-sm md:text-base">
               {banner.title}
             </p>
             {banner.button_text && (
-              <span className="mt-1.5 inline-block text-[11px] font-bold uppercase tracking-wider text-[#d7ff53]">
+              <span className="mt-1 inline-block text-[10px] font-bold uppercase tracking-wider text-[#d7ff53] sm:mt-1.5 sm:text-[11px]">
                 {banner.button_text} →
               </span>
             )}

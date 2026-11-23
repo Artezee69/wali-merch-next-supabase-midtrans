@@ -159,20 +159,30 @@ export default async function HomePage() {
                 : ""
             }`}
           >
-            <div className={hasPromos ? "overflow-hidden rounded-2xl" : ""}>
+            <div
+              className={
+                hasPromos
+                  ? "overflow-hidden rounded-2xl"
+                  : ""
+              }
+            >
               <HeroCarousel
                 banners={heroBanners}
                 fillHeight={hasPromos}
-                className={hasPromos ? "h-[320px] sm:h-[440px] lg:h-[560px]" : ""}
+                className={
+                  hasPromos
+                    ? "h-[420px] sm:h-[520px] md:h-[560px] lg:h-[620px]"
+                    : ""
+                }
               />
             </div>
 
             {hasPromos && (
-              <div className="flex flex-col gap-5">
+              <div className="grid grid-cols-2 gap-5 lg:flex lg:flex-col lg:gap-5">
                 {promoTopBanner ? (
                   <PromoBanner
                     banner={promoTopBanner}
-                    className="h-[150px] sm:h-[200px] lg:h-1/2"
+                    className="h-[160px] sm:h-[220px] lg:h-1/2"
                   />
                 ) : (
                   <AdPlaceholder />
@@ -180,7 +190,7 @@ export default async function HomePage() {
                 {promoBottomBanner ? (
                   <PromoBanner
                     banner={promoBottomBanner}
-                    className="h-[150px] sm:h-[200px] lg:h-1/2"
+                    className="h-[160px] sm:h-[220px] lg:h-1/2"
                   />
                 ) : (
                   <AdPlaceholder />
