@@ -54,19 +54,13 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
   const isSoldOut = totalStock <= 0 && !isComingSoon;
   const isTerlaris = (product.soldCount ?? 0) >= 100;
 
-  const hasDiscount = Boolean(
-    product.sale_price != null &&
-    product.base_price != null &&
-    Number(product.sale_price) < Number(product.base_price)
-  );
+  const basePrice = Number(product.base_price ?? product.price ?? 0);
+  const salePrice = product.sale_price != null ? Number(product.sale_price) : 0;
+  const hasDiscount = salePrice > 0 && basePrice > salePrice;
 
   let discountPercent = 0;
-  if (hasDiscount) {
-    const base = Number(product.base_price);
-    const sale = Number(product.sale_price);
-    if (base > 0) {
-      discountPercent = Math.round(((base - sale) / base) * 100);
-    }
+  if (hasDiscount && basePrice > 0) {
+    discountPercent = Math.round(((basePrice - salePrice) / basePrice) * 100);
   }
 
   const soldCount = product.soldCount ?? 0;
@@ -93,24 +87,24 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
         />
 
         {/* Badges */}
-        <div className="absolute left-3 top-3 z-10 flex flex-wrap gap-1.5">
+        <div className="absolute left-2.5 top-2.5 z-10 flex flex-col items-start gap-1.5">
           {hasDiscount && (
-            <span className="rounded-full bg-[var(--danger-color)] px-2.5 py-0.5 text-[10px] font-bold text-white">
+            <span className="rounded-md bg-[var(--danger-color)] px-2 py-0.5 text-[11px] font-extrabold tracking-tight text-white shadow-sm">
               -{discountPercent}%
             </span>
           )}
-          {isTerlaris && (
-            <span className="rounded-full bg-[var(--accent-color)] px-2.5 py-0.5 text-[10px] font-bold text-black">
+          {isTerlaris && !isSoldOut && (
+            <span className="rounded-md bg-[var(--accent-color)] px-2 py-0.5 text-[11px] font-extrabold tracking-tight text-black shadow-sm">
               Terlaris
             </span>
           )}
-          {isComingSoon && !hasDiscount && (
-            <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm">
+          {isComingSoon && !hasDiscount && !isTerlaris && (
+            <span className="rounded-md border border-white/20 bg-black/40 px-2 py-0.5 text-[11px] font-bold text-white backdrop-blur-md">
               Baru
             </span>
           )}
           {isSoldOut && (
-            <span className="rounded-full bg-neutral-500 px-2.5 py-0.5 text-[10px] font-bold text-white">
+            <span className="rounded-md bg-neutral-700 px-2 py-0.5 text-[11px] font-bold text-white/80 shadow-sm">
               Habis
             </span>
           )}
@@ -137,20 +131,18 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
         </h3>
 
         {/* Price row */}
-        <div className="mt-2 flex items-baseline gap-2">
+        <div className="mt-2 flex items-baseline gap-2 flex-wrap">
           {isComingSoon ? (
             <span className="text-sm font-semibold text-white/50">
               Segera Hadir
             </span>
           ) : hasDiscount ? (
             <>
-              <span
-                className="text-xs font-medium text-white/40 line-through"
-              >
-                {rupiah(product.base_price ?? product.price)}
-              </span>
               <span className="text-base font-bold text-[var(--accent-color)] sm:text-lg">
-                {rupiah(product.sale_price ?? product.price)}
+                {rupiah(salePrice)}
+              </span>
+              <span className="text-xs font-medium text-white/40 line-through">
+                {rupiah(basePrice)}
               </span>
             </>
           ) : (
@@ -158,7 +150,7 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
               className="text-base font-bold sm:text-lg"
               style={{ color: "var(--text-primary)" }}
             >
-              {rupiah(Number(product.price))}
+              {rupiah(basePrice)}
             </span>
           )}
         </div>
