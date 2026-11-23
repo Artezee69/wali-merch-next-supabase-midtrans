@@ -30,11 +30,23 @@ type ShowProduct = {
  * current latest-drop settings (auto vs manual mode).
  */
 async function fetchLatestDropProducts(limit: number) {
-  const { data: products, error } = await supabaseAdmin
+  // Prefer featured (unggulan) products; fall back to all active if none flagged
+  let { data: products, error } = await supabaseAdmin
     .from("products")
     .select("*")
     .eq("status", "active")
+    .eq("is_featured", true)
     .limit(limit);
+
+  if (error || !products || products.length === 0) {
+    const fallback = await supabaseAdmin
+      .from("products")
+      .select("*")
+      .eq("status", "active")
+      .limit(limit);
+    products = fallback.data;
+    error = fallback.error;
+  }
 
   if (error || !products || products.length === 0) return [];
 
