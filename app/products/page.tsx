@@ -3,6 +3,8 @@ import Footer from "@/components/Footer";
 import ProductsExplorer, { Product } from "@/components/ProductsExplorer";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
+export const revalidate = 0;
+
 const fallbackProducts: Product[] = [
   {
     id: "fallback-1",
@@ -168,9 +170,26 @@ export default async function ProductsPage({
     ),
   ];
 
+  // DEBUG: show price data for first product
+  const debugProduct = products[0];
+
   return (
     <main style={{ background: "var(--bg-primary)" }}>
       <Navbar />
+      {debugProduct && (
+        <div style={{
+          padding: "8px 24px",
+          background: "#fffbeb",
+          borderBottom: "1px solid #fde68a",
+          color: "#92400e",
+          fontSize: "11px",
+          fontFamily: "monospace",
+        }}>
+          DEBUG: price={debugProduct.price} base_price={"base_price" in debugProduct ? debugProduct.base_price : "NO_COL"} sale_price={"sale_price" in debugProduct ? debugProduct.sale_price : "NO_COL"}
+          {" "}variants={debugProduct.product_variants?.length ?? 0}
+          {debugProduct.product_variants?.[0] && ` | var[0]: price=${debugProduct.product_variants[0].price ?? "NO_COL"} sale_price=${(debugProduct.product_variants[0] as any).sale_price ?? "NO_COL"}`}
+        </div>
+      )}
       {productsError && (
         <div style={{
           padding: "12px 24px",
