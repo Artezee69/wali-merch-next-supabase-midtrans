@@ -32,12 +32,27 @@ type ShowProduct = {
 async function fetchLatestDropProducts(limit: number) {
   const { data: products, error } = await supabaseAdmin
     .from("products")
-    .select("*, product_images(image_url, sort_order), product_variants(*)")
+    .select("*")
     .eq("status", "active")
     .order("updated_at", { ascending: false })
     .limit(limit);
 
-  if (error || !products) return [];
+  if (error || !products || products.length === 0) return [];
+
+  // Fetch images & variants separately (embed syntax unreliable via service role)
+  const ids = products.map((p: any) => p.id);
+  const [imgRes, varRes] = await Promise.all([
+    supabaseAdmin.from("product_images").select("product_id, image_url, sort_order").in("product_id", ids).order("sort_order"),
+    supabaseAdmin.from("product_variants").select("*").in("product_id", ids),
+  ]);
+  const imgsById: Record<string, Array<{ image_url: string; sort_order?: number }>> = {};
+  for (const img of (imgRes.data ?? []) as Array<{ product_id: string; image_url: string; sort_order?: number }>) {
+    (imgsById[img.product_id] ||= []).push({ image_url: img.image_url, sort_order: img.sort_order });
+  }
+  const varsById: Record<string, Array<{ size?: string; stock?: number }>> = {};
+  for (const v of varRes.data ?? []) {
+    (varsById[v.product_id] ||= []).push(v);
+  }
 
   return (products as Array<Record<string, unknown>>).map((row) => {
     const tags = (row.tags as string[] | undefined) ?? [];
@@ -50,13 +65,11 @@ async function fetchLatestDropProducts(limit: number) {
       category: String(row.category) || undefined,
       slug: String(row.slug),
       description: String(row.short_description ?? row.description ?? ""),
-      product_images: (row.product_images as Array<{ image_url: string; sort_order?: number }>)?.length
-        ? [...(row.product_images as Array<{ image_url: string; sort_order?: number }>)].sort(
-            (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
-          )
+      product_images: imgsById[row.id as string]?.length
+        ? imgsById[row.id as string]
         : undefined,
-      product_variants: (row.product_variants as Array<{ size?: string; stock?: number }>)?.length
-        ? (row.product_variants as Array<{ size?: string; stock?: number }>)
+      product_variants: varsById[row.id as string]?.length
+        ? varsById[row.id as string]
         : undefined,
     };
   });

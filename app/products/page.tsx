@@ -79,26 +79,46 @@ export default async function ProductsPage({
   let productsError: string | null = null;
 
   try {
-    const { data, error } = await supabaseAdmin
+    // Fetch products first
+    const { data: prods, error: pErr } = await supabaseAdmin
       .from("products")
-      .select("*, product_images, product_variants")
+      .select("*")
       .eq("status", "active")
       .order("updated_at", { ascending: false });
-    productsData = data;
-    productsError = error ? error.message : null;
+    productsData = prods;
+    productsError = pErr ? pErr.message : null;
+
+    if (productsData && productsData.length > 0) {
+      const productIds = productsData.map((p: any) => p.id);
+
+      // Fetch images and variants separately, then attach
+      const [imgRes, varRes] = await Promise.all([
+        supabaseAdmin.from("product_images")
+          .select("*")
+          .in("product_id", productIds)
+          .order("sort_order", { ascending: true }),
+        supabaseAdmin.from("product_variants")
+          .select("*")
+          .in("product_id", productIds),
+      ]);
+
+      const imagesById: Record<string, any[]> = {};
+      for (const img of imgRes.data ?? []) {
+        (imagesById[img.product_id] ||= []).push(img);
+      }
+      const variantsById: Record<string, any[]> = {};
+      for (const v of varRes.data ?? []) {
+        (variantsById[v.product_id] ||= []).push(v);
+      }
+
+      productsData = productsData.map((p: any) => ({
+        ...p,
+        product_images: imagesById[p.id] ?? [],
+        product_variants: variantsById[p.id] ?? [],
+      }));
+    }
   } catch (err) {
     productsError = err instanceof Error ? err.message : String(err);
-  }
-
-  if (!productsData) {
-    // Fallback: try without status filter (in case column doesn't exist)
-    try {
-      const fb = await supabaseAdmin
-        .from("products")
-        .select("*, product_images, product_variants");
-      productsData = fb.data;
-      productsError = fb.error ? fb.error.message : null;
-    } catch {}
   }
 
   if (productsError) {
