@@ -15,28 +15,43 @@ export default async function EditProductPage({ params }: { params: Promise<Para
   const supabaseAdmin = getSupabaseAdmin();
   const settings = await getStoreSettings();
 
-  const [{ data: product }, { data: images }, { data: variants }, { data: profile }] =
-    await Promise.all([
-      supabaseAdmin.from("products").select("*").eq("id", id).maybeSingle(),
-      supabaseAdmin
-        .from("product_images")
-        .select("id, image_url, storage_path, sort_order, is_primary")
-        .eq("product_id", id)
-        .order("sort_order", { ascending: true }),
-      supabaseAdmin
-        .from("product_variants")
-        .select("*")
-        .eq("product_id", id)
-        .order("created_at", { ascending: true }),
-      supabaseAdmin
-        .from("profiles")
-        .select("full_name, email")
-        .eq("id", session.userId)
-        .maybeSingle(),
-    ]);
+  const [
+    { data: product },
+    { data: images },
+    { data: variants, error: variantsError },
+    { data: profile },
+  ] = await Promise.all([
+    supabaseAdmin.from("products").select("*").eq("id", id).maybeSingle(),
+    supabaseAdmin
+      .from("product_images")
+      .select("id, image_url, storage_path, sort_order, is_primary")
+      .eq("product_id", id)
+      .order("sort_order", { ascending: true }),
+    supabaseAdmin
+      .from("product_variants")
+      .select("*")
+      .eq("product_id", id),
+    supabaseAdmin
+      .from("profiles")
+      .select("full_name, email")
+      .eq("id", session.userId)
+      .maybeSingle(),
+  ]);
 
   if (!product) {
     notFound();
+  }
+
+  // Sort variants client-side by created_at (if available) or updated_at as fallback,
+  // so the form always renders even if migration 029 has not been applied.
+  let sortedVariants = variants ?? [];
+  if (sortedVariants.length > 1) {
+    sortedVariants = [...sortedVariants].sort((a: any, b: any) => {
+      const aTime = a.created_at ?? a.updated_at;
+      const bTime = b.created_at ?? b.updated_at;
+      if (aTime && bTime) return new Date(aTime).getTime() - new Date(bTime).getTime();
+      return 0;
+    });
   }
 
   const initialData: Partial<ProductFormValues> = {
@@ -72,7 +87,7 @@ export default async function EditProductPage({ params }: { params: Promise<Para
     option_1_name: (product as any).option_1_name ?? "",
     option_1_values: Array.from(
       new Set(
-        (variants ?? [])
+        (sortedVariants)
           .map((va: any) => va.option_1_value)
           .filter((v: string | null) => v && v !== "")
       )
@@ -80,7 +95,7 @@ export default async function EditProductPage({ params }: { params: Promise<Para
     option_2_name: (product as any).option_2_name ?? "",
     option_2_values: Array.from(
       new Set(
-        (variants ?? [])
+        (sortedVariants)
           .map((va: any) => va.option_2_value)
           .filter((v: string | null) => v && v !== "")
       )
@@ -93,7 +108,7 @@ export default async function EditProductPage({ params }: { params: Promise<Para
       is_primary: img.is_primary ?? false,
       isNew: false,
     })),
-    variants: (variants ?? []).map((va) => ({
+    variants: (sortedVariants).map((va) => ({
       id: va.id,
       sku: (va as any).sku ?? "",
       option_1_name: (va as any).option_1_name ?? "",
@@ -110,6 +125,10 @@ export default async function EditProductPage({ params }: { params: Promise<Para
     })),
   };
 
+  const variantLoadWarning = variantsError
+    ? `Gagal memuat data varian dari database: ${variantsError.message}`
+    : null;
+
   return (
     <AdminShell
       title={`Edit: ${product.name}`}
@@ -117,6 +136,11 @@ export default async function EditProductPage({ params }: { params: Promise<Para
       adminName={profile?.full_name ?? null}
       adminEmail={profile?.email ?? null}
     >
+      {variantLoadWarning && (
+        <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">
+          {variantLoadWarning}
+        </div>
+      )}
       <ProductForm mode="edit" productId={id} initialData={initialData} />
     </AdminShell>
   );

@@ -82,9 +82,7 @@ export async function PATCH(
   try {
     const body = await request.json();
     const input = body as Record<string, unknown>;
-    console.log("[PATCH] request body keys:", Object.keys(input).join(", "));
-    console.log("[PATCH] status input:", JSON.stringify(input.status));
-    console.log("[PATCH] condition input:", JSON.stringify(input.condition));
+    console.log("[PATCH] body keys:", Object.keys(input).join(", "));
 
     // Map form field aliases to canonical DB/API field names.
     const preorderProcessingDays =
@@ -263,8 +261,7 @@ export async function PATCH(
 
     // Validasi
     const prodValidation = validateProductInput(coercedInput);
-    console.log("[PATCH] coercedInput keys:", Object.keys(coercedInput).filter((k) => (coercedInput as Record<string, unknown>)[k] !== undefined).join(", "));
-    console.log("[PATCH] coercedInput condition:", coercedInput.condition, "status:", coercedInput.status, "name:", coercedInput.name?.slice(0, 20));
+    console.log("[PATCH] valid input keys:", Object.keys(coercedInput).filter((k) => (coercedInput as Record<string, unknown>)[k] !== undefined).join(", "));
     if (!prodValidation.valid) {
       console.log("[PATCH] validation errors:", JSON.stringify(prodValidation.errors));
       return NextResponse.json({ error: "Validasi gagal", errors: prodValidation.errors }, { status: 400 });
@@ -335,7 +332,7 @@ export async function PATCH(
     if (productInput.status) after.status = productInput.status;
 
     // Update produk
-    console.log("[PATCH] Updating product with:", JSON.stringify(buildUpdate));
+    console.log("[PATCH] update payload:", JSON.stringify(buildUpdate));
     const { error: updateError, data } = await supabaseAdmin
       .from("products")
       .update(buildUpdate)
@@ -343,9 +340,8 @@ export async function PATCH(
       .select("id, status, is_active")
       .single();
 
-    console.log("[PATCH] Update result:", { error: updateError?.message, data });
     if (updateError) {
-      console.error("[PATCH] FULL UPDATE ERROR:", JSON.stringify(updateError, null, 2));
+      console.error("[PATCH] full update error:", updateError.message);
     }
 
     if (updateError) {
@@ -469,31 +465,34 @@ export async function PATCH(
         }
       }
 
-      // Hapus varian yang tidak ada di list (yang tidak pernah dipesan)
-      const ids = rawVariants.map((v) => v.id as string | undefined).filter(Boolean) as string[];
+      // Soft-disable varian yang tidak ada di list (bukan hard delete)
+      // Ini mencegah hilangnya data jika form mengirim payload tidak lengkap
+      // (misal admin rename opsi lalu restore-nya, atau uncheck "produk memiliki variasi")
+      const ids = rawVariants
+        .filter((v) => !((v as any).toDelete === true))
+        .map((v) => v.id as string | undefined)
+        .filter(Boolean) as string[];
       if (ids.length > 0) {
-        // Hapus varian lama yang tidak ada di list baru, bukan primary, belum pernah dipesan
         const { data: oldVariants } = await supabaseAdmin
           .from("product_variants")
           .select("id")
           .eq("product_id", productId)
           .not("id", "in", ids);
 
-        if (oldVariants) {
-          for (const ov of oldVariants as { id: string }[]) {
-            const { count: oiCount } = await supabaseAdmin
-              .from("order_items")
-              .select("id", { count: "exact", head: true })
-              .eq("variant_id", ov.id);
-
-            if ((oiCount ?? 0) === 0) {
-              await supabaseAdmin.from("product_variants").delete().eq("id", ov.id);
-            } else {
-              await supabaseAdmin
-                .from("product_variants")
-                .update({ is_active: false })
-                .eq("id", ov.id);
-            }
+        if (oldVariants && oldVariants.length > 0) {
+          // Semua varian yang hilang dari payload di-disable (bukan dihapus),
+          // termasuk yang belum pernah dipesan. Reactivation cukup dengan
+          // update is_active=true + restock saat admin ingin menghidupkannya lagi.
+          const oldIds = (oldVariants as { id: string }[]).map((v) => v.id);
+          const { error: softErr } = await supabaseAdmin
+            .from("product_variants")
+            .update({ is_active: false })
+            .in("id", oldIds);
+          if (softErr) {
+            console.warn(
+              "[PATCH] gagal soft-disable varian lama:",
+              softErr.message
+            );
           }
         }
       }

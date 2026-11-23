@@ -1,4 +1,9 @@
 <!-- ENTRI BARU DI BAWAH BARIS INI -->
+### Fix #12 — PATCH produk admin: varian lama di-hard-delete saat opsi diubah → data hilang
+| Field | Tanggal | File | Masalah | Akar | Fix | Verifikasi | Pelajaran | Log Keyword | Deploy |
+|---|---|---|---|---|---|---|---|---|---|
+| app/api/admin/products/[id]/route.ts + admin edit page + ProductForm | 2026-11-22 | `app/api/admin/products/[id]/route.ts:472-502`, `app/admin/products/[id]/edit/page.tsx:18-39`, `components/admin/ProductForm.tsx:717` | Saat admin rename opsi atau uncheck "produk memiliki variasi", semua varian lama hilang permanen dari DB | Kode PATCH memakai `supabaseAdmin.from("product_variants").delete().eq("id", ov.id)` untuk varian yang tidak ada di payload baru; juga halaman edit fetch varian dengan `.order("created_at")` yang error 500 jika migration 029 belum di-apply, membuat form tidak load → payload kosong → hard delete | 1. Ganti hard-delete dengan soft-disable (`update({is_active:false})`) untuk semua varian yang hilang dari payload, tanpa filter `order_items` — data tidak hilang, bisa di-re-enable. 2. Halaman edit fetch varian tanpa `.order()` (sort client-side), plus banner error bila fetch gagal — form selalu render, payload selalu lengkap. 3. Form submit tetap mengabaikan `stock` untuk produk ber-varian. | `npx tsc --noEmit` clean. Simulasi payload form dengan varian baru/lama → tidak ada hard-delete. | Jangan pernah hard-delete data admin dari API form — form state bisa incomplete; soft-disable + re-enable pattern lebih aman | product.patch-variant-soft-delete, edit-page-robust-load | PENDING verifikasi (belum di-deploy) |
+
 ### Fix #11 — Redesign Home page: bold premium dark theme
 | Field | Tanggal | File | Masalah | Akar | Fix | Verifikasi | Pelajaran | Log Keyword | Deploy |
 |---|---|---|---|---|---|---|---|---|---|
