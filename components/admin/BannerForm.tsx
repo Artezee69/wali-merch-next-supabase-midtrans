@@ -208,6 +208,14 @@ export default function BannerForm({ mode, initial }: Props) {
               Format: PNG, JPG, WebP, SVG, atau GIF. Maksimal 5MB. Gambar lama
               di storage otomatis terhapus saat upload gambar baru.
             </p>
+            <div className="rounded-lg border border-[var(--ad-border)] bg-[var(--ad-surface-2)] p-3 text-[11.5px] leading-5 text-[var(--ad-text-2)]">
+              <p className="font-semibold text-[var(--ad-text)]">Ukuran gambar yang disarankan:</p>
+              <ul className="mt-1.5 space-y-1">
+                <li><strong>Hero Slider</strong> — 1920×1080 px (16:9) · 800×420 px minimum mobile</li>
+                <li><strong>Promo Top / Bottom</strong> — 600×400 px (3:2) · 400×260 px minimum mobile</li>
+              </ul>
+              <p className="mt-1.5 text-[var(--ad-text-3)]">Gambar di-crop otomatis via object-cover, jadi aman upload lebih besar dari ukuran di atas.</p>
+            </div>
             {uploadError && (
               <p className="text-[12px] font-semibold text-[var(--ad-red)]">{uploadError}</p>
             )}
