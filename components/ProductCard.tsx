@@ -9,6 +9,8 @@ type Variant = {
   id?: string;
   size: string;
   stock: number;
+  price?: number | null;
+  sale_price?: number | null;
 };
 
 type ProductCardProps = {
@@ -54,9 +56,25 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
   const isSoldOut = totalStock <= 0 && !isComingSoon;
   const isTerlaris = (product.soldCount ?? 0) >= 100;
 
-  const basePrice = Number(product.base_price ?? product.price ?? 0);
-  const salePrice = product.sale_price != null ? Number(product.sale_price) : 0;
-  const hasDiscount = salePrice > 0 && basePrice > salePrice;
+  // Determine effective price and discount
+  const productBase = Number(product.base_price ?? product.price ?? 0);
+  const productSale = product.sale_price != null ? Number(product.sale_price) : 0;
+
+  // Also check variant-level: any variant with sale_price set and lower than productBase
+  let variantSale = 0;
+  if (product.product_variants) {
+    for (const v of product.product_variants) {
+      const vs = v.sale_price != null ? Number(v.sale_price) : 0;
+      if (vs > 0 && vs < productBase) {
+        variantSale = vs;
+        break;
+      }
+    }
+  }
+
+  const salePrice = productSale > 0 ? productSale : variantSale;
+  const hasDiscount = salePrice > 0 && productBase > salePrice;
+  const basePrice = productBase;
 
   let discountPercent = 0;
   if (hasDiscount && basePrice > 0) {
