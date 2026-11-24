@@ -358,8 +358,11 @@ export async function PATCH(
     }
 
     if (updateError) {
-      console.error("[API /api/admin/products/:id] PATCH error:", updateError.message);
-      return NextResponse.json({ error: "Gagal memperbarui produk", details: updateError.message }, { status: 500 });
+      console.error("[API /api/admin/products/:id] PATCH error:", updateError.message, "payload:", JSON.stringify(buildUpdate));
+      return NextResponse.json(
+        { error: "Gagal memperbarui produk", details: updateError.message, payload: buildUpdate },
+        { status: 500 }
+      );
     }
 
     // === Sync image sort_order ===
