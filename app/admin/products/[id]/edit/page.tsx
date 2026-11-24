@@ -64,12 +64,11 @@ export default async function EditProductPage({ params }: { params: Promise<Para
     condition: (product as any).condition ?? "Baru",
     status: ((product as any).status ?? "draft") as ProductFormValues["status"],
     sku: (product as any).sku ?? "",
-    base_price: product.price ?? 0,
+    base_price: (product as any).base_price ?? product.price ?? 0,
     sale_price: (product as any).sale_price ?? null,
-    // NOTE: kolom `stock` TIDAK ADA di tabel `products`.
-    // Untuk produk dengan varian, hitung dari sum variants.stock.
-    // Untuk produk tanpa varian, tetap 0 (stock global akan disimpan nanti).
-    stock: 0,
+    // Stok: produk non-varian menyimpan stock di kolom products.stock.
+    // Produk dengan varian: stock dihitung dari sum variants (ditangani form).
+    stock: product.has_variants ? 0 : ((product as any).stock ?? 0),
     weight: (product as any).weight ?? 0,
     length: (product as any).length_cm ?? (product as any).length ?? 0,
     width: (product as any).width_cm ?? (product as any).width ?? 0,
