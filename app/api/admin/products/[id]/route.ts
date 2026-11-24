@@ -208,9 +208,8 @@ export async function PATCH(
       admin_notes: input.admin_notes !== undefined
         ? (typeof input.admin_notes === "string" ? input.admin_notes || null : null)
         : undefined,
-      // NOTE: `stock` TIDAK diset ke tabel products karena kolom itu
-      // tidak ada. Stok total dihitung dari product_variants.stock (lihat
-      // updateVariantStocks() di bawah).
+      // stock diset terpisah di bawah (non-varian: kolom products.stock;
+      // varian: dihitung dari sum product_variants.stock).
     };
 
     // Coerce ProductInput fields to exact types
@@ -530,9 +529,7 @@ export async function PATCH(
         }
       }
 
-      // Recompute price range from all active variants.
-      // NOTE: kolom `stock` TIDAK ADA di `products`. Stok total dihitung
-      // di product_variants.stock; clients harus sum variannya.
+      // Recompute price range + stock from all active variants.
       const { data: allVariants, error: fetchErr } = await supabaseAdmin
         .from("product_variants")
         .select("stock, price, sale_price, is_active")
@@ -560,16 +557,21 @@ export async function PATCH(
           ? Math.min(...salesOnly.map((v) => Number(v.sale_price)))
           : null;
 
-        await supabaseAdmin
+        const totalStock = active.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
+        const { error: recomputeErr } = await supabaseAdmin
           .from("products")
           .update({
             has_variants: rawVariants.length > 0,
             base_price: minBase,
             price: minEffective,
             sale_price: minSale,
+            stock: totalStock,
           })
           .eq("id", productId);
-
+        if (recomputeErr) {
+          console.error("[PATCH] variant recompute failed:", recomputeErr.message);
+          return NextResponse.json({ error: "Gagal menghitung ulang harga/stok varian", details: recomputeErr.message }, { status: 500 });
+        }
       }
     }
 
@@ -582,7 +584,8 @@ export async function PATCH(
           .update({ stock: stockVal })
           .eq("id", productId);
         if (stockErr) {
-          console.warn("[PATCH] stock update failed:", stockErr.message);
+          console.error("[PATCH] stock update failed:", stockErr.message);
+          return NextResponse.json({ error: "Gagal memperbarui stok produk", details: stockErr.message }, { status: 500 });
         }
       }
     }

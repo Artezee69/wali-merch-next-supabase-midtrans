@@ -356,7 +356,7 @@ export async function POST(request: NextRequest) {
         ? Math.min(...(allVars as any[]).filter((v: any) => v.sale_price != null && v.sale_price > 0).map((v: any) => Number(v.sale_price)))
         : null;
 
-      await supabaseAdmin
+      const { error: recomputeErr } = await supabaseAdmin
         .from("products")
         .update({
           base_price: minBase,
@@ -365,6 +365,10 @@ export async function POST(request: NextRequest) {
           stock: totalStock,
         })
         .eq("id", product.id);
+      if (recomputeErr) {
+        console.error("[POST] variant recompute failed:", recomputeErr.message);
+        return NextResponse.json({ error: "Gagal menghitung ulang harga/stok varian", details: recomputeErr.message }, { status: 500 });
+      }
     }
 
     await logAdminAction({
