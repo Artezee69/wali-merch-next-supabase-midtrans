@@ -66,9 +66,9 @@ export default async function EditProductPage({ params }: { params: Promise<Para
     sku: (product as any).sku ?? "",
     base_price: (product as any).base_price ?? product.price ?? 0,
     sale_price: (product as any).sale_price ?? null,
-    // Stok: produk non-varian menyimpan stock di kolom products.stock.
-    // Produk dengan varian: stock dihitung dari sum variants (ditangani form).
-    stock: product.has_variants ? 0 : ((product as any).stock ?? 0),
+    stock: product.has_variants
+      ? (sortedVariants as any[]).reduce((sum, v) => sum + (Number(v.stock) || 0), 0)
+      : ((product as any).stock ?? 0),
     weight: (product as any).weight ?? 0,
     length: (product as any).length_cm ?? (product as any).length ?? 0,
     width: (product as any).width_cm ?? (product as any).width ?? 0,

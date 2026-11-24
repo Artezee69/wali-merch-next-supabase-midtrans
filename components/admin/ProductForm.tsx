@@ -725,7 +725,9 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
 
       if (!res.ok || !data?.success) {
         if (data?.errors) setErrors(data.errors);
-        throw new Error(data?.error || "Gagal menyimpan");
+        const detail = data?.details ? ` — ${data.details}` : "";
+        const stack = data?.stack ? `\n[stack: ${data.stack}]` : "";
+        throw new Error(`(HTTP ${res.status}) ${data?.error || "Gagal menyimpan"}${detail}${stack}`);
       }
 
       setSuccessMsg(

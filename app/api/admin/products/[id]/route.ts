@@ -604,7 +604,12 @@ export async function PATCH(
   } catch (err: unknown) {
     console.error("[API /api/admin/products/:id] PATCH FATAL error:", err);
     console.error("[PATCH] stack:", (err as Error).stack);
-    return NextResponse.json({ error: "Internal server error", details: (err as Error).message }, { status: 500 });
+    const msg = err instanceof Error ? err.message : String(err);
+    const stack = err instanceof Error ? (err.stack ?? "").split("\n").slice(0, 5).join(" | ") : "";
+    return NextResponse.json(
+      { error: "Internal server error", details: msg, stack, fatal: true },
+      { status: 500 }
+    );
   }
 }
 
