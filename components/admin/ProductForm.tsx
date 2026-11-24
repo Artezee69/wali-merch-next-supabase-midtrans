@@ -716,7 +716,7 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
       const text = await res.text();
       console.log("[FormSubmit] status:", res.status, "text:", text.slice(0, 500));
 
-      let data: { success?: boolean; error?: string; errors?: Record<string, string>; product?: { id: string } };
+      let data: { success?: boolean; error?: string; errors?: Record<string, string>; product?: { id: string }; details?: string; fatal?: boolean };
       try {
         data = JSON.parse(text);
       } catch {
@@ -736,8 +736,7 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
         }
         const variantDetail = variantMsgs.length ? ` [${[...new Set(variantMsgs)].join("; ")}]` : "";
         const detail = data?.details ? ` — ${data.details}` : "";
-        const stack = data?.stack ? `\n[stack: ${data.stack}]` : "";
-        throw new Error(`(HTTP ${res.status}) ${data?.error || "Gagal menyimpan"}${variantDetail}${detail}${stack}`);
+        throw new Error(`(HTTP ${res.status}) ${data?.error || "Gagal menyimpan"}${variantDetail}${detail}`);
       }
 
       setSuccessMsg(

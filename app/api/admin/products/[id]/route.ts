@@ -412,7 +412,8 @@ export async function PATCH(
     // variants array: setiap item punya id (ada = update, tidak ada = insert)
     const rawVariants = input.variants as Array<Record<string, unknown>> | undefined;
     if (rawVariants && rawVariants.length > 0) {
-      const varValidation = validateVariants(rawVariants as any);
+      const isPublish = input.status === "active";
+      const varValidation = validateVariants(rawVariants as any, isPublish);
       if (!varValidation.valid) {
         return NextResponse.json(
           { error: "Validasi varian gagal", errors: varValidation.errors },
@@ -605,9 +606,8 @@ export async function PATCH(
     console.error("[API /api/admin/products/:id] PATCH FATAL error:", err);
     console.error("[PATCH] stack:", (err as Error).stack);
     const msg = err instanceof Error ? err.message : String(err);
-    const stack = err instanceof Error ? (err.stack ?? "").split("\n").slice(0, 5).join(" | ") : "";
     return NextResponse.json(
-      { error: "Internal server error", details: msg, stack, fatal: true },
+      { error: "Internal server error", details: msg, fatal: true },
       { status: 500 }
     );
   }

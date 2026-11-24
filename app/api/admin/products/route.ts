@@ -222,7 +222,8 @@ export async function POST(request: NextRequest) {
     const rawVariants = input.variants as Array<Record<string, unknown>> | undefined;
     let variantValidation = { valid: true, errors: {} } as ReturnType<typeof validateVariants>;
     if (rawVariants && rawVariants.length > 0) {
-      variantValidation = validateVariants(rawVariants as any);
+      const isPublish = input.status === "active";
+      variantValidation = validateVariants(rawVariants as any, isPublish);
     }
 
     // Buat slug unik

@@ -145,7 +145,7 @@ export function validateProductInput(input: ProductInput): ValidationResult {
   return { valid: Object.keys(errors).length === 0, errors };
 }
 
-export function validateVariants(variants: ProductVariantInput[]): ValidationResult {
+export function validateVariants(variants: ProductVariantInput[], requirePrice?: boolean): ValidationResult {
   const errors: Record<string, string> = {};
   const seen = new Set<string>();
 
@@ -170,6 +170,8 @@ export function validateVariants(variants: ProductVariantInput[]): ValidationRes
 
     if (Number.isNaN(price) || price < 0) {
       errors[`variants.${idx}.price`] = "Harga variasi tidak valid.";
+    } else if (requirePrice && price <= 0) {
+      errors[`variants.${idx}.price`] = "Harga variasi wajib diisi (minimal Rp 1) untuk publikasi.";
     }
     if (Number.isNaN(salePrice) || salePrice < 0) {
       errors[`variants.${idx}.sale_price`] = "Harga diskon variasi tidak valid.";
