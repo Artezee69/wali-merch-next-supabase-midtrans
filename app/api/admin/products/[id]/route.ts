@@ -566,15 +566,19 @@ export async function PATCH(
           })
           .eq("id", productId);
 
-        // For non-variant products, save stock directly
-        if (rawVariants.length === 0 && typeof input.stock === "number") {
-          const { error: stockErr } = await supabaseAdmin
-            .from("products")
-            .update({ stock: input.stock })
-            .eq("id", productId);
-          if (stockErr) {
-            console.warn("[PATCH] stock update failed:", stockErr.message);
-          }
+      }
+    }
+
+    // For non-variant products, save stock directly
+    if ((!rawVariants || rawVariants.length === 0) && input.stock !== undefined && input.stock !== null && input.stock !== "") {
+      const stockVal = Number(input.stock) || 0;
+      if (stockVal >= 0) {
+        const { error: stockErr } = await supabaseAdmin
+          .from("products")
+          .update({ stock: stockVal })
+          .eq("id", productId);
+        if (stockErr) {
+          console.warn("[PATCH] stock update failed:", stockErr.message);
         }
       }
     }
