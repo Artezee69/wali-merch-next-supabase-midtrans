@@ -358,7 +358,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
             {/* Trust signals */}
             <div className="mb-6 sm:mb-8 grid grid-cols-3 gap-3 sm:gap-4">
               {[
-                { icon: Truck, label: "Gratis Ongkir*", sub: "min. Rp 200rb" },
+                { icon: Truck, label: "Gratis Ongkir*", sub: "min. Rp 1.000.000" },
                 { icon: Package, label: "Stok Ready", sub: "Kirim 1–2 hari" },
                 { icon: Shield, label: "100% Original", sub: "Garansi resmi" },
               ].map(({ icon: Icon, label, sub }, i) => (

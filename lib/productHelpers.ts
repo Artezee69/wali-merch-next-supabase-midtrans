@@ -173,7 +173,7 @@ export function validateVariants(variants: ProductVariantInput[]): ValidationRes
     }
     if (Number.isNaN(salePrice) || salePrice < 0) {
       errors[`variants.${idx}.sale_price`] = "Harga diskon variasi tidak valid.";
-    } else if (salePrice > 0 && salePrice >= price) {
+    } else if (price > 0 && salePrice > 0 && salePrice >= price) {
       errors[`variants.${idx}.sale_price`] = "Harga diskon harus lebih kecil dari harga variasi.";
     }
     if (Number.isNaN(stock) || stock < 0) {
