@@ -1,4 +1,8 @@
 <!-- ENTRI BARU DI BAWAH BARIS INI -->
+### Fix #13 — Halaman Kalkulator HPP admin (/admin/finance) + tabel product_hpp
+| Field | Tanggal | File | Masalah | Akar | Fix | Verifikasi | Pelajaran | Log Keyword | Deploy |
+|---|---|---|---|---|---|---|---|---|---|
+| `app/admin/finance/page.tsx`, `components/admin/HppCalculatorClient.tsx`, `app/api/admin/hpp/route.ts`, `supabase/migrations/032_product_hpp.sql`, `components/admin/AdminShell.tsx` | 2026-11-24 | Baru (fitur, bukan bug) | Halaman Kalkulator HPP belum ada: admin gak bisa hitung HPP + overhead + bagi hasil kantor/studio per produk, dan nominalnya gak tersimpan antar-sesi | Fitur belum dibuat | 1. Migration 032: tabel `product_hpp` (1 row per produk, `hpp_items`/`overhead_items` JSONB, `sales_fee` default 10000, `kantor_share` 40 / `studio_share` 60, RLS admin-only, trigger `touch_updated_at`). 2. API GET/POST `/api/admin/hpp` — GET ambil nama+harga jual live dari `products`, POST upsert per produk (validasi share=100%). 3. Kalkulator UI: pilih produk → step1 biaya HPP (qty) → step2 overhead (preset + custom) → step3 potongan sales + bagi 40/60 kantor/studio → simpan. 4. Nav sidebar grup "Keuangan". | `npx tsc --noEmit` clean. Table `product_hpp` ada di DB prod (upsert+delete OK). Endpoint guarded admin-only. | Jangan bikin halaman kalku­lator yang "gagal memuat produk" karena tabel-nya belum di-migrasi: jalankan migration dulu, baru test end-to-end. | hpp-calculator-page, product_hpp-table, admin-finance | ✅ LIVE 2026-11-24 (table sudah di-apply ke DB prod) |
 ### Fix #12 — PATCH produk admin: varian lama di-hard-delete saat opsi diubah → data hilang
 | Field | Tanggal | File | Masalah | Akar | Fix | Verifikasi | Pelajaran | Log Keyword | Deploy |
 |---|---|---|---|---|---|---|---|---|---|

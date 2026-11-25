@@ -15,6 +15,7 @@ import {
   ChevronLeft,
   ImageIcon,
   MousePointer,
+  Calculator,
   type LucideIcon,
 } from "lucide-react";
 
@@ -47,6 +48,12 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
     items: [
       { href: "/admin/banners", label: "Banner", icon: ImageIcon, matchPrefix: "/admin/banners" },
       { href: "/admin/popup-ads", label: "Popup Ads", icon: MousePointer, matchPrefix: "/admin/popup-ads" },
+    ],
+  },
+  {
+    label: "Keuangan",
+    items: [
+      { href: "/admin/finance", label: "Kalkulator HPP", icon: Calculator, matchPrefix: "/admin/finance" },
     ],
   },
   {
