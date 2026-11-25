@@ -16,6 +16,7 @@ import {
   ImageIcon,
   MousePointer,
   Calculator,
+  Tag,
   type LucideIcon,
 } from "lucide-react";
 
@@ -54,6 +55,7 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
     label: "Keuangan",
     items: [
       { href: "/admin/finance", label: "Kalkulator HPP", icon: Calculator, matchPrefix: "/admin/finance" },
+      { href: "/admin/employee-sales", label: "Penjualan Karyawan", icon: Tag, matchPrefix: "/admin/employee-sales" },
     ],
   },
   {
