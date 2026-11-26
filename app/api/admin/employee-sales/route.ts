@@ -16,6 +16,8 @@ export type EmployeeProduct = {
   has_variants: boolean;
   // HPP total per unit (sum of hpp_items + overhead_items from product_hpp)
   hpp_per_unit: number;
+  // HPP efektif untuk karyawan ini: hpp_snapshot (jika ada) > hpp_per_unit
+  hpp_effective: number;
   // Employee sales state for the current employee (if any)
   purchased: boolean;
   special_price: number | null;
@@ -39,11 +41,13 @@ export type EmployeeSalesPayload = {
     purchased: boolean;
   }>;
   /**
-   * Opsional: HPP total per unit yang diinput dari halaman penjualan karyawan.
-   * Bila ada, upsert ke tabel product_hpp sebagai item HPP bernama
-   * "HPP input manual" agar konsisten dengan halaman Kalkulator HPP.
+   * Opsional: HPP per unit yang diinput dari halaman penjualan karyawan.
+   * Disimpan di `employee_sales.hpp_snapshot` (per karyawan + produk),
+   * BUKAN ke tabel bersama `product_hpp` — jadi angka Kalkulator HPP
+   * tidak ikut berubah dan tidak membengkak. null = mengosongkan
+   * (kembali ke HPP Kalkulator HPP).
    */
-  hpp_overrides?: Array<{ product_id: string; hpp: number }>;
+  hpp_values?: Array<{ product_id: string; hpp: number | null }>;
 };
 
 /* ============ Helpers ============ */
@@ -152,7 +156,12 @@ export async function GET(request: NextRequest) {
 
       const pid = p.id as string;
       const s = salesByProduct.get(pid);
+      // HPP dari Kalkulator HPP (product_hpp) — nilai awal / fallback
       const hppPerUnit = hppPerUnitByProduct.get(pid) ?? 0;
+      // HPP yang tercatat untuk karyawan ini (employee_sales.hpp_snapshot)
+      const hppSnapshot = s && s.hpp_snapshot != null ? Number(s.hpp_snapshot) : null;
+      // HPP efektif: prioritaskan catatan karyawan, lalu Kalkulator HPP
+      const hppEffective = hppSnapshot != null ? hppSnapshot : hppPerUnit;
       return {
         id: pid,
         name: p.name as string,
@@ -161,9 +170,10 @@ export async function GET(request: NextRequest) {
         status: p.status as string,
         has_variants: Boolean(p.has_variants),
         hpp_per_unit: hppPerUnit,
+        hpp_effective: hppEffective,
         purchased: s ? Boolean(s.purchased) : false,
         special_price: s ? Number(s.special_price) : null,
-        hpp_snapshot: s ? (s.hpp_snapshot != null ? Number(s.hpp_snapshot) : null) : null,
+        hpp_snapshot: hppSnapshot,
       };
     });
 
@@ -224,6 +234,8 @@ export async function POST(request: NextRequest) {
     }
 
     let employeeId: string;
+    // true = karyawan baru di-insert, false = nama sudah ada (existing)
+    let employeeCreated = false;
     if (existing) {
       employeeId = existing.id;
     } else {
@@ -240,85 +252,33 @@ export async function POST(request: NextRequest) {
         );
       }
       employeeId = created.id;
+      employeeCreated = true;
     }
 
-    // 2) Ambil HPP per produk (untuk snapshot)
+    // 2) HPP per karyawan: HANYA ditulis bila admin benar-benar mengisi kolom
+    //    HPP untuk produk itu. Disimpan di hpp_snapshot (per karyawan + produk),
+    //    BUKAN ke tabel bersama product_hpp — angka Kalkulator HPP tidak
+    //    terpengaruh dan tidak membengkak.
+    //    null = tidak dicatat → GET memakai total live dari product_hpp.
     const entries = Array.isArray(body.entries) ? (body.entries as Array<Record<string, unknown>>) : [];
-    const productIds = entries
-      .map((e) => (typeof e.product_id === "string" ? e.product_id.trim() : ""))
-      .filter(Boolean);
-
-    const { data: hppRows } = productIds.length
-      ? await supabaseAdmin
-          .from("product_hpp")
-          .select("product_id, hpp_items, overhead_items")
-          .in("product_id", productIds)
-      : { data: [] as any[] };
-
-    const hppByProduct = new Map<string, number>();
-    for (const row of (hppRows ?? []) as Array<Record<string, unknown>>) {
-      hppByProduct.set(row.product_id as string, computeHppPerUnit(row));
-    }
-
-    // 3) Bila ada hpp_overrides, upsert ke product_hpp (item "HPP input manual")
-    const hppOverrides = Array.isArray(body.hpp_overrides)
-      ? (body.hpp_overrides as Array<{ product_id?: unknown; hpp?: unknown }>)
+    const hppValues = Array.isArray(body.hpp_values)
+      ? (body.hpp_values as Array<{ product_id?: unknown; hpp?: unknown }>)
       : [];
-    for (const o of hppOverrides) {
+    const hppMap = new Map<string, number | null>();
+    for (const o of hppValues) {
       const pid = typeof o.product_id === "string" ? o.product_id.trim() : "";
       if (!pid) continue;
-      const hppVal = Math.max(0, Math.round(Number(o.hpp) || 0));
-      if (hppVal === 0) continue; // jangan overwrite 0
-
-      // Ambil row existing (kalau ada) supaya items lain gak hilang
-      const { data: existingRow } = await supabaseAdmin
-        .from("product_hpp")
-        .select("hpp_items, overhead_items, sales_fee, kantor_share, studio_share, notes")
-        .eq("product_id", pid)
-        .maybeSingle();
-
-      const baseHppItems = (existingRow?.hpp_items as Array<Record<string, unknown>> | undefined) ?? [];
-      const baseOverheadItems =
-        (existingRow?.overhead_items as Array<Record<string, unknown>> | undefined) ?? [];
-
-      // Ganti / tambah item "HPP input manual" di hpp_items
-      const manualItem = {
-        id: "manual_hpp",
-        name: "HPP input manual",
-        amount: hppVal,
-      };
-      const newHppItems = [
-        manualItem,
-        ...baseHppItems.filter((i) => i.id !== "manual_hpp"),
-      ];
-
-      const { error: hppErr } = await supabaseAdmin
-        .from("product_hpp")
-        .upsert(
-          {
-            product_id: pid,
-            hpp_items: newHppItems,
-            overhead_items: baseOverheadItems,
-            sales_fee: (existingRow?.sales_fee as number) ?? 10000,
-            kantor_share: (existingRow?.kantor_share as number) ?? 40,
-            studio_share: (existingRow?.studio_share as number) ?? 60,
-            notes: (existingRow?.notes as string | null) ?? null,
-          },
-          { onConflict: "product_id" }
-        );
-      if (hppErr) {
-        console.error("[API /api/admin/employee-sales] hpp upsert error:", hppErr.message);
-        return NextResponse.json(
-          { error: "Gagal menyimpan HPP", details: hppErr.message },
-          { status: 500 }
-        );
-      }
-
-      // Perbarui cache HPP untuk snapshot
-      hppByProduct.set(pid, hppVal);
+      hppMap.set(
+        pid,
+        o.hpp == null || (typeof o.hpp === "string" && o.hpp === "")
+          ? null
+          : Math.max(0, Math.round(Number(o.hpp) || 0))
+      );
     }
 
-    // 4) Upsert semua entry produk
+    // 3) Upsert massal TANPA hpp_snapshot. Produk yang kolom HPP-nya tidak
+    //    disentuh admin harus mempertahankan snapshot yang sudah pernah
+    //    diinput — kalau kolom ini ikut ditulis, snapshot lama terhapus.
     const upsertRows = entries.map((e) => {
       const pid = typeof e.product_id === "string" ? e.product_id.trim() : "";
       const special =
@@ -326,12 +286,10 @@ export async function POST(request: NextRequest) {
           ? Math.max(0, Math.round(Number(e.special_price) || 0))
           : null;
       const purchased = e.purchased === true;
-      const hppSnapshot = hppByProduct.get(pid) ?? null;
       return {
         employee_id: employeeId,
         product_id: pid,
         special_price: special ?? 0,
-        hpp_snapshot: hppSnapshot,
         purchased,
       };
     });
@@ -349,6 +307,24 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // 3b) Tulis hpp_snapshot HANYA untuk produk yang benar-benar disentuh.
+    //     null di sini berarti admin mengosongkan kolom → kembali ke HPP
+    //     Kalkulator (snapshot dihapus), bukan dibiarkan.
+    for (const [pid, hppVal] of hppMap.entries()) {
+      const { error: hppErr } = await supabaseAdmin
+        .from("employee_sales")
+        .update({ hpp_snapshot: hppVal })
+        .eq("employee_id", employeeId)
+        .eq("product_id", pid);
+      if (hppErr) {
+        console.error("[API /api/admin/employee-sales] update hpp error:", hppErr.message);
+        return NextResponse.json(
+          { error: "Gagal menyimpan HPP", details: hppErr.message },
+          { status: 500 }
+        );
+      }
+    }
+
     await logAdminAction({
       actorId: admin.id,
       actorEmail: admin.email,
@@ -360,6 +336,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      created: employeeCreated,
       employee: { id: employeeId, full_name: name },
       entries_saved: upsertRows.length,
     });
